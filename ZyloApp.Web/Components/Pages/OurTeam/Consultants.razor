@@ -69,11 +69,10 @@
         var state = await AuthTask;
         using var Db = DbFactory.CreateDbContext();
 
-        if (state?.User is not null && (state.User.IsInRole(Role.Admin) || state.User.IsInRole(Role.SuperAdmin)))
+        if (state?.User is not null && (state.User.IsInAnyRole(Role.Admin, Role.SuperAdmin)))
         {
             instructors = await Db.Instructors
                 .Include(x => x.Tags)
-                .Where(x => x.MemberType == MemberType.Consultant)
                 .ToListAsync();
         }
         else

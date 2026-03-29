@@ -10,83 +10,61 @@
 }
 else
 {
-    <AuthorizeView Roles="@Role.Admins">
-        <MudGrid Class="pb-8 mt-0 px-4">
+    <MudGrid Class="mt-0 px-4" Spacing="10">
+
+        <AuthorizeView Roles="@Role.Admins">
             @foreach (var item in homeAdminNavigations)
             {
-                <MudItem xs="12" sm="6" md="4" lg="3"">
-                    <MudCard Class="nav-card admin" Elevation="10">
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.h6">@item.Text</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            <MudStack Row="true">
-                                <MudIcon Size="Size.Large" Icon="@item.Icon" />
-                                <MudText Typo="Typo.body2">The quick, brown fox jumps over a lazy dog.</MudText>
+                <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
+                    <a href="@item.Link" style="text-decoration:none;">
+                        <MudPaper Class="nav-card admin py-4" Elevation="10">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
+                                <MudIcon Style="height:64px;width:64px;" Color="Color.Error" Icon="@item.Icon" />
+                                <MudText Typo="Typo.body1">@item.Description</MudText>                                
                             </MudStack>
-                        </MudCardContent>
-                        <MudCardActions>
-                            <MudButton Variant="Variant.Text" Color="Color.Info" Href="@item.Link">Navigate to @item.Text</MudButton>
-                        </MudCardActions>
-                    </MudCard>
+                        </MudPaper>
+                    </a>
                 </MudItem>
             }
-        </MudGrid>
-    </AuthorizeView>
+        </AuthorizeView>
 
-    <AuthorizeView Roles="@Role.Instructor">
-        <MudGrid Class="pb-8 mt-0 px-4">
+        <AuthorizeView Roles="@Role.Instructor">
             @foreach (var item in homeConsultantNavigations)
             {
-                <MudItem xs="12" sm="6" md="4" lg="3">
-                    <MudCard Class="nav-card consultant" Elevation="10">
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.h6">@item.Text</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            <MudStack Row="true">
-                                <MudIcon Size="Size.Large" Icon="@item.Icon" />
-                                <MudText Typo="Typo.body2">The quick, brown fox jumps over a lazy dog.</MudText>
+                <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
+                    <a href="@item.Link" style="text-decoration:none;">
+                        <MudPaper Class="nav-card consultant py-4" Elevation="10">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
+                                <MudIcon Style="height:64px;width:64px;" Color="Color.Warning" Icon="@item.Icon" />
+                                <MudText Typo="Typo.body1">@item.Description</MudText>
                             </MudStack>
-                        </MudCardContent>
-                        <MudCardActions>
-                            <MudButton Variant="Variant.Text" Color="Color.Info" Href="@item.Link">Navigate to @item.Text</MudButton>
-                        </MudCardActions>
-                    </MudCard>
+                        </MudPaper>
+                    </a>
                 </MudItem>
             }
-        </MudGrid>
-    </AuthorizeView>
+        </AuthorizeView>
 
-    <AuthorizeView Roles="@Role.TraineesOrAttendeesOrEmployees">
-        <MudGrid Class="pb-8 mt-0 px-4">
-            @foreach (var item in homeAdminNavigations)
+        <AuthorizeView Roles="@Role.TraineesOrAttendeesOrEmployees">
+            @foreach (var item in homeUserNavigations)
             {
-                <MudItem xs="12" sm="6" md="4" lg="3">
-                    <MudCard Class="nav-card" Elevation="10">
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Typo="Typo.h6">@item.Text</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            <MudStack Row="true">
-                                <MudIcon Size="Size.Large" Icon="@item.Icon" />
-                                <MudText Typo="Typo.body2">The quick, brown fox jumps over a lazy dog.</MudText>
+                <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
+                    <a href="@item.Link" style="text-decoration:none;">
+                        <MudPaper Class="nav-card py-4" Elevation="10">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
+                                <MudIcon Style="height:64px;width:64px;" Color="Color.Secondary" Icon="@item.Icon" />
+                                <MudText Typo="Typo.body1">@item.Description</MudText>
                             </MudStack>
-                        </MudCardContent>
-                        <MudCardActions>
-                            <MudButton Variant="Variant.Text" Color="Color.Info" Href="@item.Link">Navigate to @item.Text</MudButton>
-                        </MudCardActions>
-                    </MudCard>
+                        </MudPaper>
+                    </a>
                 </MudItem>
             }
-        </MudGrid>
-    </AuthorizeView>
+
+        </AuthorizeView>
+
+    </MudGrid>
 }
 
 <style>
@@ -94,39 +72,44 @@ else
         transition: transform 0.3s ease-in-out;
     }
 
-    .nav-card.admin {
-        box-shadow: 0px 5px 15px rgba(244, 67, 54, 0.5) !important;
-    }
+        .nav-card.admin {
+            box-shadow: 0px 5px 15px rgba(244, 67, 54, 0.5) !important;
+        }
 
-    .nav-card.consultant {
-        box-shadow: 0px 5px 15px rgba(25, 118, 210, 0.5) !important;
-    }
+        .nav-card.consultant {
+            box-shadow: 0px 5px 15px rgba(255, 152, 0, 0.5) !important;
+        }
 
-    .nav-card:not(.admin):not(.consultant) {
-        box-shadow: 0px 5px 15px rgba(156, 39, 176, 0.5) !important;
-    }
+        .nav-card:not(.admin):not(.consultant) {
+            box-shadow: 0px 5px 15px rgba(156, 39, 176, 0.5) !important;
+        }
 
-    .nav-card:hover {
-        transform: translateY(-8px);
-    }
+        .nav-card:hover {
+            transform: translateY(-8px);
+        }
 </style>
 
 @code {
 
-    private List<(string Text, string Link, string Icon)> homeAdminNavigations = [
-        ("Dashboard", "/dashboard/admin", Icons.Material.Sharp.Dashboard),
-        ("New Joinees", "/applicants", Icons.Material.Sharp.PeopleOutline),
-        ("Courses", "/trainingplans", Icons.Material.Sharp.MenuBook),
-        ("Reviews", "/review/forms", Icons.Material.Sharp.MenuBook),        
-        ("Consultants", "/instructors", Icons.Material.Sharp.PersonOutline),
-        ("Timesheets", "/timesheets", Icons.Material.Sharp.PeopleOutline)
+    private record NavigationItem(string Text, string Link, string Icon, string Description);
+
+    private List<NavigationItem> homeAdminNavigations = [
+        new ("Admin Dashboard", "/dashboard/admin", Icons.Material.Sharp.Dashboard, "Multiple insights for admin users"),
+        new ("New Joinees", "/applicants", Icons.Material.Sharp.PeopleOutline, "All new application requests"),
+        new ("Courses", "/trainingplans", Icons.Material.Sharp.MenuBook, "All training plans for workshops etc."),
+        new ("Reviews", "/review/forms", Icons.Material.Sharp.Reviews, "Ratings for consultants"),
+        new ("Consultants", "/consultants", Icons.Material.Sharp.CoPresent, "Our consultants pool"),
+        new ("Timesheets", "/timesheets", Icons.Material.Sharp.Checklist, "Track timesheet submissions")
     ];
-    private List<(string Text, string Link, string Icon)> homeConsultantNavigations = [
-        ("Dashboard", "/dashboard/admin", Icons.Material.Sharp.Dashboard),
-        ("New Joinees", "/applicants", Icons.Material.Sharp.PeopleOutline),
-        ("Courses", "/trainingplans", Icons.Material.Sharp.MenuBook),
-        ("Consultants", "/instructors", Icons.Material.Sharp.PersonOutline),
-        ("Timesheets", "/timesheets", Icons.Material.Sharp.PeopleOutline)
+    private List<NavigationItem> homeConsultantNavigations = [
+        new ("Consultant Dashboard", "/dashboard/consultant", Icons.Material.Sharp.Dashboard, "Dashboard and insights for consultants"),
+        new ("Class Schedules", "/schedules", Icons.Material.Sharp.Schedule, "View and manage your class schedules"),
+        new ("Batch Attedance", "/attendance/batches", Icons.Material.Sharp.Check, "See attendance for your batches")
     ];
-    private List<(string Text, string Link, string Icon)> homeUserNavigations = [];
+    private List<NavigationItem> homeUserNavigations = [
+        new ("My Timesheet", "/my/timesheet", Icons.Material.Sharp.AddTask, "Track your working hours"),
+        new ("My Classes", "/my/classes", Icons.Material.Sharp.Class, "View classes you are enrolled in"),
+        new ("My Assignments", "/my/assignments", Icons.Material.Sharp.Assignment, "View your pending assignments"),
+        new ("My Accomplishments", "/accomplishments", Icons.Material.Sharp.CardMembership, "Track your achievements and certificates")
+    ];
 }

@@ -2,16 +2,9 @@
     <MudNavMenu Class="mud-width-full">
         <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home" IconColor="Color.Success">Home</MudNavLink>
         <MudNavLink Href="/enroll" Icon="@Icons.Material.Filled.Person3" IconColor="Color.Success">Enroll</MudNavLink>
-        <MudNavLink Href="/contact" Icon="@Icons.Material.Sharp.Contacts" IconColor="Color.Success">Contact</MudNavLink>
-
-        <AuthorizeView Context="moduleGroup" Roles="@Role.AdminsOrInstructor">
-            <MudNavGroup Title="Our Team" Icon="@Icons.Material.Sharp.Groups3" IconColor="Color.Success">
-                <MudNavLink Href="/coreteam" Icon="@Icons.Material.Sharp.PeopleOutline" IconColor="Color.Success">Core Team</MudNavLink>
-                <MudNavLink Href="/consultants" Icon="@Icons.Material.Sharp.AccountBox" IconColor="Color.Success">Consultants</MudNavLink>
-            </MudNavGroup>
-            <AuthorizeView Roles="@Role.AdminsOrInstructor">
-                <MudNavLink Href="/course/modules" Icon="@Icons.Material.Sharp.SelectAll" IconColor="Color.Success">Modules</MudNavLink>
-            </AuthorizeView>
+        <MudNavLink Href="/consultants" Icon="@Icons.Material.Sharp.AccountBox" IconColor="Color.Success">Consultants</MudNavLink>        
+        <AuthorizeView Roles="@Role.AdminsOrInstructor">
+            <MudNavLink Href="/course/modules" Icon="@Icons.Material.Sharp.SelectAll" IconColor="Color.Success">Modules</MudNavLink>
         </AuthorizeView>
 
         <AuthorizeView Roles="@Role.TraineesOrAttendees">
@@ -39,9 +32,9 @@
 
         <AuthorizeView Roles="@Role.AdminsOrInstructor">
             <MudDivider Class="my-2" />
-            <MudNavLink Href="/dashboard/consultant" Icon="@Icons.Material.Sharp.Dashboard" IconColor="Color.Success">Consultant Dashboard</MudNavLink>
-            <MudNavLink Href="/schedules" Icon="@Icons.Material.Sharp.Schedule" IconColor="Color.Success">Class Schedules</MudNavLink>
-            <MudNavLink Href="/attendance/batches" Icon="@Icons.Material.Sharp.Person2" IconColor="Color.Success">Attendance</MudNavLink>
+            <MudNavLink Href="/dashboard/consultant" Icon="@Icons.Material.Sharp.Dashboard" IconColor="Color.Warning">Consultant Dashboard</MudNavLink>
+            <MudNavLink Href="/schedules" Icon="@Icons.Material.Sharp.Schedule" IconColor="Color.Warning">Class Schedules</MudNavLink>
+            <MudNavLink Href="/attendance/batches" Icon="@Icons.Material.Sharp.Person2" IconColor="Color.Warning">Attendance</MudNavLink>
         </AuthorizeView>
 
         <AuthorizeView Roles="@Role.AdminsOrInstructor">
@@ -81,10 +74,10 @@
         </AuthorizeView>
 
         <AuthorizeView Roles="@Role.Admins">
-            <MudNavGroup Title="Site Manager" Icon="@Icons.Material.Filled.Web" IconColor="Color.Warning">
-                <MudNavLink Href="/admin/websites" Icon="@Icons.Material.Sharp.Public" IconColor="Color.Warning" Match="NavLinkMatch.All">All Websites</MudNavLink>
-                <MudNavLink Href="/admin/websites/new" Icon="@Icons.Material.Sharp.DomainAdd" IconColor="Color.Warning">New Website</MudNavLink>
-                <MudNavLink Href="/admin/sitesection/new" Icon="@Icons.Material.Sharp.TableRows" IconColor="Color.Warning">New Site Section</MudNavLink>
+            <MudNavGroup Title="Site Manager" Icon="@Icons.Material.Filled.Web" IconColor="Color.Success">
+                <MudNavLink Href="/admin/websites" Icon="@Icons.Material.Sharp.Public" IconColor="Color.Success" Match="NavLinkMatch.All">All Websites</MudNavLink>
+                <MudNavLink Href="/admin/websites/new" Icon="@Icons.Material.Sharp.DomainAdd" IconColor="Color.Success">New Website</MudNavLink>
+                <MudNavLink Href="/admin/sitesection/new" Icon="@Icons.Material.Sharp.TableRows" IconColor="Color.Success">New Site Section</MudNavLink>
             </MudNavGroup>
         </AuthorizeView>
 
