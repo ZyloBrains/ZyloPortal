@@ -1,0 +1,95 @@
+﻿@page "/admin/sitesection/new"
+@page "/admin/sitesection/edit/{Id:int}"
+
+@attribute [Authorize(Roles = Role.Admins)]
+
+@using ZyloApp.Web.Extensions
+@inject ApplicationDbContext Db
+@inject ISnackbar SnackBar
+
+<PageTitle>@pageTitle</PageTitle>
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+    <MudSelect Label="Select Website you are adding this section for."
+               @bind-Value="model.SiteId"
+               Variant="Variant.Outlined">
+        @foreach (var site in sites)
+        {
+            <MudSelectItem Value="@site.Id">@site.Name (@site.Domain)</MudSelectItem>
+        }
+    </MudSelect>
+    <MudTextField Label="Section Title" @bind-Value="model.Title" Variant="Variant.Outlined" Class="mb-3" />
+
+    <MudField Label="Section Visibility" Variant="Variant.Outlined" Class="mb-3">
+        <MudToggleGroup T="bool" SelectionMode="SelectionMode.SingleSelection" @bind-Value="@model.Enabled" Color="Color.Inherit" CheckMark FixedContent>
+            <MudToggleItem Value="@true" Text="Public" />
+            <MudToggleItem Value="@false" Text="Draft" />
+        </MudToggleGroup>
+    </MudField>
+
+    <MudTextField Lines="10" @bind-Value="@model.Content" Variant="Variant.Outlined" Label="Content HTML" AutoGrow />
+
+    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Warning" Class="mt-3" StartIcon="@Icons.Material.Filled.Save">
+        Save Section @(siteName == "" ? "" : $"for {siteName}")
+    </MudButton>
+</EditForm>
+
+@code {
+
+    [Parameter]
+    public int? Id { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? SiteId { get; set; }
+
+    Section model = new();
+    IEnumerable<Site> sites = [];
+    string pageTitle = string.Empty;
+    bool IsAdd => Id is null or 0;
+    string siteName => sites.FirstOrDefault(s => s.Id == model.SiteId)?.Name ?? "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        sites = await Db.Sites.ToListAsync() ?? [];
+        model.SiteId = SiteId;
+
+        if (IsAdd)
+        {
+            pageTitle = "New Website Section";
+        }
+        else
+        {
+            pageTitle = "Edit Website Section";
+            model = await Db.Sections.FindAsync(Id) ?? new();
+        }
+    }
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        // Generate slug from title and replace the <section id="..."> in HTML content
+        var slug = model.Title.ToSlug();
+        model.Slug = slug;
+        model.Content = model.Content?.ReplaceSectionId(slug);
+
+        if (IsAdd)
+        {
+            Db.Sections.Add(model);
+        }
+        else
+        {
+            model.Id = Id.Value;
+            Db.Sections.Update(model);
+        }
+
+        var rowsAffected = await Db.SaveChangesAsync();
+
+        if (rowsAffected > 0)
+        {
+            SnackBar.Add("Site section saved successfully", Severity.Success);
+        }
+        else
+        {
+            SnackBar.Add("Site section save failed", Severity.Error);
+        }
+    }
+}
