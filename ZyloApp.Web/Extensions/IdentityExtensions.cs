@@ -18,4 +18,20 @@ public static class IdentityExtensions
                 .Select(c => c.Value)
                 .ToList();
         });
+
+    public static bool IsInAnyRole(this ClaimsPrincipal user, params string[] roles)
+    {
+        if (user == null || roles == null || roles.Length == 0)
+            return false;
+
+        return roles.Any(user.IsInRole);
+    }
+
+    public static bool IsInAllRoles(this ClaimsPrincipal user, params string[] roles)
+    {
+        if (user == null || roles == null || roles.Length == 0)
+            return false;
+
+        return roles.All(user.IsInRole);
+    }
 }

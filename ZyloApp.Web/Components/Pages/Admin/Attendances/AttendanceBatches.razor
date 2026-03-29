@@ -1,0 +1,91 @@
+﻿@page "/attendance/batches"
+
+@attribute [Authorize(Roles = Role.AdminsOrInstructor)]
+
+@inject ApplicationDbContext Db
+@inject ISnackbar SnackBar
+
+<PageTitle>Current Batches</PageTitle>
+
+@if (loadingData)
+{
+    <Loading />
+}
+else if (batches.Count == 0)
+{
+    <ApplicationAlert Text="No batches found" />
+}
+else
+{
+    <MudGrid Class="pa-3">
+        @foreach (var batch in batches)
+        {
+            <MudItem md="6">
+                <MudCard Elevation="5" Class="pa-3">
+                    <MudCardHeader Class="pb-0">
+                        <CardHeaderAvatar>
+                            <MudAvatar Color="Color.Secondary" Size="Size.Large">B</MudAvatar>
+                        </CardHeaderAvatar>
+                        <CardHeaderContent>
+                            <MudText Typo="Typo.h5">@batch.Name</MudText>
+                            <MudText Typo="Typo.body1" title="@batch.Created">Added @batch.Created.Humanize()</MudText>
+                        </CardHeaderContent>
+                        <CardHeaderActions>
+                            <MudText Typo="Typo.h6" Inline>@(batch.Students?.Count ?? 0) Members</MudText>
+                        </CardHeaderActions>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudStack Spacing="3" Row Wrap="Wrap.Wrap" Justify="Justify.Center">
+                            @foreach (var student in batch.Students ?? [])
+                            {
+                                <UserProfile AvatarPath="@student.ProfileImagePath" Name="@student.Name" />
+                            }
+                        </MudStack>
+                    </MudCardContent>
+                    <MudCardActions>
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Href=@($"/attendance/batches/{batch.Id}")>Go to Attendees</MudButton>
+                    </MudCardActions>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+}
+
+@code {
+
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthTask { get; set; } = null!;
+
+    private List<Batch> batches = new();
+    private bool loadingData;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loadingData = true;
+
+        var userTask = await AuthTask;
+        var loggedInUser = userTask.User;
+        var loggedInUserId = loggedInUser.GetUserId();
+
+        if (loggedInUser.IsInAnyRole(Role.Admin, Role.SuperAdmin))
+        {
+            // Admins and SuperAdmins can see all batches
+            batches = await Db.Batches
+                .Include(x => x.Students)
+                .OrderByDescending(x => x.Created)
+                .ToListAsync();
+        }
+        else
+        {
+            // Instructors can only see batches they are associated with
+            batches = await Db.Batches
+                .Include(x => x.Students)
+                .Where(x => x.Training.Instructor.ApplicationUserId == loggedInUserId)
+                .OrderByDescending(x => x.Created)
+                .ToListAsync();
+        }
+        
+        loadingData = false;
+    }
+}

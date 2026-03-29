@@ -2,108 +2,114 @@
 
 @inject ApplicationDbContext db
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home - ZyloBrains</PageTitle>
 
-@if (homeItems is null || homeItems.Count == 0)
+@if (homeAdminNavigations is null || homeConsultantNavigations.Count == 0)
 {
-    <MudProgressCircular Indeterminate Color="Color.Tertiary" />
+    <Loading />
 }
 else
 {
-    var homeTitle = homeItems.FirstOrDefault(x => x.Title == nameof(WidgetFilter.HomeTitle));
-    if (homeTitle is not null)
-    {
-        <MudText Typo="Typo.h3" Align="Align.Center">
-            @homeTitle.Description
-            <AuthorizeView Roles="@Role.Admins">
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Class="ml-auto" Href="@("/edit-widget/" + homeTitle.Id)" />
-            </AuthorizeView>
-        </MudText>
-        @((MarkupString)homeTitle.HtmlContent)
-    }
+    <MudGrid Class="mt-0 px-4" Spacing="10">
 
-    <MudText Align="Align.Center" Typo="Typo.h3" Class="my-16">Our Products</MudText>
-    <MudGrid Justify="Justify.SpaceEvenly" Class="pb-16">
-        @foreach (var item in homeItems.Where(x => x.Title == WidgetFilter.Product))
-        {
-            <MudItem xs="12" sm="6" md="6" lg="4">
-                <MudPaper Class="p-3" Style="text-align:center" Elevation="10">
-                    <AuthorizeView Roles="@Role.Admins">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Class="ml-auto" Href="@("/edit-widget/" + item.Id)" />
-                    </AuthorizeView>
-                    <MudText Typo="Typo.h4" Class="my-10">@item.Description</MudText>
-                    @((MarkupString)item.HtmlContent)
-                </MudPaper>
-            </MudItem>
-        }
-    </MudGrid>
+        <AuthorizeView Roles="@Role.Admins">
+            @foreach (var item in homeAdminNavigations)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
+                    <a href="@item.Link" style="text-decoration:none;">
+                        <MudPaper Class="nav-card admin py-4" Elevation="10">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
+                                <MudIcon Style="height:64px;width:64px;" Color="Color.Error" Icon="@item.Icon" />
+                                <MudText Typo="Typo.body1">@item.Description</MudText>                                
+                            </MudStack>
+                        </MudPaper>
+                    </a>
+                </MudItem>
+            }
+        </AuthorizeView>
 
-    <MudText Align="Align.Center" Typo="Typo.h3" Class="my-16">Tech Stacks and Tools</MudText>
-    <MudGrid Justify="Justify.SpaceEvenly" Class="pb-16">
-        @foreach (var item in homeItems.Where(x => x.Title == nameof(WidgetFilter.CarouselItem)))
-        {
-            <MudItem xs="12" sm="6" md="6" lg="4">
-                <MudPaper Class="p-3" Style="text-align:center" Elevation="10">
-                    <AuthorizeView Roles="@Role.Admins">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Class="ml-auto" Href="@("/edit-widget/" + item.Id)" />
-                    </AuthorizeView>
-                    <MudText Typo="Typo.h4" Class="my-10">@item.Description</MudText>
-                    @((MarkupString)item.HtmlContent)
-                </MudPaper>
-            </MudItem>
-        }
-    </MudGrid>
+        <AuthorizeView Roles="@Role.Instructor">
+            @foreach (var item in homeConsultantNavigations)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
+                    <a href="@item.Link" style="text-decoration:none;">
+                        <MudPaper Class="nav-card consultant py-4" Elevation="10">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
+                                <MudIcon Style="height:64px;width:64px;" Color="Color.Warning" Icon="@item.Icon" />
+                                <MudText Typo="Typo.body1">@item.Description</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </a>
+                </MudItem>
+            }
+        </AuthorizeView>
 
-    <MudText Align="Align.Center" Typo="Typo.h3" Class="my-16">Our Ambitions</MudText>
-    <MudGrid Justify="Justify.SpaceEvenly">
-        @foreach (var item in homeItems.Where(x => x.Title == WidgetFilter.Ambition))
-        {
-            <MudItem xs="12" sm="6" md="6" lg="4">
-                <MudPaper Class="p-3" Style="text-align:center" Elevation="10">
-                    <AuthorizeView Roles="@Role.Admins">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Class="ml-auto" Href="@("/edit-widget/" + item.Id)" />
-                    </AuthorizeView>
-                    <MudText Typo="Typo.h4" Class="my-10">@item.Description</MudText>
-                    @((MarkupString)item.HtmlContent)
-                </MudPaper>
-            </MudItem>
-        }
+        <AuthorizeView Roles="@Role.TraineesOrAttendeesOrEmployees">
+            @foreach (var item in homeUserNavigations)
+            {
+                <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
+                    <a href="@item.Link" style="text-decoration:none;">
+                        <MudPaper Class="nav-card py-4" Elevation="10">
+                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
+                                <MudIcon Style="height:64px;width:64px;" Color="Color.Secondary" Icon="@item.Icon" />
+                                <MudText Typo="Typo.body1">@item.Description</MudText>
+                            </MudStack>
+                        </MudPaper>
+                    </a>
+                </MudItem>
+            }
+
+        </AuthorizeView>
+
     </MudGrid>
 }
 
-@* <AuthorizeView Roles="@($"{Role.Admin},{Role.SuperAdmin}")">
-    <MudText Typo="Typo.h6" Class="mt-6">Home Page Image References (Shown just to admins)</MudText>
-    @foreach (var image in images)
-    {
-        <MudImage Src="@image" Alt="@image" Class="rounded-lg" Height="100" /> @image
+<style>
+    .nav-card {
+        transition: transform 0.3s ease-in-out;
     }
-</AuthorizeView>
- *@
+
+        .nav-card.admin {
+            box-shadow: 0px 5px 15px rgba(244, 67, 54, 0.5) !important;
+        }
+
+        .nav-card.consultant {
+            box-shadow: 0px 5px 15px rgba(255, 152, 0, 0.5) !important;
+        }
+
+        .nav-card:not(.admin):not(.consultant) {
+            box-shadow: 0px 5px 15px rgba(156, 39, 176, 0.5) !important;
+        }
+
+        .nav-card:hover {
+            transform: translateY(-8px);
+        }
+</style>
 
 @code {
 
-    private List<Widget> homeItems = [];
-    
-    // private string[] images = [];
+    private record NavigationItem(string Text, string Link, string Icon, string Description);
 
-    // [CascadingParameter]
-    // private Task<AuthenticationState> AuthTask { get; set; } = null!;
-
-    protected override async Task OnInitializedAsync()
-    {
-        homeItems = await db.Widgets.Where(x => x.Title == nameof(WidgetFilter.CarouselItem)
-        || x.Title == WidgetFilter.Product
-        || x.Title == WidgetFilter.Ambition
-        || x.Title == nameof(WidgetFilter.HomeTitle)).ToListAsync();
-
-        // Get all home images for reference
-        // var state = await AuthTask;
-        // if (state.User.IsInRole(Role.Admin) || state.User.IsInRole(Role.SuperAdmin))
-        // {
-        //     var relativeAssetPath = $"homeitems";
-        //     var currentAppPath = Environment.CurrentDirectory;
-        //     var path = Path.Combine(currentAppPath, "wwwroot", relativeAssetPath);
-        //     images = Directory.GetFiles(path).Select(x => relativeAssetPath + "/" + Path.GetFileName(x)).ToArray();
-        // }
-    }
+    private List<NavigationItem> homeAdminNavigations = [
+        new ("Admin Dashboard", "/dashboard/admin", Icons.Material.Sharp.Dashboard, "Multiple insights for admin users"),
+        new ("New Joinees", "/applicants", Icons.Material.Sharp.PeopleOutline, "All new application requests"),
+        new ("Courses", "/trainingplans", Icons.Material.Sharp.MenuBook, "All training plans for workshops etc."),
+        new ("Reviews", "/review/forms", Icons.Material.Sharp.Reviews, "Ratings for consultants"),
+        new ("Consultants", "/consultants", Icons.Material.Sharp.CoPresent, "Our consultants pool"),
+        new ("Timesheets", "/timesheets", Icons.Material.Sharp.Checklist, "Track timesheet submissions")
+    ];
+    private List<NavigationItem> homeConsultantNavigations = [
+        new ("Consultant Dashboard", "/dashboard/consultant", Icons.Material.Sharp.Dashboard, "Dashboard and insights for consultants"),
+        new ("Class Schedules", "/schedules", Icons.Material.Sharp.Schedule, "View and manage your class schedules"),
+        new ("Batch Attedance", "/attendance/batches", Icons.Material.Sharp.Check, "See attendance for your batches")
+    ];
+    private List<NavigationItem> homeUserNavigations = [
+        new ("My Timesheet", "/my/timesheet", Icons.Material.Sharp.AddTask, "Track your working hours"),
+        new ("My Classes", "/my/classes", Icons.Material.Sharp.Class, "View classes you are enrolled in"),
+        new ("My Assignments", "/my/assignments", Icons.Material.Sharp.Assignment, "View your pending assignments"),
+        new ("My Accomplishments", "/accomplishments", Icons.Material.Sharp.CardMembership, "Track your achievements and certificates")
+    ];
 }
