@@ -3,5 +3,5 @@
     <File Path=".github/workflows/master_appsoft1.yml" />
     <File Path="readme.md" />
   </Folder>
-  <Project Path="AppTechnoSoft.Interns/ZyloApp.Web.csproj" />
+  <Project Path="ZyloApp.Web/ZyloApp.Web.csproj" />
 </Solution>

@@ -24,6 +24,13 @@ builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
+// --- Key Vault client (shared for both options)
+var keyVaultUri = builder.Configuration["KeyVault:VaultUri"];
+if (string.IsNullOrEmpty(keyVaultUri))
+    throw new InvalidOperationException("KeyVault:VaultUri is not configured.");
+
+builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultScheme = IdentityConstants.ApplicationScheme;
@@ -31,8 +38,8 @@ builder.Services.AddAuthentication(options =>
     })
     .AddGoogle(googleoptions =>
     {
-        googleoptions.ClientId = builder.Configuration["authentication:google:clientid"] ?? string.Empty;
-        googleoptions.ClientSecret = builder.Configuration["authentication:google:clientsecret"] ?? string.Empty;
+        googleoptions.ClientId = builder.Configuration["GoogleClientId"] ?? string.Empty;
+        googleoptions.ClientSecret = builder.Configuration["GoogleClientSecret"] ?? string.Empty;
     })  
     .AddIdentityCookies();
 
@@ -48,14 +55,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddMudServices();
-builder.Services.AddBrowserTimeProvider();
-
-// --- Key Vault client (shared for both options)
-var keyVaultUri = builder.Configuration["KeyVault:VaultUri"];
-if (string.IsNullOrEmpty(keyVaultUri))
-    throw new InvalidOperationException("KeyVault:VaultUri is not configured.");
-
-builder.Configuration.AddAzureKeyVault(new Uri(keyVaultUri), new DefaultAzureCredential());
+//builder.Services.AddBrowserTimeProvider();
 
 // read connection string secret value
 var blobConnectionString = builder.Configuration["BlobStorageConnectionString"];
