@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Data.Models.Gatherings;
+﻿namespace ZyloApp.Web.Data.Models.Gatherings;
 public enum GatheringType
 {
     Workshop = 1,

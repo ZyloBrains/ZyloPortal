@@ -1,6 +1,6 @@
-﻿using AppTechnoSoft.Interns.Data.Models.Gatherings;
+﻿using ZyloApp.Web.Data.Models.Gatherings;
 
-namespace AppTechnoSoft.Interns.Data.Models;
+namespace ZyloApp.Web.Data.Models;
 public class Certificate
 {
     public Certificate() => Id = Guid.NewGuid();

@@ -1,7 +1,7 @@
-﻿using AppTechnoSoft.Interns.Data.Enums;
-using AppTechnoSoft.Interns.Data.Models.Consultant;
+﻿using ZyloApp.Web.Data.Enums;
+using ZyloApp.Web.Data.Models.Consultant;
 
-namespace AppTechnoSoft.Interns.Data.Models;
+namespace ZyloApp.Web.Data.Models;
 public class StudentAssignment  //join table with payload
 {
     public int Id { get; set; }

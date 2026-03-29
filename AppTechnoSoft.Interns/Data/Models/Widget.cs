@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Data.Models;
+﻿namespace ZyloApp.Web.Data.Models;
 public class Widget : BaseEntity
 {
     public int Id { get; set; }

@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace AppTechnoSoft.Interns.Data.Migrations
+namespace ZyloApp.Web.Data.Migrations
 {
     /// <inheritdoc />
     public partial class AddSlugToSection : Migration

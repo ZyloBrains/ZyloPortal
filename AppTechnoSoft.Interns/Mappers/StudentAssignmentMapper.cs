@@ -1,5 +1,5 @@
 ﻿using AppTechnoSoft.Core.ViewModels;
-using AppTechnoSoft.Interns.Data.Models;
+using ZyloApp.Web.Data.Models;
 using Humanizer;
 
 namespace AppTechnoSoft.Core.Mappers;

@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Data.Models;
+﻿namespace ZyloApp.Web.Data.Models;
 public class Assignment: BaseEntity
 {
     public int Id { get; set; }

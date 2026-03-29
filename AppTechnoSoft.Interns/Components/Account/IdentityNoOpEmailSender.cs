@@ -1,8 +1,8 @@
-using AppTechnoSoft.Interns.Data.Models;
+using ZyloApp.Web.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 
-namespace AppTechnoSoft.Interns.Components.Account
+namespace ZyloApp.Web.Components.Account
 {
     // Remove the "else if (EmailSender is IdentityNoOpEmailSender)" block from RegisterConfirmation.razor after updating with a real implementation.
     internal sealed class IdentityNoOpEmailSender : IEmailSender<ApplicationUser>

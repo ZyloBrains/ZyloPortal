@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Data.Models;
+﻿namespace ZyloApp.Web.Data.Models;
 public class BaseEntity
 {    
     public DateTime? Created { get; set; }

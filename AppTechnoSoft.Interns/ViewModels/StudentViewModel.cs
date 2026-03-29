@@ -1,4 +1,4 @@
-﻿using AppTechnoSoft.Interns.Data.Enums;
+﻿using ZyloApp.Web.Data.Enums;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace AppTechnoSoft.Core.ViewModels;

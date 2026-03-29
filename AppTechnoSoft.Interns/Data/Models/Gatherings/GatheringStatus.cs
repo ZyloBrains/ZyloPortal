@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Data.Models.Gatherings;
+﻿namespace ZyloApp.Web.Data.Models.Gatherings;
 public enum GatheringStatus
 {
     Requested = 1,

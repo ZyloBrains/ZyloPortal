@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Data.Models.Sites;
+﻿namespace ZyloApp.Web.Data.Models.Sites;
 public class SectionItem : BaseEntity
 {
     public int Id { get; set; }

@@ -1,8 +1,8 @@
-﻿using AppTechnoSoft.Interns.Data.Enums;
+﻿using ZyloApp.Web.Data.Enums;
 using Microsoft.AspNetCore.Components.Forms;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AppTechnoSoft.Interns.Data.Models.Consultant;
+namespace ZyloApp.Web.Data.Models.Consultant;
 public class Instructor
 {
     public int Id { get; set; }

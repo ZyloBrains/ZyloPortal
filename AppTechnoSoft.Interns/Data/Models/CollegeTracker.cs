@@ -1,7 +1,7 @@
 ﻿
-using AppTechnoSoft.Interns.Data.Enums;
+using ZyloApp.Web.Data.Enums;
 
-namespace AppTechnoSoft.Interns.Data.Models;
+namespace ZyloApp.Web.Data.Models;
 public class CollegeTracker : BaseEntity
 {
     public int Id { get; set; }

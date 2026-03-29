@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Helpers;
+﻿namespace ZyloApp.Web.Helpers;
 
 internal sealed class BrowserTimeProvider : TimeProvider
 {

@@ -1,5 +1,5 @@
-﻿using AppTechnoSoft.Interns.Data.Enums;
-using AppTechnoSoft.Interns.Data.Models;
+﻿using ZyloApp.Web.Data.Enums;
+using ZyloApp.Web.Data.Models;
 
 namespace AppTechnoSoft.Core.ViewModels;
 public record ProfessionalViewModel(string Id, 

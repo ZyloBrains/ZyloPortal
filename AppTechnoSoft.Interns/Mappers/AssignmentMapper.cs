@@ -1,6 +1,6 @@
 ﻿using AppTechnoSoft.Core.ViewModels;
-using AppTechnoSoft.Interns.Data.Models;
-using AppTechnoSoft.Interns.Extensions;
+using ZyloApp.Web.Data.Models;
+using ZyloApp.Web.Extensions;
 using Humanizer;
 
 namespace AppTechnoSoft.Core.Mappers;

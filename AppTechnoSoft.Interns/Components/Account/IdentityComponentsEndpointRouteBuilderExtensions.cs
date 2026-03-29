@@ -1,6 +1,6 @@
-using AppTechnoSoft.Interns.Components.Account.Pages;
-using AppTechnoSoft.Interns.Components.Account.Pages.Manage;
-using AppTechnoSoft.Interns.Data.Models;
+using ZyloApp.Web.Components.Account.Pages;
+using ZyloApp.Web.Components.Account.Pages.Manage;
+using ZyloApp.Web.Data.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;

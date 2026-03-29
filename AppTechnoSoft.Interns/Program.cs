@@ -1,9 +1,9 @@
-using AppTechnoSoft.Interns.Components;
-using AppTechnoSoft.Interns.Components.Account;
-using AppTechnoSoft.Interns.Data;
-using AppTechnoSoft.Interns.Data.Models;
-using AppTechnoSoft.Interns.Extensions;
-using AppTechnoSoft.Interns.Services;
+using ZyloApp.Web.Components;
+using ZyloApp.Web.Components.Account;
+using ZyloApp.Web.Data;
+using ZyloApp.Web.Data.Models;
+using ZyloApp.Web.Extensions;
+using ZyloApp.Web.Services;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Storage.Blobs;

@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Data.Constants;
+﻿namespace ZyloApp.Web.Data.Constants;
 public class WidgetFilter
 {
     public const string Module = "Course Module";

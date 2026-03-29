@@ -1,6 +1,6 @@
-﻿using AppTechnoSoft.Interns.Helpers;
+﻿using ZyloApp.Web.Helpers;
 
-namespace AppTechnoSoft.Interns.Extensions;
+namespace ZyloApp.Web.Extensions;
 
 public static class ServiceCollectionExtensions
 {

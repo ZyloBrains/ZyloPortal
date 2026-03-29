@@ -1,4 +1,4 @@
-﻿using AppTechnoSoft.Interns.Data.Models;
+﻿using ZyloApp.Web.Data.Models;
 using AppTechnoSoft.Core.ViewModels;
 using Humanizer;
 

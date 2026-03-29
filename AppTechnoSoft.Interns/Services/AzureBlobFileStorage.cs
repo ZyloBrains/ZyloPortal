@@ -3,7 +3,7 @@ using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Http;
 
-namespace AppTechnoSoft.Interns.Services;
+namespace ZyloApp.Web.Services;
 public class AzureBlobFileStorage : IFileStorageService
 {
     private readonly BlobServiceClient _blobServiceClient;

@@ -1,9 +1,9 @@
-﻿using AppTechnoSoft.Interns.Extensions;
-using AppTechnoSoft.Interns.Helpers;
+﻿using ZyloApp.Web.Extensions;
+using ZyloApp.Web.Helpers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 
-namespace AppTechnoSoft.Interns.Components.TimeZone;
+namespace ZyloApp.Web.Components.TimeZone;
 
 public sealed class LocalTime : ComponentBase, IDisposable
 {

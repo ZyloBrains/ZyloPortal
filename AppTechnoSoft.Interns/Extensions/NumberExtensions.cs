@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using System.Numerics;
 
-namespace AppTechnoSoft.Interns.Extensions;
+namespace ZyloApp.Web.Extensions;
 public static class NumberExtensions
 {    
     public static string AsCurrency<T>(this T value) where T : INumber<T> =>

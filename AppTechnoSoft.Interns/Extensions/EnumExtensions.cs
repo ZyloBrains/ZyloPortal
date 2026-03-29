@@ -1,6 +1,6 @@
-﻿using AppTechnoSoft.Interns.Data.Enums;
+﻿using ZyloApp.Web.Data.Enums;
 
-namespace AppTechnoSoft.Interns.Extensions;
+namespace ZyloApp.Web.Extensions;
 public static class EnumExtensions
 {
     public static string GetGeneralProgText(this GeneralProgrammingExperience experience) => experience switch

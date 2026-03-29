@@ -12,19 +12,19 @@ EXPOSE 8081
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["AppTechnoSoft.Interns/AppTechnoSoft.Interns.csproj", "AppTechnoSoft.Interns/"]
-RUN dotnet restore "./AppTechnoSoft.Interns/AppTechnoSoft.Interns.csproj"
+COPY ["ZyloApp.Web/ZyloApp.Web.csproj", "ZyloApp.Web/"]
+RUN dotnet restore "./ZyloApp.Web/ZyloApp.Web.csproj"
 COPY . .
-WORKDIR "/src/AppTechnoSoft.Interns"
-RUN dotnet build "./AppTechnoSoft.Interns.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/ZyloApp.Web"
+RUN dotnet build "./ZyloApp.Web.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./AppTechnoSoft.Interns.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./ZyloApp.Web.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "AppTechnoSoft.Interns.dll"]
+ENTRYPOINT ["dotnet", "ZyloApp.Web.dll"]

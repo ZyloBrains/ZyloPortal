@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Extensions;
+﻿namespace ZyloApp.Web.Extensions;
 
 public static class TimeProviderExtensions
 {

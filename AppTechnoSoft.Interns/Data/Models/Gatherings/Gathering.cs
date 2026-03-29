@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Data.Models.Gatherings;
+﻿namespace ZyloApp.Web.Data.Models.Gatherings;
 public class Gathering : BaseEntity
 {
     public Guid Id { get; set; }

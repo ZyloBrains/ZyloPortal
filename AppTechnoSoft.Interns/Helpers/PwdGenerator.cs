@@ -1,6 +1,6 @@
 ﻿using PasswordGenerator;
 
-namespace AppTechnoSoft.Interns.Helpers;
+namespace ZyloApp.Web.Helpers;
 public static class PwdGenerator
 {
     public static string NewPassword(int length)

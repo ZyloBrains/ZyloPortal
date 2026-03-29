@@ -1,13 +1,13 @@
-using AppTechnoSoft.Interns.Data.Constants;
-using AppTechnoSoft.Interns.Data.Models;
-using AppTechnoSoft.Interns.Data.Models.Consultant;
-using AppTechnoSoft.Interns.Data.Models.Gatherings;
-using AppTechnoSoft.Interns.Data.Models.Sites;
+using ZyloApp.Web.Data.Constants;
+using ZyloApp.Web.Data.Models;
+using ZyloApp.Web.Data.Models.Consultant;
+using ZyloApp.Web.Data.Models.Gatherings;
+using ZyloApp.Web.Data.Models.Sites;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace AppTechnoSoft.Interns.Data;
+namespace ZyloApp.Web.Data;
 
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
     : IdentityDbContext<ApplicationUser>(options)

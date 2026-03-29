@@ -1,6 +1,6 @@
-﻿using AppTechnoSoft.Interns.Data.Models.Consultant;
+﻿using ZyloApp.Web.Data.Models.Consultant;
 
-namespace AppTechnoSoft.Interns.Data.Models;
+namespace ZyloApp.Web.Data.Models;
 
 public class ReviewForm : BaseEntity
 {

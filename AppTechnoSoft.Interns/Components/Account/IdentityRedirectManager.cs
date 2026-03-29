@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using System.Diagnostics.CodeAnalysis;
 
-namespace AppTechnoSoft.Interns.Components.Account
+namespace ZyloApp.Web.Components.Account
 {
     internal sealed class IdentityRedirectManager(NavigationManager navigationManager)
     {

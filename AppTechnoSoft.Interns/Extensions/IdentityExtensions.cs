@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using System.Security.Principal;
 
-namespace AppTechnoSoft.Interns.Extensions;
+namespace ZyloApp.Web.Extensions;
 public static class IdentityExtensions
 {
     public static string GetUserId(this ClaimsPrincipal? principal) =>

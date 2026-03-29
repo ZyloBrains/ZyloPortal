@@ -1,7 +1,7 @@
-using AppTechnoSoft.Interns.Data.Models;
+using ZyloApp.Web.Data.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace AppTechnoSoft.Interns.Components.Account
+namespace ZyloApp.Web.Components.Account
 {
     internal sealed class IdentityUserAccessor(UserManager<ApplicationUser> userManager, IdentityRedirectManager redirectManager)
     {

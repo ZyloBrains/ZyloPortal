@@ -1,6 +1,6 @@
-﻿using AppTechnoSoft.Interns.Extensions;
+﻿using ZyloApp.Web.Extensions;
 
-namespace AppTechnoSoft.Interns.Data.Models;
+namespace ZyloApp.Web.Data.Models;
 public class Attendance
 {
     public int Id { get; set; }

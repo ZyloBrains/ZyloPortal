@@ -1,8 +1,8 @@
-﻿using AppTechnoSoft.Interns.Data.Enums;
+﻿using ZyloApp.Web.Data.Enums;
 using Microsoft.AspNetCore.Components.Forms;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AppTechnoSoft.Interns.Data.Models;
+namespace ZyloApp.Web.Data.Models;
 public class Student : BaseEntity
 {
     public Student()

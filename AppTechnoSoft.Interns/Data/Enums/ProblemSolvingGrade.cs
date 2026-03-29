@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Data.Enums;
+﻿namespace ZyloApp.Web.Data.Enums;
 public enum ProblemSolvingGrade
 {
     PreBasicSolver = 1,     //Lack basic problem solving skills, need more consultation and time

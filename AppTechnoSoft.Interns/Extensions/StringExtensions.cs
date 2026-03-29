@@ -3,7 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Net;
 
-namespace AppTechnoSoft.Interns.Extensions;
+namespace ZyloApp.Web.Extensions;
 
 public static class StringExtensions
 {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components.Forms;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace AppTechnoSoft.Interns.Data.Models.Gatherings;
+namespace ZyloApp.Web.Data.Models.Gatherings;
 public class Attendee
 {
     public Attendee() => Id = Guid.NewGuid();

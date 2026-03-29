@@ -1,6 +1,6 @@
-﻿using AppTechnoSoft.Interns.Data.Models.Consultant;
+﻿using ZyloApp.Web.Data.Models.Consultant;
 
-namespace AppTechnoSoft.Interns.Data.Models.Gatherings;
+namespace ZyloApp.Web.Data.Models.Gatherings;
 public class GatheringAttendees
 {
     public int Id { get; set; }

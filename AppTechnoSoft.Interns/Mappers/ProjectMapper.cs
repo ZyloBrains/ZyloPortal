@@ -1,5 +1,5 @@
 ﻿using AppTechnoSoft.Core.ViewModels;
-using AppTechnoSoft.Interns.Data.Models;
+using ZyloApp.Web.Data.Models;
 
 namespace AppTechnoSoft.Core.Mappers;
 public static class ProjectMapper

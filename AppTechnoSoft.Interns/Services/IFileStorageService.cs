@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components.Forms;
 
-namespace AppTechnoSoft.Interns.Services;
+namespace ZyloApp.Web.Services;
 public interface IFileStorageService
 {
     /// <summary>

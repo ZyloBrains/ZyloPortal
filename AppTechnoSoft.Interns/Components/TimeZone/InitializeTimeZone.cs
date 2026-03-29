@@ -1,8 +1,8 @@
-﻿using AppTechnoSoft.Interns.Helpers;
+﻿using ZyloApp.Web.Helpers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
-namespace AppTechnoSoft.Interns.Components.TimeZone;
+namespace ZyloApp.Web.Components.TimeZone;
 
 public sealed class InitializeTimeZone : ComponentBase
 {

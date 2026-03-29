@@ -1,4 +1,4 @@
-﻿namespace AppTechnoSoft.Interns.Data.Enums;
+﻿namespace ZyloApp.Web.Data.Enums;
 public enum AssignmentStatus
 {
     Assigned = 1,

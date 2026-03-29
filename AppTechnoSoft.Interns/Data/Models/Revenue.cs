@@ -1,7 +1,7 @@
-﻿using AppTechnoSoft.Interns.Data.Enums;
-using AppTechnoSoft.Interns.Extensions;
+﻿using ZyloApp.Web.Data.Enums;
+using ZyloApp.Web.Extensions;
 
-namespace AppTechnoSoft.Interns.Data.Models;
+namespace ZyloApp.Web.Data.Models;
 public class Revenue : BaseEntity
 {
     public int Id { get; set; }

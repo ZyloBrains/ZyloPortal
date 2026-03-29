@@ -1,6 +1,6 @@
-﻿using AppTechnoSoft.Interns.Data.Enums;
+﻿using ZyloApp.Web.Data.Enums;
 
-namespace AppTechnoSoft.Interns.Data.Models.Consultant;
+namespace ZyloApp.Web.Data.Models.Consultant;
 public class ConsultantPayable
 {
     public int Id { get; set; }

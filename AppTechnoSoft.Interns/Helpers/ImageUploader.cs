@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components.Forms;
 
-namespace AppTechnoSoft.Interns.Helpers;
+namespace ZyloApp.Web.Helpers;
 public class ImageUploader
 {
     public static async Task<(bool uploadSuccess, string Message)> Upload(IBrowserFile? file)
