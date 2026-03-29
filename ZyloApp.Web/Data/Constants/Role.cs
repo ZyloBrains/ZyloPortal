@@ -9,6 +9,7 @@ public class Role
     public const string Attendee = nameof(Attendee);
     public const string Trainees = $"{Trainee},{Employee}";
     public const string TraineesOrAttendees = $"{Trainee},{Attendee}";
+    public const string TraineesOrAttendeesOrEmployees = $"{Trainee},{Attendee}, {Employee}";
     public const string Admins = $"{Admin},{SuperAdmin}";
     public const string AdminsOrInstructor = $"{Admins},{Instructor}";
     public const string AdminsOrInstructorOrTrainees = $"{AdminsOrInstructor},{Trainee}";

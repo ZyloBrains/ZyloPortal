@@ -11,6 +11,10 @@
 {
     <Loading />
 }
+else if (batches.Count == 0)
+{
+    <ApplicationAlert Text="No batches found" />
+}
 else
 {
     <MudGrid Class="pa-3">
