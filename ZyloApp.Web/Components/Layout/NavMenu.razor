@@ -1,14 +1,10 @@
-﻿@inject IDbContextFactory<ApplicationDbContext> dbFacotry
-
-<MudPaper Width="230px" Class="d-inline-flex py-3 mb-3" Elevation="0">
+﻿<MudPaper Width="230px" Class="d-inline-flex py-3 mb-3" Elevation="0">
     <MudNavMenu Class="mud-width-full">
         <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home" IconColor="Color.Success">Home</MudNavLink>
         <MudNavLink Href="/enroll" Icon="@Icons.Material.Filled.Person3" IconColor="Color.Success">Enroll</MudNavLink>
         <MudNavLink Href="/contact" Icon="@Icons.Material.Sharp.Contacts" IconColor="Color.Success">Contact</MudNavLink>
 
         <AuthorizeView Context="moduleGroup" Roles="@Role.AdminsOrInstructor">
-            <MudNavLink Href="/timeline" Icon="@Icons.Material.Filled.Timeline" IconColor="Color.Success">Timeline</MudNavLink>
-            <MudNavLink Href="/prospectus" Icon="@Icons.Material.Sharp.Article" IconColor="Color.Success">Prospectus</MudNavLink>
             <MudNavGroup Title="Our Team" Icon="@Icons.Material.Sharp.Groups3" IconColor="Color.Success">
                 <MudNavLink Href="/coreteam" Icon="@Icons.Material.Sharp.PeopleOutline" IconColor="Color.Success">Core Team</MudNavLink>
                 <MudNavLink Href="/consultants" Icon="@Icons.Material.Sharp.AccountBox" IconColor="Color.Success">Consultants</MudNavLink>
@@ -33,35 +29,19 @@
         </AuthorizeView>
 
         <AuthorizeView Roles="@Role.Admins">
-            <MudNavGroup Title="Admin" Icon="@Icons.Material.Filled.VerifiedUser" IconColor="Color.Error">
-                <MudNavLink Href="/dashboard/admin" Icon="@Icons.Material.Sharp.Dashboard" IconColor="Color.Error">Dashboard</MudNavLink>
-                <MudNavLink Href="/applicants" Icon="@Icons.Material.Filled.Groups3" IconColor="Color.Error">Applicants</MudNavLink>
-                <MudNavLink Href="/batches" Icon="@Icons.Material.Sharp.BatchPrediction" IconColor="Color.Error">Batches</MudNavLink>
-                <MudNavLink Href="/trainingplans" Icon="@Icons.Material.Sharp.RequestQuote" IconColor="Color.Error">Training Plans</MudNavLink>
-                <MudNavLink Href="/timesheets" Icon="@Icons.Material.Filled.Checklist" IconColor="Color.Error">Timesheets</MudNavLink>
-            </MudNavGroup>
-        </AuthorizeView>
-
-        <AuthorizeView Roles="@Role.Admins">
-            <MudNavGroup Title="Event Gathering" Icon="@Icons.Material.Filled.Event" IconColor="Color.Warning">
-                <MudNavLink Match="NavLinkMatch.All" Href="/gatherings" Icon="@Icons.Material.Sharp.EventSeat" IconColor="Color.Warning">List</MudNavLink>
-                <MudNavLink Href="/gathering/requests" Icon="@Icons.Material.Sharp.RequestQuote" IconColor="Color.Warning">Requests</MudNavLink>
-                <MudNavLink Href="/gatherings/create" Icon="@Icons.Material.Sharp.GroupAdd" IconColor="Color.Warning">New</MudNavLink>
-                <MudNavLink Href="/gatherings/calendar" Icon="@Icons.Material.Sharp.EventAvailable" IconColor="Color.Warning">Set Calendar</MudNavLink>
-            </MudNavGroup>
+            <MudDivider Class="my-2" />
+            <MudNavLink Href="/dashboard/admin" Icon="@Icons.Material.Sharp.Dashboard" IconColor="Color.Error">Dashboard</MudNavLink>
+            <MudNavLink Href="/applicants" Icon="@Icons.Material.Filled.Groups3" IconColor="Color.Error">Applicants</MudNavLink>
+            <MudNavLink Href="/batches" Icon="@Icons.Material.Sharp.BatchPrediction" IconColor="Color.Error">Batches</MudNavLink>
+            <MudNavLink Href="/trainingplans" Icon="@Icons.Material.Sharp.RequestQuote" IconColor="Color.Error">Training Plans</MudNavLink>
+            <MudNavLink Href="/timesheets" Icon="@Icons.Material.Filled.Checklist" IconColor="Color.Error">Timesheets</MudNavLink>
         </AuthorizeView>
 
         <AuthorizeView Roles="@Role.AdminsOrInstructor">
-            <MudNavGroup Title="Consultant" Icon="@Icons.Material.Sharp.PersonalVideo" IconColor="Color.Success">
-                <MudNavLink Href="/dashboard/consultant" Icon="@Icons.Material.Sharp.Dashboard" IconColor="Color.Success">Dashboard</MudNavLink>
-                <MudNavLink Href="/schedules" Icon="@Icons.Material.Sharp.Schedule" IconColor="Color.Success">Schedules</MudNavLink>
-                <MudNavGroup Title="Attendance" Icon="@Icons.Material.Sharp.Person2" IconColor="Color.Success">
-                    @foreach (var batch in batches)
-                    {
-                        <MudNavLink Href="@($"/attendance/batches/{batch.Id}")" Icon="@Icons.Material.Sharp.BatchPrediction" IconColor="Color.Success">@batch.Name</MudNavLink>
-                    }
-                </MudNavGroup>
-            </MudNavGroup>
+            <MudDivider Class="my-2" />
+            <MudNavLink Href="/dashboard/consultant" Icon="@Icons.Material.Sharp.Dashboard" IconColor="Color.Success">Consultant Dashboard</MudNavLink>
+            <MudNavLink Href="/schedules" Icon="@Icons.Material.Sharp.Schedule" IconColor="Color.Success">Class Schedules</MudNavLink>
+            <MudNavLink Href="/attendance/batches" Icon="@Icons.Material.Sharp.Person2" IconColor="Color.Success">Attendance</MudNavLink>
         </AuthorizeView>
 
         <AuthorizeView Roles="@Role.AdminsOrInstructor">
@@ -109,6 +89,15 @@
         </AuthorizeView>
 
         <AuthorizeView Roles="@Role.Admins">
+            <MudNavGroup Title="Event Gathering" Icon="@Icons.Material.Filled.Event" IconColor="Color.Warning">
+                <MudNavLink Match="NavLinkMatch.All" Href="/gatherings" Icon="@Icons.Material.Sharp.EventSeat" IconColor="Color.Warning">List</MudNavLink>
+                <MudNavLink Href="/gathering/requests" Icon="@Icons.Material.Sharp.RequestQuote" IconColor="Color.Warning">Requests</MudNavLink>
+                <MudNavLink Href="/gatherings/create" Icon="@Icons.Material.Sharp.GroupAdd" IconColor="Color.Warning">New</MudNavLink>
+                <MudNavLink Href="/gatherings/calendar" Icon="@Icons.Material.Sharp.EventAvailable" IconColor="Color.Warning">Set Calendar</MudNavLink>
+            </MudNavGroup>
+        </AuthorizeView>
+
+        <AuthorizeView Roles="@Role.Admins">
             <MudNavGroup Title="Core" Icon="@Icons.Material.Filled.VerifiedUser" IconColor="Color.Info">
                 <MudNavLink Href="/programs" Icon="@Icons.Material.Filled.Book" IconColor="Color.Info">Programs</MudNavLink>
                 <MudNavLink Href="/colleges" Icon="@Icons.Material.Filled.School" IconColor="Color.Info">Colleges</MudNavLink>
@@ -129,13 +118,3 @@
         </AuthorizeView>
     </MudNavMenu>
 </MudPaper>
-
-@code {
-    public IEnumerable<Batch> batches = [];
-
-    protected override async Task OnInitializedAsync()
-    {
-        using var db = dbFacotry.CreateDbContext();
-        batches = await db.Batches.ToListAsync() ?? [];
-    }
-}
