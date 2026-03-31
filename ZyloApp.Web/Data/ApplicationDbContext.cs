@@ -61,6 +61,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         .HasMany(e => e.Tags)
         .WithMany();
 
+        builder.Entity<Training>()
+        .HasMany(e => e.Tags)
+        .WithMany()
+        .UsingEntity("TrainingTags");
+
         builder.Entity<CourseQuote>()
         .HasMany(e => e.Modules)
         .WithMany()
