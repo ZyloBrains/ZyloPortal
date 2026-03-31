@@ -8,7 +8,7 @@
 
 <MudTable Items="@projects" Hover="true" Breakpoint="Breakpoint.Sm" Filter="new Func<ProjectViewModel, bool>(FilterFunc)" Dense RowClassFunc="HighlightRow">
     <ToolBarContent>
-        <MudFab Href="/add-project" StartIcon="@Icons.Material.Filled.Add" title="Add New Project" Size="Size.Small" Color="Color.Tertiary"></MudFab>
+        <MudFab Href="/projects/add" StartIcon="@Icons.Material.Filled.Add" title="Add New Project" Size="Size.Small" Color="Color.Tertiary"></MudFab>
         <MudSpacer />
         <MudTextField @bind-Value="searchString" Placeholder="Search"
                       Adornment="Adornment.Start"
@@ -23,10 +23,20 @@
         <col />
         <col />
         <col />
+        <col />
+        <col />
+        <col />
+        <col />
+        <col />
     </ColGroup>
     <HeaderContent>
         <MudTh>#</MudTh>
         <MudTh>Title</MudTh>
+        <MudTh>Lead</MudTh>
+        <MudTh>Organization</MudTh>
+        <MudTh>Domain</MudTh>
+        <MudTh>Status</MudTh>
+        <MudTh>Budget</MudTh>
         <MudTh>Repository</MudTh>
         <MudTh>Board</MudTh>
         <MudTh></MudTh>
@@ -34,6 +44,11 @@
     <RowTemplate>
         <MudTd DataLabel="#">@(projects.IndexOf(context) + 1)</MudTd>
         <MudTd DataLabel="Title">@context.Title</MudTd>
+        <MudTd DataLabel="Lead">@(context.LeadName ?? "N/A")</MudTd>
+        <MudTd DataLabel="Organization">@(context.OrganizationName ?? "N/A")</MudTd>
+        <MudTd DataLabel="Domain">@context.BusinessDomain</MudTd>
+        <MudTd DataLabel="Status">@context.ProgressStatus</MudTd>
+        <MudTd DataLabel="Budget">$@context.AllocatedBudget.ToString("F2")</MudTd>
         <MudTd DataLabel="RepoUrl">@context.RepoUrl</MudTd>
         <MudTd DataLabel="BoardUrl">@context.BoardUrl</MudTd>
         <MudTd>
@@ -42,7 +57,7 @@
             </MudButton>
         </MudTd>
         <MudTd>
-            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/edit-project/" + context.Id)" />
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/projects/edit/" + context.Id)" />
             <MudIconButton Icon="@Icons.Material.Sharp.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context)" />
             <MudMessageBox @ref="mbox" Title="Warning" CancelText="Cancel">
                 <MessageContent>
@@ -58,7 +73,7 @@
         @if (context.ShowDetails)
         {
             <MudTr>
-                <td colspan="5">
+                <td colspan="10">
                     <MudCard Elevation="5">
                         <MudCardHeader>
                             <CardHeaderContent>
@@ -66,6 +81,20 @@
                             </CardHeaderContent>
                         </MudCardHeader>
                         <MudCardContent>
+                            <MudGrid>
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2"><strong>Organization:</strong> @(context.OrganizationName ?? "N/A")</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Lead:</strong> @(context.LeadName ?? "N/A")</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Status:</strong> @context.ProgressStatus</MudText>
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudText Typo="Typo.body2"><strong>Domain:</strong> @context.BusinessDomain</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Allocated Budget:</strong> $@context.AllocatedBudget.ToString("F2")</MudText>
+                                    <MudText Typo="Typo.body2"><strong>Spent Budget:</strong> $@(context.SpentBudget?.ToString("F2") ?? "N/A")</MudText>
+                                </MudItem>
+                            </MudGrid>
+                            <MudDivider Class="my-4" />
+                            <MudText Typo="Typo.h6" Class="mb-3">Requirements</MudText>
                             @((MarkupString)context.Requirements)
                         </MudCardContent>
                     </MudCard>
@@ -89,7 +118,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        projectEntities = await Db.Projects.ToListAsync();
+        projectEntities = await Db.Projects
+            .Include(x => x.Lead)
+            .Include(x => x.Organization)
+            .ToListAsync();
         projects = projectEntities.ToViewModel();
     }
 
