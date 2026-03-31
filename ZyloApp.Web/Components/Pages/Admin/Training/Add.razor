@@ -9,9 +9,9 @@
 
 <MudContainer>
     <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
-        <MudTextField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.Title" Label="Training Label" Class="mt-4" @bind-Value="model.Title" Variant="Variant.Outlined" />
-        <MudNumericField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.HourglassTop" Label="Duration Hours" Format="N2" Class="mt-4" @bind-Value="model.DurationHours" Variant="Variant.Outlined" />
-        <MudNumericField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.Percent" Label="Discount Percentage" Class="mt-4" @bind-Value="model.DiscountPercentage" Variant="Variant.Outlined" />
+        <MudTextField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.Title" Label="Training Label" Class="mt-4" @bind-Value="model.Title" />
+        <MudNumericField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.HourglassTop" Label="Duration Hours" Format="N2" Class="mt-4" @bind-Value="model.DurationHours" />
+        <MudNumericField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.Percent" Label="Discount Percentage" Class="mt-4" @bind-Value="model.DiscountPercentage" />
 
         <MudAutocomplete T="Instructor"
                          Label="Select Training Consultant"
@@ -20,7 +20,6 @@
                          ToStringFunc="@(e=> e==null ? null : $"{e.Name} ({e.Role})")"
                          ShowProgressIndicator="true"
                          ProgressIndicatorColor="Color.Default"
-                         Variant="Variant.Outlined"
                          Class="mt-4"
                          MaxItems="null" />
 
@@ -31,7 +30,6 @@
                          ToStringFunc="@(e=> e==null ? null : $"{e.Code} - {e.Description} ({e.PricePerUnit.AsCurrency()}/Unit)")"
                          ShowProgressIndicator="true"
                          ProgressIndicatorColor="Color.Default"
-                         Variant="Variant.Outlined"
                          Class="mt-4"
                          MaxItems="null" />
 
@@ -42,7 +40,6 @@
                          ToStringFunc="@(e=> e==null ? null : $"{e.Name} ({e.Details})")"
                          ShowProgressIndicator="true"
                          ProgressIndicatorColor="Color.Default"
-                         Variant="Variant.Outlined"
                          Class="mt-4"
                          MaxItems="null" />
 
@@ -52,7 +49,6 @@
                    Dense
                    @bind-SelectedValues="@moduleAssignmentsSelected"
                    ToStringFunc="x => x.Title"
-                   Variant="Variant.Outlined"
                    Class="mt-4">
             @foreach (var assignment in moduleAssignments)
             {
@@ -66,13 +62,30 @@
                    Dense
                    @bind-SelectedValues="@trainingProjectsSelected"
                    ToStringFunc="x => x.Title"
-                   Variant="Variant.Outlined"
                    Class="mt-4">
             @foreach (var project in trainingProjects)
             {
                 <MudSelectItem Value="@project"/>
             }
         </MudSelect>
+
+        <MudSelect T="Tag"
+                   Label="Tags"
+                   Dense="true"
+                   HelperText="Tags that apply to this training plan"
+                   MultiSelection="true"
+                   @bind-SelectedValues="@tagsSelected"
+                   Class="my-4"
+                   MultiSelectionTextFunc="@(new Func<List<string>, string>(GetMultiSelectionText))">
+            @foreach (var tag in tags)
+            {
+                <MudSelectItem Value="@tag">@tag.Name</MudSelectItem>
+            }
+        </MudSelect>
+
+        <RichTextEditor @bind-Content="@model.Details"
+                        Placeholder="Add Training Details"
+                        ToolbarOptions="ToolbarOptions.BasicToolbarOptions" />
 
         <MudButton ButtonType="ButtonType.Submit"
                    Variant="Variant.Filled"
@@ -100,9 +113,13 @@
     IEnumerable<Project> trainingProjects = [];
     IEnumerable<Project> trainingProjectsSelected = [];
 
+    List<Tag> tags = [];
+    IEnumerable<Tag> tagsSelected = [];
+
     protected override async Task OnInitializedAsync()
     {
-        trainingProjects = await Db.Projects.ToArrayAsync();        
+        trainingProjects = await Db.Projects.ToArrayAsync();   
+        tags = await Db.Tags.ToListAsync();
     }
 
     private async Task OnValidSubmit(EditContext context)
@@ -189,5 +206,10 @@
         }
 
         return forOrganizations.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string GetMultiSelectionText(List<string> selectedValues)
+    {
+        return $"{selectedValues.Count} tag{(selectedValues.Count > 1 ? "s have" : " has")} been selected";
     }
 }

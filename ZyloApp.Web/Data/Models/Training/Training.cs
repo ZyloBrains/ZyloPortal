@@ -6,6 +6,7 @@ public class Training : BaseEntity
 {
     public int Id { get; set; }
     public string Title { get; set; } = "Training for learners";
+    public string? Details { get; set; }
     public float DurationHours { get; set; }
     public float DiscountPercentage { get; set; }
     public string? Hash { get; set; }
@@ -22,4 +23,5 @@ public class Training : BaseEntity
 
     public List<Assignment>? Assignments { get; set; }
     public List<Project>? Projects { get; set; }
+    public List<Tag>? Tags { get; set; }
 }
