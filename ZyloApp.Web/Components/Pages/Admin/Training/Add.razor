@@ -131,6 +131,7 @@
 
         model.Assignments = moduleAssignmentsSelected.ToList();
         model.Projects = trainingProjectsSelected.ToList();
+        model.Tags = tagsSelected.ToList();
 
         Db.Training.Add(model);
         var rowsAffected = await Db.SaveChangesAsync();
