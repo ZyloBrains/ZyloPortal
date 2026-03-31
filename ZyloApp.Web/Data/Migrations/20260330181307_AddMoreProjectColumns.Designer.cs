@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZyloApp.Web.Data;
 
@@ -11,9 +12,11 @@ using ZyloApp.Web.Data;
 namespace ZyloApp.Web.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260330181307_AddMoreProjectColumns")]
+    partial class AddMoreProjectColumns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1429,12 +1432,7 @@ namespace ZyloApp.Web.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("TrainingId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("TrainingId");
 
                     b.ToTable("Tags");
                 });
@@ -1560,9 +1558,6 @@ namespace ZyloApp.Web.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Details")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<float>("DiscountPercentage")
@@ -2058,13 +2053,6 @@ namespace ZyloApp.Web.Data.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("ZyloApp.Web.Data.Models.Tag", b =>
-                {
-                    b.HasOne("ZyloApp.Web.Data.Models.Training", null)
-                        .WithMany("Tags")
-                        .HasForeignKey("TrainingId");
-                });
-
             modelBuilder.Entity("ZyloApp.Web.Data.Models.Team", b =>
                 {
                     b.HasOne("ZyloApp.Web.Data.Models.Batch", "Batch")
@@ -2142,11 +2130,6 @@ namespace ZyloApp.Web.Data.Migrations
             modelBuilder.Entity("ZyloApp.Web.Data.Models.Team", b =>
                 {
                     b.Navigation("Students");
-                });
-
-            modelBuilder.Entity("ZyloApp.Web.Data.Models.Training", b =>
-                {
-                    b.Navigation("Tags");
                 });
 #pragma warning restore 612, 618
         }

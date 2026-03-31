@@ -1,5 +1,5 @@
-﻿@page "/add-project"
-@page "/edit-project/{Id:int}"
+﻿@page "/projects/add"
+@page "/projects/edit/{Id:int}"
 
 @attribute [Authorize(Roles = Role.AdminsOrInstructor)]
 
@@ -12,7 +12,36 @@
 <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
     <MudTextField Label="Title" @bind-Value="model.Title" />
     <MudTextField Label="RepoUrl" Class="mt-3" @bind-Value="model.RepoUrl" />
-    <MudTextField Label="BoardUrl" Class="mt-3 mb-5" @bind-Value="model.BoardUrl" />
+    <MudTextField Label="BoardUrl" Class="mt-3" @bind-Value="model.BoardUrl" />
+    
+    <MudNumericField Label="Budget Allocated" Class="mt-3" @bind-Value="model.AllocatedBudget" />
+    <MudNumericField Label="Spent Budget" Class="mt-3" @bind-Value="model.SpentBudget" />
+    
+    <MudSelect T="ProjectProgressStatus" Label="Progress Status" Class="mt-3" @bind-Value="model.ProgressStatus">
+        @foreach (ProjectProgressStatus status in Enum.GetValues(typeof(ProjectProgressStatus)))
+        {
+            <MudSelectItem Value="@status">@status</MudSelectItem>
+        }
+    </MudSelect>
+    
+    <MudSelect T="ProjectBusinessDomain" Label="Business Domain" Class="mt-3" @bind-Value="model.BusinessDomain">
+        @foreach (ProjectBusinessDomain domain in Enum.GetValues(typeof(ProjectBusinessDomain)))
+        {
+            <MudSelectItem Value="@domain">@domain</MudSelectItem>
+        }
+    </MudSelect>
+    
+    <MudSelect T="Organization" Label="Organization" Class="mt-3 mb-3" @bind-Value="model.Organization">
+        @foreach (var org in organizations)
+        {
+            <MudSelectItem Value="@org">@org.Name</MudSelectItem>
+        }
+    </MudSelect>
+    
+    <MudAutocomplete T="string" Label="Project Lead" @bind-Value="model.LeadId" 
+                     SearchFunc="SearchLeads" ToStringFunc="GetLeadName"
+                     Class="mt-3 mb-5" Clearable="true" />
+    
     <MudText Class="mb-1" Typo="Typo.body1">Project Requirements</MudText>    
     <RichTextEditor @bind-Content="@model.Requirements"
                     Placeholder="Very detailed description of project"
@@ -31,11 +60,16 @@
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
     Project model = new();
+    List<ApplicationUser> users = [];
+    List<Organization> organizations = [];
     string pageTitle = string.Empty;
     bool IsAdd => Id is null or 0;
 
     protected override async Task OnInitializedAsync()
     {
+        users = await Db.Users.ToListAsync();
+        organizations = await Db.Organizations.ToListAsync();
+        
         if (IsAdd)
         {
             pageTitle = "Add Project";
@@ -43,8 +77,23 @@
         else
         {
             pageTitle = "Edit Project";
-            model = await Db.Projects.FindAsync(Id) ?? new();
+            model = await Db.Projects.Include(x => x.Lead).Include(x => x.Organization).FirstOrDefaultAsync(x => x.Id == Id) ?? new();
         }
+    }
+
+    private async Task<IEnumerable<string>> SearchLeads(string value, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(value))
+            return users.Select(u => u.Id);
+        
+        return users.Where(u => u.UserName != null && u.UserName.Contains(value, StringComparison.OrdinalIgnoreCase))
+                    .Select(u => u.Id);
+    }
+
+    private string GetLeadName(string userId)
+    {
+        var user = users.FirstOrDefault(u => u.Id == userId);
+        return user?.UserName ?? string.Empty;
     }
 
     private async Task OnValidSubmit(EditContext context)
