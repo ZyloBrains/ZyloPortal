@@ -1,0 +1,18 @@
+﻿<MudChipSet T="Tag" Class=@(Centered ? "d-flex justify-center" : "")>
+    @foreach (var tag in Tags ?? [])
+    {
+        <MudChip Style="@("background:" + (tag.ColorCode ?? ""))" Label="@IsSquare">@tag.Name</MudChip>
+    }
+</MudChipSet>
+
+@code {
+
+    [Parameter]
+    public List<Tag>? Tags { get; set; }
+
+    [Parameter]
+    public bool IsSquare { get; set; } = false;
+
+    [Parameter]
+    public bool Centered { get; set; } = false;
+}

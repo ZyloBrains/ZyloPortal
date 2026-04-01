@@ -1,19 +1,14 @@
-﻿<MudPaper Class="border p-3" Elevation="0">
-    <MudChip T="string" Label="true" Class="ml-8" Size="Size.Large">
-        <MudText Typo="Typo.h5">@Widget.Description</MudText>
-    </MudChip>
-    <MudContainer Style="font-size: 1.3em">
-        @((MarkupString)Widget.HtmlContent)
-    </MudContainer>
-</MudPaper>
+﻿<div class="border-solid border-b-2 py-2">
+    <MudText Typo="Typo.h5">
+        <MudIcon Icon="@Icons.Material.Filled.Description" Size="Size.Large" />
+        @Widget.Description
+    </MudText>
+</div>
+<MudContainer Style="font-size: 1.3em" Class="mt-3">
+    @((MarkupString)Widget.HtmlContent)
+</MudContainer>
 
-
-<MudChipSet T="Tag">
-    @foreach (var tag in Widget.Tags ?? [])
-    {
-        <MudChip Style="@("background:" + tag.ColorCode ?? "")" Class="text-white">@tag.Name</MudChip>
-    }
-</MudChipSet>
+<TagList Tags="Widget.Tags" IsSquare="true" />
 
 @code {
 
