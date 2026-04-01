@@ -19,13 +19,8 @@
     <MudDrawer @bind-Open="_drawerOpen" Elevation="2" ClipMode="DrawerClipMode.Always">
         <NavMenu />
     </MudDrawer>
-    <MudMainContent Class="px-3 mt-3">
+    <MudMainContent Class="px-3 mt-3 pb-5">
         @Body
-        <MudToolBar Gutters="false" Class="mt-16 px-1 border-t-2 border-solid mud-border-tertiary" Dense>
-            <MudText Typo="Typo.subtitle2" Style="font-size:1rem">@DateTime.Now.Year &copy; ZyloBrains (Previously AppTechnoSoft)</MudText>
-            <MudSpacer />
-            <MudText Typo="Typo.subtitle2" Style="font-size:1rem">With Love ❤️</MudText>
-        </MudToolBar>
     </MudMainContent>
 </MudLayout>
 
