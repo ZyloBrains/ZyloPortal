@@ -7,7 +7,7 @@ public class Student : BaseEntity
 {
     public Student()
     {
-        Id = Guid.NewGuid().ToString();
+        Id = Guid.CreateVersion7().ToString();
     }
 
     public string Id { get; set; }

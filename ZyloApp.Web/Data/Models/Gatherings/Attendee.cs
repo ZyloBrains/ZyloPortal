@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace ZyloApp.Web.Data.Models.Gatherings;
 public class Attendee
 {
-    public Attendee() => Id = Guid.NewGuid();
+    public Attendee() => Id = Guid.CreateVersion7();
 
     public Guid Id { get; set; }
     public string FullName { get; set; } = string.Empty;

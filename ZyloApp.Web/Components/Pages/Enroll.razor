@@ -2,6 +2,8 @@
 
 <PageTitle>Enrollment</PageTitle>
 
+@attribute [Authorize]
+
 @inject ApplicationDbContext Db
 @inject ISnackbar SnackBar
 @inject IFileStorageService ImageUploader
@@ -11,19 +13,19 @@
 
         @if (alreadyApplied)
         {
-            <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">We have received your details, please feel free to update anytime or contact us for any queries.</MudAlert>
+            <MudAlert Severity="Severity.Success" Variant="Variant.Outlined">Your registration process is complete, please feel free to update your information or talk to your facilitator for any queries.</MudAlert>
         }
         else
         {
-            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Please enter your details to start professional journey with us to kickstart your career.</MudAlert>
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined">Please enter your details to complete your registration process and start learning.</MudAlert>
         }
 
         <MudField Label="I am a" Variant="Variant.Outlined" Class="mt-5">
             <MudRadioGroup @bind-Value="model.ApplicantType" Disabled="alreadyApplied">
-                <MudRadio Value="ApplicantType.WorkshopAttendee" Color="Color.Tertiary">Attendee - Workshop/Conference</MudRadio>
+                <MudRadio Value="ApplicantType.SoftwareEngineeringAspirant" Color="Color.Tertiary">Learner - Students, Freshers</MudRadio>
                 <MudRadio Value="ApplicantType.StudentInternship" Color="Color.Tertiary">Internship/Traineeship Hunter</MudRadio>
-                <MudRadio Value="ApplicantType.SoftwareEngineeringAspirant" Color="Color.Tertiary">Engineering Aspirant</MudRadio>
                 <MudRadio Value="ApplicantType.Professional" Color="Color.Tertiary">Working professional</MudRadio>
+                <MudRadio Value="ApplicantType.WorkshopAttendee" Color="Color.Tertiary">Attendee - Workshop/Conference</MudRadio>
             </MudRadioGroup>
         </MudField>
 
@@ -48,7 +50,7 @@
                       ErrorText="You have already applied with this number, please call us if you have any queries."
                       TextChanged="PhoneChanged" />
 
-        @if (model.ApplicantType != ApplicantType.Professional)
+        @if (model.ApplicantType == ApplicantType.SoftwareEngineeringAspirant || model.ApplicantType == ApplicantType.StudentInternship)
         {
             <MudStack Row="true">
                 <MudAutocomplete T="College"
@@ -73,22 +75,9 @@
                                  ProgressIndicatorColor="Color.Default"
                                  MaxItems="null" />
             </MudStack>
-            if (model.ApplicantType == ApplicantType.SoftwareEngineeringAspirant)
-            {
-                <MudSelect T="TrainingTrack" Variant="Variant.Outlined" Label="Track" @bind-Value="model.TrainingTrack" Class="mt-4">
-                    <MudSelectItem T="TrainingTrack" Value="@TrainingTrack.None">No idea, need consulting</MudSelectItem>
-                    <MudSelectItem T="TrainingTrack" Value="@TrainingTrack.LargeLanguageModels">ML, DL, NLP & LLMs</MudSelectItem>
-                    <MudSelectItem T="TrainingTrack" Value="@TrainingTrack.GenerativeAI">GenAI & Agentic AI</MudSelectItem>
-                    <MudSelectItem T="TrainingTrack" Value="@TrainingTrack.NETWeb">.NET Full-Stack</MudSelectItem>
-                    <MudSelectItem T="TrainingTrack" Value="@TrainingTrack.JavaWeb">Java Full-Stack</MudSelectItem>
-                    <MudSelectItem T="TrainingTrack" Value="@TrainingTrack.PythonWeb">Python Full-Stack</MudSelectItem>
-                    <MudSelectItem T="TrainingTrack" Value="@TrainingTrack.MobileDevlopment">Mobile (Android, ioS) Development</MudSelectItem>
-                    <MudSelectItem T="TrainingTrack" Value="@TrainingTrack.DataScience">Data Science & Engineering</MudSelectItem>
-                </MudSelect>
-            }
         }
 
-        <ImageUpload Class="mt-4" ExistingImagePath="@model.ProfileImagePath" ImageChanged="ProfileChanged" Label="Upload Profile Image (<100kb)" />
+        <ImageUpload Class="mt-4" ExistingImagePath="@(model.ProfileImagePath ?? "/img/person.png")" ImageChanged="ProfileChanged" Label="Change Profile (<200kb)" />
 
         <MudButton ButtonType="ButtonType.Submit"
                    Variant="Variant.Filled"
@@ -96,7 +85,7 @@
                    Class="mt-3 d-flex ml-auto"
                    StartIcon="@Icons.Material.Sharp.HowToReg"
                    Disabled="isSaveDisabled">
-            @(alreadyApplied ? "Update Details" : "Apply")
+            @(alreadyApplied ? "Update Details" : "Complete Registration")
         </MudButton>
     </MudPaper>
 </EditForm>
@@ -144,7 +133,7 @@
             {
                 ApplicationUserId = applicationUserId,
                 Email = state.User.GetUserName(),
-                ApplicantType = ApplicantType.WorkshopAttendee
+                ApplicantType = ApplicantType.SoftwareEngineeringAspirant
             };
         }
         else

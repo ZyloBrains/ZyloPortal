@@ -1,71 +1,79 @@
 ﻿@page "/"
 
 @inject ApplicationDbContext db
+@inject NavigationManager NavigationManager
 
 <PageTitle>Home - ZyloBrains</PageTitle>
 
-@if (homeAdminNavigations is null || homeConsultantNavigations.Count == 0)
-{
-    <Loading />
-}
-else
-{
-    <MudGrid Class="mt-0 px-4" Spacing="10">
+<AuthorizeView Context="conparent">
+    <Authorized>
+        @if (homeAdminNavigations is null || homeConsultantNavigations.Count == 0)
+        {
+            <Loading />
+        }
+        else
+        {
+            <MudGrid Class="mt-0 px-4" Spacing="10">
 
-        <AuthorizeView Roles="@Role.Admins">
-            @foreach (var item in homeAdminNavigations)
-            {
-                <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
-                    <a href="@item.Link" style="text-decoration:none;">
-                        <MudPaper Class="nav-card admin py-4" Elevation="10">
-                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
-                                <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
-                                <MudIcon Style="height:64px;width:64px;" Color="Color.Error" Icon="@item.Icon" />
-                                <MudText Typo="Typo.body1">@item.Description</MudText>                                
-                            </MudStack>
-                        </MudPaper>
-                    </a>
-                </MudItem>
-            }
-        </AuthorizeView>
+                <AuthorizeView Roles="@Role.Admins">
+                    @foreach (var item in homeAdminNavigations)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
+                            <a href="@item.Link" style="text-decoration:none;">
+                                <MudPaper Class="nav-card admin py-4" Elevation="10">
+                                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                        <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
+                                        <MudIcon Style="height:64px;width:64px;" Color="Color.Error" Icon="@item.Icon" />
+                                        <MudText Typo="Typo.body1">@item.Description</MudText>
+                                    </MudStack>
+                                </MudPaper>
+                            </a>
+                        </MudItem>
+                    }
+                </AuthorizeView>
 
-        <AuthorizeView Roles="@Role.Instructor">
-            @foreach (var item in homeConsultantNavigations)
-            {
-                <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
-                    <a href="@item.Link" style="text-decoration:none;">
-                        <MudPaper Class="nav-card consultant py-4" Elevation="10">
-                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
-                                <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
-                                <MudIcon Style="height:64px;width:64px;" Color="Color.Warning" Icon="@item.Icon" />
-                                <MudText Typo="Typo.body1">@item.Description</MudText>
-                            </MudStack>
-                        </MudPaper>
-                    </a>
-                </MudItem>
-            }
-        </AuthorizeView>
+                <AuthorizeView Roles="@Role.Instructor">
+                    @foreach (var item in homeConsultantNavigations)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
+                            <a href="@item.Link" style="text-decoration:none;">
+                                <MudPaper Class="nav-card consultant py-4" Elevation="10">
+                                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                        <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
+                                        <MudIcon Style="height:64px;width:64px;" Color="Color.Warning" Icon="@item.Icon" />
+                                        <MudText Typo="Typo.body1">@item.Description</MudText>
+                                    </MudStack>
+                                </MudPaper>
+                            </a>
+                        </MudItem>
+                    }
+                </AuthorizeView>
 
-        <AuthorizeView Roles="@Role.TraineesOrAttendeesOrEmployees">
-            @foreach (var item in homeUserNavigations)
-            {
-                <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
-                    <a href="@item.Link" style="text-decoration:none;">
-                        <MudPaper Class="nav-card py-4" Elevation="10">
-                            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
-                                <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
-                                <MudIcon Style="height:64px;width:64px;" Color="Color.Secondary" Icon="@item.Icon" />
-                                <MudText Typo="Typo.body1">@item.Description</MudText>
-                            </MudStack>
-                        </MudPaper>
-                    </a>
-                </MudItem>
-            }
+                <AuthorizeView Roles="@Role.TraineesOrAttendeesOrEmployees">
+                    @foreach (var item in homeUserNavigations)
+                    {
+                        <MudItem xs="12" sm="6" md="4" lg="3" xl="2">
+                            <a href="@item.Link" style="text-decoration:none;">
+                                <MudPaper Class="nav-card py-4" Elevation="10">
+                                    <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center">
+                                        <MudText Typo="Typo.h6" Align="Align.Center">@item.Text</MudText>
+                                        <MudIcon Style="height:64px;width:64px;" Color="Color.Secondary" Icon="@item.Icon" />
+                                        <MudText Typo="Typo.body1">@item.Description</MudText>
+                                    </MudStack>
+                                </MudPaper>
+                            </a>
+                        </MudItem>
+                    }
 
-        </AuthorizeView>
+                </AuthorizeView>
 
-    </MudGrid>
-}
+            </MudGrid>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <RedirectToLogin  />
+    </NotAuthorized>
+</AuthorizeView>
 
 <style>
     .nav-card {
@@ -96,7 +104,7 @@ else
     private List<NavigationItem> homeAdminNavigations = [
         new ("Admin Dashboard", "/dashboard/admin", Icons.Material.Sharp.Dashboard, "Multiple insights for admin users"),
         new ("New Joinees", "/applicants", Icons.Material.Sharp.PeopleOutline, "All new application requests"),
-        new ("Courses", "/trainingplans", Icons.Material.Sharp.MenuBook, "All training plans for workshops etc."),
+        new ("Courses", "/consulting/plans", Icons.Material.Sharp.MenuBook, "All training plans for workshops etc."),
         new ("Reviews", "/review/forms", Icons.Material.Sharp.Reviews, "Ratings for consultants"),
         new ("Consultants", "/consultants", Icons.Material.Sharp.CoPresent, "Our consultants pool"),
         new ("Timesheets", "/timesheets", Icons.Material.Sharp.Checklist, "Track timesheet submissions")

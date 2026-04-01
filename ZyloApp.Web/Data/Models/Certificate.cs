@@ -3,7 +3,7 @@
 namespace ZyloApp.Web.Data.Models;
 public class Certificate
 {
-    public Certificate() => Id = Guid.NewGuid();
+    public Certificate() => Id = Guid.CreateVersion7();
 
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;

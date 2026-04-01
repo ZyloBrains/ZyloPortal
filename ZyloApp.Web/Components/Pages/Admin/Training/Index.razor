@@ -1,8 +1,9 @@
-﻿@page "/trainingplans"
+﻿@page "/consulting/plans"
 
 @attribute [Authorize(Roles = Role.Admins)]
 @inject ApplicationDbContext Db
 @inject ISnackbar SnackBar
+@inject NavigationManager Navigation
 
 <PageTitle>Customized Training Plans</PageTitle>
 
@@ -12,17 +13,16 @@
              Class="mt-2"
              Loading="@loadingData">
     <ToolBarContent>
-        <MudButton Variant="Variant.Outlined" Class="rounded" StartIcon="@Icons.Material.Outlined.Add" Href="/trainingplans/add" Color="Color.Tertiary">Training Plan</MudButton>
+        <MudButton Variant="Variant.Outlined" Class="rounded" StartIcon="@Icons.Material.Outlined.Add" Href="/consulting/plans/add" Color="Color.Tertiary">New Plan</MudButton>
         <MudSpacer />
-        <MudChip Text="Professional Training Plans" Label="true" Size="Size.Large" />
+        <MudChip Text="Professional Consulting Plans" Label="true" Size="Size.Large" />
     </ToolBarContent>
     <Columns>
         <HierarchyColumn T="Training" ButtonDisabledFunc="@(x => (x.CourseQuote?.Modules?.Count ?? 0) == 0)" />
         <PropertyColumn Property="x => x.Title" />
         <PropertyColumn Property="x => x.CourseQuote!.Code" Title="Course" />
-        <PropertyColumn Property="x => x.CourseQuote!.Description" Title="Course Description" />
         <PropertyColumn Property="x => x.Organization!.Name" Title="Beneficiary" />
-        <PropertyColumn Property="x => x.DiscountPercentage" />
+        <PropertyColumn Property="x => x.DiscountPercentage" Title="Discount" />
         <PropertyColumn Property="x => x.DurationHours" />
         <TemplateColumn Title="Consultant">
             <CellTemplate>
@@ -46,9 +46,12 @@
                             <MudSelectItem Value="@status" />
                         }
                     </MudSelect>
-                    <MudIconButton title="Share plan" Icon="@Icons.Material.Filled.Share" Target="_blank" Color="Color.Info" Href="@("/consulting/plans/" + context.Item.Hash)" />
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/trainingplans/edit/" + context.Item.Id)" />
-                    <MudIconButton Icon="@Icons.Material.Sharp.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Item)" />
+                    <MudToolBar Dense>
+                        <MudIconButton title="Share plan" Icon="@Icons.Material.Filled.Share" Target="_blank" Color="Color.Info" Href="@("/consulting/plans/" + context.Item.Hash)" />
+                        <MudIconButton title="Clone plan" Icon="@Icons.Material.Filled.ContentCopy" Color="Color.Tertiary" OnClick="() => CloneNewPlan(context.Item)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Href="@("/consulting/plans/edit/" + context.Item.Id)" />
+                        <MudIconButton Icon="@Icons.Material.Sharp.Delete" Color="Color.Error" OnClick="() => ConfirmDelete(context.Item)" />
+                    </MudToolBar>
                     <MudMessageBox @ref="mbox" Title="Warning" CancelText="Cancel">
                         <MessageContent>
                             Are you sure to delete this training plan? It can't be undone.
@@ -75,11 +78,14 @@
         </MudGrid>
     </ChildRowContent>
     <PagerContent>
-        <MudDataGridPager PageSizeOptions="[20, 50, 100, 200]" />
+        <MudDataGridPager PageSizeOptions="[50, 100, 200]" />
     </PagerContent>
 </MudDataGrid>
 
 @code {
+
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
     private List<Training> trainings = [];
 
@@ -96,7 +102,7 @@
             .Include(x => x.Instructor)
             .Include(x => x.CourseQuote)
             .ThenInclude(y => y.Modules)
-            .OrderBy(x => x.CourseQuote.Code)
+            .OrderByDescending(x => x.Created)
             .ToListAsync();
 
         loadingData = false;
@@ -133,6 +139,42 @@
         else
         {
             SnackBar.Add("Training plan deletion failed", Severity.Error);
+        }
+    }
+
+    private async Task CloneNewPlan(Training training)
+    {
+        var newPlan = new Training
+        {
+            Title = training.Title + " - Copy",
+            DiscountPercentage = training.DiscountPercentage,
+            DurationHours = training.DurationHours,
+            CourseQuoteId = training.CourseQuoteId,
+            InstructorId = training.InstructorId,
+            OrganizationId = training.OrganizationId,
+            Status = TrainingStatus.Drafted,
+            Details = training.Details,            
+            Tags = training.Tags?.ToList() ?? [],
+            Projects = training.Projects?.ToList() ?? [],
+            Assignments = training.Assignments?.ToList() ?? []
+        };
+
+        var state = await AuthTask;
+        var userName = state.User.Identity?.Name;
+        newPlan.AddCreatedStamps(userName);
+        newPlan.Hash = Guid.CreateVersion7().ToString();
+
+        Db.Training.Add(newPlan);
+        var rowsAffected = Db.SaveChanges();
+        
+        if (rowsAffected > 0)
+        {
+            SnackBar.Add("Training plan cloned successfully", Severity.Success);
+            Navigation.NavigateTo("/consulting/plans/edit/" + newPlan.Id);
+        }
+        else
+        {
+            SnackBar.Add("Training plan cloning failed", Severity.Error);
         }
     }
 }

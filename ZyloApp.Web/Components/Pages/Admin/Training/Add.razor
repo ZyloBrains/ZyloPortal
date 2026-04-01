@@ -1,11 +1,11 @@
-﻿@page "/trainingplans/add"
+﻿@page "/consulting/plans/add"
 
 @attribute [Authorize(Roles = Role.Admins)]
 @inject ISnackbar SnackBar
 @inject NavigationManager Navigation
 @inject ApplicationDbContext Db
 
-<PageTitle>Add New Training Plan</PageTitle>
+<PageTitle>New Counsulting Plan</PageTitle>
 
 <MudContainer>
     <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
@@ -127,10 +127,11 @@
         var state = await AuthTask;
         var userName = state.User.Identity?.Name;
         model.AddCreatedStamps(userName);
-        model.Hash = Guid.NewGuid().ToString();
+        model.Hash = Guid.CreateVersion7().ToString();
 
         model.Assignments = moduleAssignmentsSelected.ToList();
         model.Projects = trainingProjectsSelected.ToList();
+        model.Tags = tagsSelected.ToList();
 
         Db.Training.Add(model);
         var rowsAffected = await Db.SaveChangesAsync();
@@ -138,7 +139,7 @@
         if (rowsAffected > 0)
         {
             SnackBar.Add("New training plan added successfully", Severity.Success);
-            Navigation.NavigateTo("/trainingplans");
+            Navigation.NavigateTo("/consulting/plans");
         }
         else
         {

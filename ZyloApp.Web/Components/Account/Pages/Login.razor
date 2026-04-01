@@ -13,53 +13,118 @@
 
 <PageTitle>Log in</PageTitle>
 
-<div class="container">
-    <div>
-        <StatusMessage Message="@errorMessage" />
-        <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
-            <DataAnnotationsValidator />
-            <h3 class="text-center mb-4">Your Account</h3>
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-4">
-                <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                <label for="email" class="form-label">Email</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
-            </div>
-            <div class="form-floating mb-4">
-                <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                <label for="password" class="form-label">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
-            </div>
-            <div class="checkbox mb-4">
-                <label class="form-label">
-                    <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                    Remember me
-                </label>
-            </div>
-            <div>
-                <button type="submit" class="w-25 btn btn-lg btn-outline-warning">Log In</button>
-                <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))" class="w-25 btn btn-lg btn-warning float-end">
-                    Register
-                </a>
-            </div>
+<div style="min-height: 80vh; display: flex; align-items: center;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-5">
+                <div class="card shadow-lg border-0" style="border-radius: 15px; overflow: hidden;">
+                    <!-- Header -->
+                    <div style="background: linear-gradient(135deg, #FF6B35 0%, #FF9500 100%); padding: 2rem; color: white; text-align: center;">
+                        <h2 class="mb-2" style="font-weight: 700; font-size: 2.2rem;">Welcome Back</h2>
+                        <p class="text-white-50 mb-0" style="font-size: 1.1rem;">Sign in to your account</p>
+                    </div>
 
-            @* <div class="alert alert-info mt-4 font-monospace" role="alert">
-                If you don't have appsoft login credentials, please <a href="/join" class="link-primary">connect to ATS</a> first and ATS admin will provide you username and password for the system.
-            </div> *@
+                    <!-- Form Content -->
+                    <div class="p-4">
+                        <StatusMessage Message="@errorMessage" />
+                        
+                        <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="alert alert-danger" role="alert" />
+                            
+                            <!-- Email Field -->
+                            <div class="mb-3">
+                                <label for="email" class="form-label fw-500" style="font-size: 1.05rem;">Email</label>
+                                <InputText @bind-Value="Input.Email" 
+                                          class="form-control" 
+                                          id="email"
+                                          autocomplete="username" 
+                                          aria-required="true" 
+                                          placeholder="firstname.lastname@zylobrains.com"
+                                          style="padding: 0.75rem; border-radius: 8px; border: 1.5px solid #e0e0e0; font-size: 1rem;" />
+                                <ValidationMessage For="() => Input.Email" class="text-danger small mt-1" />
+                            </div>
 
-            
-        </EditForm>
-    </div>
-    <div class="text-center" style="margin-top: 5rem">
-        <h3 class="mb-5">Or sign in with</h3>
-        <div>
-            <ExternalLoginPicker />
+                            <!-- Password Field -->
+                            <div class="mb-3">
+                                <label for="password" class="form-label fw-500" style="font-size: 1.05rem;">Password</label>
+                                <InputText type="password" 
+                                          @bind-Value="Input.Password" 
+                                          class="form-control" 
+                                          id="password"
+                                          autocomplete="current-password" 
+                                          aria-required="true" 
+                                          placeholder="Enter your password"
+                                          style="padding: 0.75rem; border-radius: 8px; border: 1.5px solid #e0e0e0; font-size: 1rem;" />
+                                <ValidationMessage For="() => Input.Password" class="text-danger small mt-1" />
+                            </div>
+
+                            <!-- Remember Me -->
+                            <div class="form-check mb-4">
+                                <InputCheckbox @bind-Value="Input.RememberMe" 
+                                             class="form-check-input" 
+                                             id="rememberMe"
+                                             style="cursor: pointer;" />
+                                <label class="form-check-label" for="rememberMe" style="cursor: pointer; font-size: 1.05rem;">
+                                    Remember me for 30 days
+                                </label>
+                            </div>
+
+                            <!-- Sign In Button -->
+                            <button type="submit" class="btn w-100 fw-600 py-2" style="background: linear-gradient(135deg, #FF6B35 0%, #FF9500 100%); color: white; border: none; border-radius: 8px; font-size: 1.15rem; transition: transform 0.2s, box-shadow 0.2s;">
+                                Sign In
+                            </button>
+                        </EditForm>
+
+                        <!-- Divider -->
+                        <div class="d-flex align-items-center my-4">
+                            <div style="flex: 1; height: 1px; background: #e0e0e0;"></div>
+                            <span class="px-3 text-muted small" style="font-size: 0.95rem;">Or continue with</span>
+                            <div style="flex: 1; height: 1px; background: #e0e0e0;"></div>
+                        </div>
+
+                        <!-- Google Auth Button -->
+                        <form class="w-100" action="Account/PerformExternalLogin" method="post">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+                            @foreach (var provider in externalLogins)
+                            {
+                                @if (provider.DisplayName == "Google")
+                                {
+                                    <button type="submit" 
+                                           class="btn w-100 fw-500 py-2" 
+                                           name="provider" 
+                                           value="@provider.Name" 
+                                           title="Log in using your Google account"
+                                           style="border: 1.5px solid #e0e0e0; color: #333; border-radius: 8px; background: white; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 1.05rem;">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                                        </svg>
+                                        <span>Google</span>
+                                    </button>
+                                }
+                            }
+                        </form>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="text-center py-3" style="background-color: #f8f9fa; border-top: 1px solid #e0e0e0;">
+                        <small class="text-muted" style="font-size: 0.95rem;">
+                            Don't have an account? <a href="/account/register" class="text-decoration-none fw-600" style="color: #FF6B35;">Create one here</a>
+                        </small>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 @code {
     private string? errorMessage;
+    private AuthenticationScheme[] externalLogins = [];
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -77,6 +142,8 @@
             // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         }
+
+        externalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).ToArray();
     }
 
     public async Task LoginUser()
@@ -92,7 +159,7 @@
 
             if (enrollee is null)
             {
-                RedirectManager.RedirectTo(ReturnUrl);
+                RedirectManager.RedirectTo("/enroll");
             }
             else
             {
