@@ -13,10 +13,12 @@
 else
 {
     <MudGrid Class="px-5">
-        <MudItem xs="12" Class="my-4 d-flex justify-center">
-            <MudPaper Class="border-b-2 border-solid pa-4">
-                <MudText Typo="Typo.h4" Align="Align.Center">@model.Title</MudText>
-            </MudPaper>
+        <MudItem xs="12" Class="my-4">
+            <MudText Typo="Typo.h4" Align="Align.Center">
+                <MudIcon Icon="@Icons.Material.Filled.Title" Size="Size.Large" />
+                @model.Title
+            </MudText>
+            <TagList Tags="model.Tags" Centered="true" IsSquare="true" />
         </MudItem>
         <MudItem xs="12" md="6">
             <div class="border-solid border-2 py-2 px-6 rounded-t-xl mb-3 d-flex justify-center">
@@ -104,13 +106,8 @@ else
                                 @(model.Instructor?.Role ?? "N/A")
                                 <MudText Typo="Typo.body2">@model.Instructor?.Organization</MudText>
                             </MudText>
-                        </MudStack>
-                        <MudStack Row Wrap="Wrap.Wrap" Spacing="0" Justify="Justify.Center">
-                            @foreach (var tag in model.Instructor?.Tags ?? [])
-                            {
-                                <MudChip Label="true" Value="@tag.Name" Style="@($"background:{tag.ColorCode}")" />
-                            }
-                        </MudStack>
+                        </MudStack>                        
+                        <TagList Tags="model.Instructor?.Tags" IsSquare="true" Centered="true" />
                     </MudStack>
                 </MudItem>
                 <MudItem xs="12">
@@ -121,10 +118,18 @@ else
             </MudGrid>
         </MudItem>
         <MudItem xs="12">
-            <div class="border-solid border-2 py-2 px-6 rounded-t-xl my-3 d-flex justify-center">
+            <div class="border-solid border-2 py-2 px-6 rounded-t-xl my-6 d-flex justify-center">
+                <MudText Typo="Typo.button" Style="font-size:1.3rem;">Details</MudText>
+            </div>
+            <div Style="font-size: 1.3em" Class="mt-3">
+                @((MarkupString)model.Details)
+            </div>
+        </MudItem>
+        <MudItem xs="12">
+            <div class="border-solid border-2 py-2 px-6 rounded-t-xl my-6 d-flex justify-center">
                 <MudText Typo="Typo.button" Style="font-size:1.3rem;">@model?.CourseQuote?.Code Modules</MudText>
             </div>
-            <MudGrid>
+            <MudGrid Spacing="20">
                 @foreach (var module in model?.CourseQuote?.Modules?.OrderBy(x => x.Description).ToArray() ?? [])
                 {
                     <MudItem xs="12" md="6">
@@ -249,10 +254,12 @@ else
             .Include(x => x.Organization)
             .Include(x => x.Assignments)
             .Include(x => x.Projects)
+            .Include(x => x.Tags)
             .Include(x => x.Instructor)
             .ThenInclude(x => x.Tags)
             .Include(x => x.CourseQuote)
             .ThenInclude(y => y.Modules)
+            .ThenInclude(z => z.Tags)
             .FirstOrDefaultAsync(x => x.Hash == Hash.ToString()) ?? new();
 
         if (model.Status == TrainingStatus.Completed)
