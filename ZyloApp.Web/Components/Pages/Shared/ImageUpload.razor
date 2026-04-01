@@ -4,23 +4,23 @@
                InputClass="absolute mud-width-full mud-height-full overflow-hidden z-20"
                InputStyle="opacity:0">
     <ActivatorContent>
-        <MudPaper Height="116px"
-                  Outlined="true"
+        <MudPaper Outlined="true"
                   Class="relative rounded-lg border-2 border-dashed pa-4 mud-width-full mud-height-full z-10">
-            <MudStack Row AlignItems="AlignItems.Center">
-                @if (ExistingImagePath is not (null or ""))
-                {
-                    <MudAvatar Style="height:80px; width:80px; font-size:2rem;">
+            <MudStack Row AlignItems="AlignItems.Center" Spacing="20">
+                <MudStack AlignItems="AlignItems.Center">
+                    <MudAvatar Style="height:100px; width:100px; font-size:2rem;">
                         <MudImage Src="@ExistingImagePath" />
                     </MudAvatar>
                     <MudText>Current Profile</MudText>
-                }
-                <MudAvatar Style="height:80px; width:80px; font-size:2rem;">
-                    <MudImage Src="@profileImagePreview" />
-                </MudAvatar>
-                <MudText Typo="Typo.body1">
-                    @Label - Click or Drag & drop
-                </MudText>
+                </MudStack>
+                <MudStack AlignItems="AlignItems.Center">
+                    <MudAvatar Style="height:100px; width:100px; font-size:2rem;">
+                        <MudImage Src="@profileImagePreview" FallbackSrc="/img/person.png" />
+                    </MudAvatar>
+                    <MudText Typo="Typo.body1">
+                        @Label - Click or Drag & drop
+                    </MudText>
+                </MudStack>
             </MudStack>
         </MudPaper>
     </ActivatorContent>

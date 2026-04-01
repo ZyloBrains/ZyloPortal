@@ -2,10 +2,8 @@
 public enum TrainingTrack
 {
     None = 1,
-    NETWeb,
-    JavaWeb,
-    PythonWeb,
-    NodeWeb,
+    FrontendDevelopment,
+    FullstackDevelopment,
     MobileDevlopment,
     GameDevelopment,
     IoT,
