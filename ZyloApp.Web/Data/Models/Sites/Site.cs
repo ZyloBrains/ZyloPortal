@@ -1,7 +1,7 @@
 ﻿namespace ZyloApp.Web.Data.Models.Sites;
 public class Site: BaseEntity
 {
-    public Site() => Id = Guid.NewGuid().ToString();
+    public Site() => Id = Guid.CreateVersion7().ToString();
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Domain { get; set; }

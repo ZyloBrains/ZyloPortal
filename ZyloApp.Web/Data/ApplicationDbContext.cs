@@ -141,10 +141,10 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
              }
 
              // Seed roles and admin user
-             string superAdminId = Guid.NewGuid().ToString();
-             string superAdminRoleId = Guid.NewGuid().ToString();
-             string adminRoleId = Guid.NewGuid().ToString();
-             string traineeRoleId = Guid.NewGuid().ToString();
+             string superAdminId = Guid.CreateVersion7().ToString();
+             string superAdminRoleId = Guid.CreateVersion7().ToString();
+             string adminRoleId = Guid.CreateVersion7().ToString();
+             string traineeRoleId = Guid.CreateVersion7().ToString();
              var appUser = new ApplicationUser
              {
                  Id = superAdminId,

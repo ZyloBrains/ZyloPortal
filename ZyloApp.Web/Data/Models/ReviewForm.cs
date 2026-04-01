@@ -4,7 +4,7 @@ namespace ZyloApp.Web.Data.Models;
 
 public class ReviewForm : BaseEntity
 {
-    public ReviewForm() => Id = Guid.NewGuid().ToString();
+    public ReviewForm() => Id = Guid.CreateVersion7().ToString();
 
     public string Id { get; set; }
     public string Title { get; set; } = "";

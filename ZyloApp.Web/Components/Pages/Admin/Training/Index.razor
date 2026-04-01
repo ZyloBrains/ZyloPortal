@@ -84,6 +84,9 @@
 
 @code {
 
+    [CascadingParameter]
+    private Task<AuthenticationState> AuthTask { get; set; } = null!;
+
     private List<Training> trainings = [];
 
     private bool loadingData = false;
@@ -139,7 +142,7 @@
         }
     }
 
-    private void CloneNewPlan(Training training)
+    private async Task CloneNewPlan(Training training)
     {
         var newPlan = new Training
         {
@@ -150,10 +153,16 @@
             InstructorId = training.InstructorId,
             OrganizationId = training.OrganizationId,
             Status = TrainingStatus.Drafted,
+            Details = training.Details,            
             Tags = training.Tags?.ToList() ?? [],
             Projects = training.Projects?.ToList() ?? [],
             Assignments = training.Assignments?.ToList() ?? []
         };
+
+        var state = await AuthTask;
+        var userName = state.User.Identity?.Name;
+        newPlan.AddCreatedStamps(userName);
+        newPlan.Hash = Guid.CreateVersion7().ToString();
 
         Db.Training.Add(newPlan);
         var rowsAffected = Db.SaveChanges();
