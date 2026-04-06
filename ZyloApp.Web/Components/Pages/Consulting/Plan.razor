@@ -14,11 +14,13 @@ else
 {
     <MudGrid Class="px-5">
         <MudItem xs="12" Class="my-4">
-            <MudText Typo="Typo.h4" Align="Align.Center">
-                <MudIcon Icon="@Icons.Material.Filled.Title" Size="Size.Large" />
-                @model.Title
-            </MudText>
-            <TagList Tags="model.Tags" Centered="true" IsSquare="true" />
+            <MudStack AlignItems="AlignItems.Center" Justify="Justify.Center" Spacing="2">
+                <MudChip T="string" Size="Size.Large"><MudText Typo="Typo.h5">@model.Format</MudText></MudChip>
+                <MudText Typo="Typo.h3" Align="Align.Center">
+                    @model.Title
+                </MudText>
+                <TagList Tags="model.Tags" Centered="true" IsSquare="true" />
+            </MudStack>
         </MudItem>
         <MudItem xs="12" md="6">
             <div class="border-solid border-2 py-2 px-6 rounded-t-xl mb-3 d-flex justify-center">
@@ -37,7 +39,7 @@ else
                         </MudText>
                         <MudText Typo="Typo.h6">
                             Coaching Duration
-                            <MudText Typo="Typo.subtitle1">@("Hour".ToQuantity(model.DurationHours))</MudText>
+                            <MudText Typo="Typo.subtitle1">@model.Duration</MudText>
                         </MudText>
                         <MudText Typo="Typo.h6">
                             Coaching Status
@@ -77,7 +79,6 @@ else
                                     @(employeeProfiles.Any() ? employeeProfiles.Count() + " Pax" : "To be populated")
                                 </MudTooltip>
                             </MudText>
-
                         </MudText>
                         <MudText Typo="Typo.h6">
                             Training Drafted
@@ -89,7 +90,7 @@ else
         </MudItem>
         <MudItem xs="12" md="6">
             <div class="border-solid border-2 py-2 px-6 rounded-t-xl mb-3 d-flex justify-center">
-                <MudText Typo="Typo.button" Style="font-size:1.3rem;">Consultant</MudText>
+                <MudText Typo="Typo.button" Style="font-size:1.3rem;">Facilitator</MudText>
             </div>
             <MudGrid Class="d-flex align-center">
                 <MudItem xs="12">
@@ -106,7 +107,7 @@ else
                                 @(model.Instructor?.Role ?? "N/A")
                                 <MudText Typo="Typo.body2">@model.Instructor?.Organization</MudText>
                             </MudText>
-                        </MudStack>                        
+                        </MudStack>
                         <TagList Tags="model.Instructor?.Tags" IsSquare="true" Centered="true" />
                     </MudStack>
                 </MudItem>
@@ -121,7 +122,7 @@ else
             <div class="border-solid border-2 py-2 px-6 rounded-t-xl my-6 d-flex justify-center">
                 <MudText Typo="Typo.button" Style="font-size:1.3rem;">Details</MudText>
             </div>
-            <div Style="font-size: 1.3em" Class="mt-3">
+            <div Style="font-size: 1.3em" Class="mt-3" id="consulting-plan-details">
                 @((MarkupString)model.Details)
             </div>
         </MudItem>
@@ -141,13 +142,13 @@ else
         <MudItem xs="12">
             @if (model?.Assignments?.Any() ?? false)
             {
-                <div class="border-solid border-2 py-2 px-6 rounded-t-xl my-3">
+                <div class="border-solid border-2 py-2 px-6 rounded-t-xl my-3 d-flex justify-center">
                     <MudText Typo="Typo.button" Style="font-size:1.3rem;">Assignment(s)</MudText>
                 </div>
                 <MudStack Row Wrap="Wrap.Wrap" Spacing="5">
                     @foreach (var assignment in model?.Assignments?.OrderBy(x => x.Title).ToArray() ?? [])
                     {
-                        <MudPaper Elevation="0" Class="p-4 border" Square Style="text-align:center;">
+                        <MudPaper Elevation="0" Class="p-3 border-2" Square Style="text-align:center;">
                             <MudChip T="string" Label="true" Size="Size.Large" Class="mb-2">
                                 <MudText Typo="Typo.h6">Assignment</MudText>
                             </MudChip>
@@ -163,71 +164,73 @@ else
         <MudItem xs="12">
             @if (model?.Projects?.Any() ?? false)
             {
-                <div class="border-solid border-2 py-2 px-6 rounded-t-xl my-3">
+                <div class="border-solid border-2 py-2 px-6 rounded-t-xl my-3 d-flex justify-center">
                     <MudText Typo="Typo.button" Style="font-size:1.3rem;">Project(s)</MudText>
                 </div>
-                <MudPaper Elevation="0" Class="p-4 border" Square>
-                    <MudStack Row Wrap="Wrap.Wrap" Spacing="5">
-                        @foreach (var project in model?.Projects?.OrderBy(x => x.Title).ToArray() ?? [])
-                        {
-                            <MudPaper Elevation="0" Class="p-4 border" Square Style="text-align:center">
-                                <MudChip T="string" Label="true" Size="Size.Large" Class="mb-2">
-                                    <MudText Typo="Typo.h6">Project</MudText>
-                                </MudChip>
-                                <MudText Typo="Typo.h6">
-                                    @project.Title
-                                    <MudText Typo="Typo.body2">@project.RepoUrl</MudText>
-                                </MudText>
-                            </MudPaper>
-                        }
-                    </MudStack>
-                </MudPaper>
+                <MudStack Row Wrap="Wrap.Wrap" Spacing="5">
+                    @foreach (var project in model?.Projects?.OrderBy(x => x.Title).ToArray() ?? [])
+                    {
+                        <MudPaper Elevation="0" Class="p-3 border-2" Square Style="text-align:center">
+                            <MudChip T="string" Label="true" Size="Size.Large" Class="mb-2">
+                                <MudText Typo="Typo.h6">Project</MudText>
+                            </MudChip>
+                            <MudText Typo="Typo.h6">
+                                @project.Title
+                                <MudText Typo="Typo.body2">@project.RepoUrl</MudText>
+                            </MudText>
+                        </MudPaper>
+                    }
+                </MudStack>
             }
         </MudItem>
         @if (model.Status == TrainingStatus.Completed)
         {
             <MudItem xs="12">
-                <MudText Typo="Typo.button" Style="font-size:1.1rem;">Attendees Performance</MudText>
-                <MudTable Items="@employeeProfiles" Hover="true" Class="p-4 border" Elevation="0" Dense="true">
-                    <HeaderContent>
-                        <MudTh></MudTh>
-                        <MudTh>Public Profile</MudTh>
-                        @if (employeeProfiles?.Any() ?? false)
-                        {
-                            var length = employeeProfiles.Select(x => x.Assignments?.Length)?.Max() ?? 0;
-                            for (byte j = 1; j <= length; j++)
-                            {
-                                var index = j;
-                                <MudTh>Assignment @index</MudTh>
+                <div class="border-solid border-2 py-2 px-6 rounded-t-xl my-3 d-flex justify-center">
+                    <MudText Typo="Typo.button" Style="font-size:1.3rem;">Attendees Performance</MudText>
+                </div>
+                @if (employeeProfiles?.Any() ?? false)
+                {
+                    <MudTable Items="@employeeProfiles" Hover="true" Elevation="0" Dense="true">
+                        <HeaderContent>
+                            <MudTh></MudTh>
+                            <MudTh>Public Profile</MudTh>
+                            @{
+                                var length = employeeProfiles.Select(x => x.Assignments?.Length)?.Max() ?? 0;
+                                for (byte j = 1; j <= length; j++)
+                                {
+                                    var index = j;
+                                    <MudTh>Assignment @index</MudTh>
+                                }
                             }
-                        }
-                    </HeaderContent>
-                    <RowTemplate>
-                        <MudTd DataLabel="Name">
-                            <MudStack Row AlignItems="AlignItems.Center">
-                                <UserProfile AvatarPath="@context.AvatarPath" Name="@context.Name" Horizontal="true" />
-                            </MudStack>
-                        </MudTd>
-                        <MudTd DataLabel="Profile">
-                            <MudLink Href="@($"/profile/professional/{context.Id}")" Target="_blank">
-                                <MudIcon Icon="@Icons.Material.Sharp.OpenInNew" />
-                                @context.Id
-                            </MudLink>
-                        </MudTd>
-                        @{
-                            byte i = 1;
-                        }
-                        @foreach (var assignment in context.Assignments ?? [])
-                        {
-                            var assignmentLabel = $"Assignment {i++}";
-                            <MudTd DataLabel="@assignmentLabel">
-                                <ProblemSolverLabel Score="assignment.Evaluation" />
-                                <br />
-                                <StatusIndicator Assignment="@(new("", "", assignment.ReturnDate, assignment.Deadline, assignment.Evaluation, assignment.Status))" />
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd DataLabel="Name">
+                                <MudStack Row AlignItems="AlignItems.Center">
+                                    <UserProfile AvatarPath="@context.AvatarPath" Name="@context.Name" Horizontal="true" />
+                                </MudStack>
                             </MudTd>
-                        }
-                    </RowTemplate>
-                </MudTable>
+                            <MudTd DataLabel="Profile">
+                                <MudLink Href="@($"/profile/professional/{context.Id}")" Target="_blank">
+                                    <MudIcon Icon="@Icons.Material.Sharp.OpenInNew" />
+                                    @context.Id
+                                </MudLink>
+                            </MudTd>
+                            @{
+                                byte i = 1;
+                            }
+                            @foreach (var assignment in context.Assignments ?? [])
+                            {
+                                var assignmentLabel = $"Assignment {i++}";
+                                <MudTd DataLabel="@assignmentLabel">
+                                    <ProblemSolverLabel Score="assignment.Evaluation" />
+                                    <br />
+                                    <StatusIndicator Assignment="@(new("", "", assignment.ReturnDate, assignment.Deadline, assignment.Evaluation, assignment.Status))" />
+                                </MudTd>
+                            }
+                        </RowTemplate>
+                    </MudTable>
+                }
             </MudItem>
         }
         <MudItem></MudItem>

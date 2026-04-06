@@ -10,7 +10,13 @@
 <MudContainer>
     <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
         <MudTextField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.Title" Label="Training Label" Class="mt-4" @bind-Value="model.Title" />
-        <MudNumericField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.HourglassTop" Label="Duration Hours" Format="N2" Class="mt-4" @bind-Value="model.DurationHours" />
+        <MudSelect T="TrainingFormat" Label="Format" @bind-Value="model.Format" Class="mt-4">
+            @foreach (var format in Enum.GetValues<TrainingFormat>())
+            {
+                <MudSelectItem Value="@format" />
+            }
+        </MudSelect>
+        <MudTextField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.HourglassTop" Label="Duration" Class="mt-4" @bind-Value="model.Duration" />
         <MudNumericField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.Percent" Label="Discount Percentage" Class="mt-4" @bind-Value="model.DiscountPercentage" />
 
         <MudAutocomplete T="Instructor"
@@ -86,7 +92,7 @@
 
         <RichTextEditor @bind-Content="@model.Details"
                         Placeholder="Add Training Details"
-                        ToolbarOptions="ToolbarOptions.BasicToolbarOptions" />
+                        ToolbarOptions="ToolbarOptions.FullToolbarOptions" />
 
         <MudButton ButtonType="ButtonType.Submit"
                    Variant="Variant.Filled"
@@ -107,7 +113,7 @@
     [Parameter]
     public int Id { get; set; }
 
-    Training model = new() { DurationHours = 20f };
+    Training model = new() { Duration = "20 Hours" };
     IEnumerable<Instructor> consultants = [];
     IEnumerable<CourseQuote> quotes = [];
     IEnumerable<Organization> forOrganizations = [];
@@ -160,6 +166,7 @@
         var userName = state.User.Identity?.Name;
         model.AddLastUpdatedStamps(userName);
 
+        model.Details = HtmlStyleStripper.StripStyles(model.Details);
         model.Assignments = moduleAssignmentsSelected.ToList();
         model.Projects = trainingProjectsSelected.ToList();
         model.Tags = tagsSelected.ToList();
