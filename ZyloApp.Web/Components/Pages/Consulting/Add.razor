@@ -10,10 +10,18 @@
 <MudContainer>
     <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
         <MudTextField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.Title" Label="Training Label" Class="mt-4" @bind-Value="model.Title" />
-        <MudNumericField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.HourglassTop" Label="Duration Hours" Format="N2" Class="mt-4" @bind-Value="model.DurationHours" />
+        <MudSelect T="TrainingFormat" Label="Format" @bind-Value="model.Format" Class="mt-4" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.Category">
+            @foreach (var format in Enum.GetValues<TrainingFormat>())
+            {
+                <MudSelectItem Value="@format" />
+            }
+        </MudSelect>
+        <MudTextField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.HourglassTop" Label="Duration" Class="mt-4" @bind-Value="model.Duration" />
         <MudNumericField Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Sharp.Percent" Label="Discount Percentage" Class="mt-4" @bind-Value="model.DiscountPercentage" />
 
         <MudAutocomplete T="Instructor"
+                         Adornment="Adornment.Start" 
+                         AdornmentIcon="@Icons.Material.Sharp.Person3"
                          Label="Select Training Consultant"
                          @bind-Value="model.Instructor"
                          SearchFunc="@SearchConsultants"
@@ -25,6 +33,8 @@
 
         <MudAutocomplete T="CourseQuote"
                          Label="Select Quote"
+                         Adornment="Adornment.Start"
+                         AdornmentIcon="@Icons.Material.Sharp.RequestQuote"
                          ValueChanged="QuoteChanged"
                          SearchFunc="@SearchQuotes"
                          ToStringFunc="@(e=> e==null ? null : $"{e.Code} - {e.Description} ({e.PricePerUnit.AsCurrency()}/Unit)")"
@@ -35,6 +45,8 @@
 
         <MudAutocomplete T="Organization"
                          Label="Training For"
+                         Adornment="Adornment.Start"
+                         AdornmentIcon="@Icons.Material.Sharp.CorporateFare"
                          @bind-Value="model.Organization"
                          SearchFunc="@SearchOrganizations"
                          ToStringFunc="@(e=> e==null ? null : $"{e.Name} ({e.Details})")"
@@ -45,6 +57,8 @@
 
         <MudSelect T="Assignment"
                    Label="Curate Assignments"
+                   Adornment="Adornment.Start"
+                   AdornmentIcon="@Icons.Material.Sharp.Assignment"
                    MultiSelection
                    Dense
                    @bind-SelectedValues="@moduleAssignmentsSelected"
@@ -58,6 +72,8 @@
 
         <MudSelect T="Project"
                    Label="Curate Projects"
+                   Adornment="Adornment.Start"
+                   AdornmentIcon="@Icons.Material.Sharp.Apps"
                    MultiSelection
                    Dense
                    @bind-SelectedValues="@trainingProjectsSelected"
@@ -71,6 +87,8 @@
 
         <MudSelect T="Tag"
                    Label="Tags"
+                   Adornment="Adornment.Start"
+                   AdornmentIcon="@Icons.Material.Sharp.Tag"
                    Dense="true"
                    HelperText="Tags that apply to this training plan"
                    MultiSelection="true"
@@ -85,7 +103,7 @@
 
         <RichTextEditor @bind-Content="@model.Details"
                         Placeholder="Add Training Details"
-                        ToolbarOptions="ToolbarOptions.BasicToolbarOptions" />
+                        ToolbarOptions="ToolbarOptions.FullToolbarOptions" />
 
         <MudButton ButtonType="ButtonType.Submit"
                    Variant="Variant.Filled"
@@ -102,7 +120,7 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
-    Training model = new() { DurationHours = 20f };
+    Training model = new() { Duration = "20 Hours" };
     IEnumerable<Instructor> consultants = [];
     IEnumerable<CourseQuote> quotes = [];
     IEnumerable<Organization> forOrganizations = [];
@@ -129,6 +147,7 @@
         model.AddCreatedStamps(userName);
         model.Hash = Guid.CreateVersion7().ToString();
 
+        model.Details = HtmlStyleStripper.StripStyles(model.Details);
         model.Assignments = moduleAssignmentsSelected.ToList();
         model.Projects = trainingProjectsSelected.ToList();
         model.Tags = tagsSelected.ToList();

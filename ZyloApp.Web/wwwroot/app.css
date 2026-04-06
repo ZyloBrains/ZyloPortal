@@ -64,7 +64,37 @@ p {
 }
 
 .ql-editor {
-  height: 300px !important;
+  height: 400px !important;
   line-height: 1.75 !important;
   font-size: 16px !important;
 }
+
+
+#consulting-plan-details table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: system-ui, sans-serif;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+  #consulting-plan-details table thead {
+    background: #6366f1;
+    color: white;
+  }
+
+  #consulting-plan-details table th,
+  #consulting-plan-details table td {
+    padding: 12px 20px;
+    text-align: left;
+  }
+
+  #consulting-plan-details table tbody tr {
+    border-bottom: 1px solid #e5e7eb;
+    transition: background 0.2s;
+  }
+
+    #consulting-plan-details table tbody tr:hover {
+      background: #ffc8b8;
+    }

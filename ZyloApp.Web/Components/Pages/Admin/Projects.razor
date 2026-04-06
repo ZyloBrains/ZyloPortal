@@ -1,6 +1,6 @@
 ﻿@page "/projects"
 
-@attribute [Authorize(Roles = Role.AdminsOrInstructor)]
+@attribute [Authorize(Roles = Role.Admins)]
 @inject ApplicationDbContext Db
 @inject ISnackbar SnackBar
 
@@ -48,9 +48,9 @@
         <MudTd DataLabel="Organization">@(context.OrganizationName ?? "N/A")</MudTd>
         <MudTd DataLabel="Domain">@context.BusinessDomain</MudTd>
         <MudTd DataLabel="Status">@context.ProgressStatus</MudTd>
-        <MudTd DataLabel="Budget">$@context.AllocatedBudget.ToString("F2")</MudTd>
-        <MudTd DataLabel="RepoUrl">@context.RepoUrl</MudTd>
-        <MudTd DataLabel="BoardUrl">@context.BoardUrl</MudTd>
+        <MudTd DataLabel="Budget">@context.AllocatedBudget.AsCurrency()</MudTd>
+        <MudTd DataLabel="RepoUrl"><MudLink Href="@context.RepoUrl" Target="_blank">Browse<MudIcon Icon="@Icons.Material.Sharp.OpenInNew" Size="Size.Small" /></MudLink></MudTd>
+        <MudTd DataLabel="BoardUrl"><MudLink Href="@context.BoardUrl" Target="_blank">Browse<MudIcon Icon="@Icons.Material.Sharp.OpenInNew" Size="Size.Small" /></MudLink></MudTd>
         <MudTd>
             <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => ShowBtnPress(context.Id))">
                 @((context.ShowDetails == true) ? "Hide" : "Show") Requirements
@@ -74,30 +74,9 @@
         {
             <MudTr>
                 <td colspan="10">
-                    <MudCard Elevation="5">
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText Align="Align.Center" Typo="Typo.h6">@context.Title</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            <MudGrid>
-                                <MudItem xs="12" sm="6">
-                                    <MudText Typo="Typo.body2"><strong>Organization:</strong> @(context.OrganizationName ?? "N/A")</MudText>
-                                    <MudText Typo="Typo.body2"><strong>Lead:</strong> @(context.LeadName ?? "N/A")</MudText>
-                                    <MudText Typo="Typo.body2"><strong>Status:</strong> @context.ProgressStatus</MudText>
-                                </MudItem>
-                                <MudItem xs="12" sm="6">
-                                    <MudText Typo="Typo.body2"><strong>Domain:</strong> @context.BusinessDomain</MudText>
-                                    <MudText Typo="Typo.body2"><strong>Allocated Budget:</strong> $@context.AllocatedBudget.ToString("F2")</MudText>
-                                    <MudText Typo="Typo.body2"><strong>Spent Budget:</strong> $@(context.SpentBudget?.ToString("F2") ?? "N/A")</MudText>
-                                </MudItem>
-                            </MudGrid>
-                            <MudDivider Class="my-4" />
-                            <MudText Typo="Typo.h6" Class="mb-3">Requirements</MudText>
-                            @((MarkupString)context.Requirements)
-                        </MudCardContent>
-                    </MudCard>
+                    <div class="px-6 py-3">
+                        @((MarkupString)context.Requirements)
+                    </div>
                 </td>
             </MudTr>
         }

@@ -24,7 +24,7 @@
                 StartIcon="@Icons.Material.Filled.Add"
                 title="Add expense"
                 Size="Size.Small"
-                Color="Color.Tertiary"></MudFab>
+                Color="Color.Tertiary" />
         <MudSpacer />
         <MudTextField @bind-Value="_searchString"
                       Placeholder="Search"
@@ -38,7 +38,7 @@
         <PropertyColumn Property="x => x.Created" Title="Date" />
         <PropertyColumn Property="x => x.Title" Title="Title" />
         <PropertyColumn Property="x => x.Description" Title="Description" />
-        <PropertyColumn Property="x => x.ExpenseType" Title="Expense Type" />
+        <PropertyColumn Property="x => x.ExpenseType" Title="Expense Type" Groupable="true" />
         <TemplateColumn Title="Amount" AggregateDefinition="AmountAggregation">
             <CellTemplate>
                 @context.Item.Amount.AsCurrency()
@@ -47,7 +47,7 @@
                 <MudTextField Label="Amount" Variant="Variant.Outlined" T="float" @bind-Value="@context.Item.Amount" />
             </EditTemplate>
         </TemplateColumn>
-        <PropertyColumn Property="x => x.PaidBy" Title="Paid By" />
+        <PropertyColumn Property="x => x.PaidBy" Title="Paid By" Groupable="true" />
         <TemplateColumn CellClass="d-flex justify-end">
             <CellTemplate>
                 <MudIconButton Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
@@ -55,7 +55,7 @@
         </TemplateColumn>
     </Columns>
     <PagerContent>
-        <MudDataGridPager T="Expense" PageSizeOptions="[30, 50, 100, 200]" />
+        <MudDataGridPager T="Expense" PageSizeOptions="[50, 100, 200, 500]" />
     </PagerContent>
 </MudDataGrid>
 

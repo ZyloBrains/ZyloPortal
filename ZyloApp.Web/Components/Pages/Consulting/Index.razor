@@ -8,6 +8,7 @@
 <PageTitle>Customized Training Plans</PageTitle>
 
 <MudDataGrid Items="@trainings"
+             Dense="true"
              Hover="true"
              Outlined
              Class="mt-2"
@@ -20,10 +21,11 @@
     <Columns>
         <HierarchyColumn T="Training" ButtonDisabledFunc="@(x => (x.CourseQuote?.Modules?.Count ?? 0) == 0)" />
         <PropertyColumn Property="x => x.Title" />
+        <PropertyColumn Property="x => x.Format" />
         <PropertyColumn Property="x => x.CourseQuote!.Code" Title="Course" />
         <PropertyColumn Property="x => x.Organization!.Name" Title="Beneficiary" />
         <PropertyColumn Property="x => x.DiscountPercentage" Title="Discount" />
-        <PropertyColumn Property="x => x.DurationHours" />
+        <PropertyColumn Property="x => x.Duration" />
         <TemplateColumn Title="Consultant">
             <CellTemplate>
                 <MudTooltip Text="@context.Item.Instructor?.Name" Arrow="true" Placement="Placement.Bottom">
@@ -78,7 +80,7 @@
         </MudGrid>
     </ChildRowContent>
     <PagerContent>
-        <MudDataGridPager PageSizeOptions="[50, 100, 200]" />
+        <MudDataGridPager PageSizeOptions="[50, 100, 200, 500]" />
     </PagerContent>
 </MudDataGrid>
 
@@ -147,13 +149,14 @@
         var newPlan = new Training
         {
             Title = training.Title + " - Copy",
+            Format = training.Format,
             DiscountPercentage = training.DiscountPercentage,
-            DurationHours = training.DurationHours,
+            Duration = training.Duration,
             CourseQuoteId = training.CourseQuoteId,
             InstructorId = training.InstructorId,
             OrganizationId = training.OrganizationId,
             Status = TrainingStatus.Drafted,
-            Details = training.Details,            
+            Details = training.Details,
             Tags = training.Tags?.ToList() ?? [],
             Projects = training.Projects?.ToList() ?? [],
             Assignments = training.Assignments?.ToList() ?? []
