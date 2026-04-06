@@ -8,6 +8,6 @@ public record ProfessionalViewModel(string Id,
     Status Status,
     string Training = "", 
     string Organization = "",
-    float TrainingHours = 0.0f,
+    string TrainingDuration = "",
     StudentAssignment[]? Assignments = null,
     Project[]? Projects = null);

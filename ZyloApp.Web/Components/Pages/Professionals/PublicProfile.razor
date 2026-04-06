@@ -23,7 +23,7 @@ else
         <MudText Typo="Typo.h5" Align="Align.Left">
             @trainee.Training
             <MudText Typo="Typo.body1">
-                @trainee.TrainingHours Hours Training Plan
+                @trainee.TrainingDuration Training Plan
             </MudText>
         </MudText>
     </MudStack>
@@ -53,7 +53,7 @@ else
                 x.BatchId,
                 AvatarPath = x.ProfileImagePath,
                 Training = x.Training.Title,
-                TrainingHours = x.Training.DurationHours,
+                TrainingDuration = x.Training.Duration,
                 Organization = x.Training.Organization.Name
             })
             .FirstOrDefaultAsync();
@@ -67,6 +67,6 @@ else
             student.Status,
             student.Training,
             student.Organization,
-            student.TrainingHours);
+            student.TrainingDuration);
     }
 }

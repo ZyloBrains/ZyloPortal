@@ -7,9 +7,10 @@ public class Training : BaseEntity
     public int Id { get; set; }
     public string Title { get; set; } = "Training for learners";
     public string? Details { get; set; }
-    public float DurationHours { get; set; }
+    public string Duration { get; set; } = string.Empty;
     public float DiscountPercentage { get; set; }
     public string? Hash { get; set; }
+    public TrainingFormat Format { get; set; } = TrainingFormat.Workshop;
     public TrainingStatus Status { get; set; } = TrainingStatus.Drafted;
 
     public int OrganizationId { get; set; }
