@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy ASP.Net Core app to Azure Web App
+name: Build and deploy ASP.Net Core app to Azure Web App - appsoft1
 
 on:
   push:
@@ -41,9 +41,7 @@ jobs:
     permissions:
       id-token: write #This is required for requesting the JWT
       contents: read #This is required for actions/checkout
-    environment:
-      name: production
-      url: https://zylobrains.com
+
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
@@ -53,9 +51,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_CA5B87FB991E42C7A4567F2D0C2766D1 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0AED25C9AB3E4A4690DF878B009FB209 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_82207F06463D4730A8388BBAA28C7F88 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_479CBE0178E24E479F97334E15E4ECDA }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_13BCBFE31F934D72A97B5D1E3A79E6B0 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_8CE59E86165046309217E920DB2AB3C8 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
