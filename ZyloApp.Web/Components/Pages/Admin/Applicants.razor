@@ -20,24 +20,44 @@
              Hover="true"
              QuickFilter="@_quickFilter"
              Loading="loadingData"
-             ReadOnly="true"
              Hideable="true"
              RowClassFunc="HighlightRow"
-             Dense="true">
+             Dense="true"
+             Class="mt-2">
     <ToolBarContent>
         <MudToolBar WrapContent="true" Class="px-0">
+            <MudAutocomplete T="Batch"
+                             Label="Select Batch"
+                             @bind-Value="selectedBatch"
+                             SearchFunc="@SearchBatches"
+                             ToStringFunc="x => x == null ? null : x.Name"
+                             ShowProgressIndicator="true"
+                             ProgressIndicatorColor="Color.Default"
+                             Style="width:300px"
+                             Dense="true" />
+
+            <MudTooltip Text="Add to Batch">
+                <MudButton Disabled="@(selectedBatch == null || !selectedApplicants.Any())"
+                           StartIcon="@Icons.Material.Sharp.GroupAdd"
+                           OnClick="AddToBatch"
+                           Variant="Variant.Outlined"
+                           Color="Color.Success"
+                           Class="ml-2">Add to Batch</MudButton>
+            </MudTooltip>
+
             <MudTooltip Text="Debatch trainees">
                 <MudButton Disabled="@(!selectedApplicants.Any())"
                            StartIcon="@Icons.Material.Sharp.BatchPrediction"
                            OnClick="RemoveFromBatch"
                            Variant="Variant.Outlined"
+                           Class="ml-2"
                            Color="Color.Warning">Debatch</MudButton>
             </MudTooltip>
 
             <MudTooltip Text="Remove applicants">
                 <MudButton Disabled="@(!selectedApplicants.Any())"
                            StartIcon="@Icons.Material.Sharp.Delete"
-                           Class="ml-1"
+                           Class="ml-2"
                            OnClick="RemoveApplicants"
                            Variant="Variant.Outlined"
                            Color="Color.Error">Remove</MudButton>
@@ -58,12 +78,14 @@
                 }
             </MudSelect>
         </MudToolBar>
+
         <MudSpacer />
         <MudTextField @bind-Value="_searchString"
                       Placeholder="@($"Search {studentList.Count} applicants by name, email, status or phone...")"
                       Adornment="Adornment.Start"
                       Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search"></MudTextField>
+                      
     </ToolBarContent>
     <Columns>
         <SelectColumn ShowInFooter="false" ShowInHeader="false" />
@@ -176,6 +198,8 @@
     private bool loadingData = false;
     private Status selectedStatus = Status.Applied;
     private List<(string BatchName, int? BatchId)> batches = [];
+    private Batch? selectedBatch;
+    private IEnumerable<Batch> allBatches = [];
     private Func<StudentViewModel, bool> _quickFilter => x =>
     {
         if (string.IsNullOrWhiteSpace(_searchString))
@@ -199,6 +223,8 @@
     protected override void OnInitialized()
     {
         loadingData = true;
+
+        allBatches = Db.Batches.OrderBy(x => x.Name).AsNoTracking().ToList();
 
         var studentModels = Db.Students
             .Select(x => new
@@ -225,22 +251,22 @@
         foreach (var item in studentModels)
         {
             studentList.Add(new()
-                {
-                    Id = item.Id,
-                    Name = item.Name,
-                    Email = item.Email,
-                    ProfileImagePath = item.ProfileImagePath,
-                    Phone = item.Phone,
-                    ApplicantType = item.ApplicantType,
-                    Status = item.Status,
-                    TrainingTrack = item.TrainingTrack,
-                    FormSubmitted = item.FormSubmitted,
-                    BatchName = item.Batch,
-                    TeamName = item.Team,
-                    CollegeName = item.College,
-                    ProgramName = item.Program,
-                    ApplicationUserId = item.UserId
-                });
+            {
+                Id = item.Id,
+                Name = item.Name,
+                Email = item.Email,
+                ProfileImagePath = item.ProfileImagePath,
+                Phone = item.Phone,
+                ApplicantType = item.ApplicantType,
+                Status = item.Status,
+                TrainingTrack = item.TrainingTrack,
+                FormSubmitted = item.FormSubmitted,
+                BatchName = item.Batch,
+                TeamName = item.Team,
+                CollegeName = item.College,
+                ProgramName = item.Program,
+                ApplicationUserId = item.UserId
+            });
         }
 
         loadingData = false;
@@ -375,5 +401,39 @@
             return ids.Contains(studentViewModel.Id) ? "mud-tertiary" : "";
         }
         return Highlight == studentViewModel.Id ? "mud-tertiary" : "";
+    }
+
+    private async Task AddToBatch()
+    {
+        if (selectedBatch == null || !selectedApplicants.Any())
+            return;
+
+        var rowsAffected = await Db.Students
+            .Where(s => selectedApplicants.Select(z => z.Id).Contains(s.Id))
+            .ExecuteUpdateAsync(x => x
+                .SetProperty(y => y.BatchId, selectedBatch.Id)
+            );
+
+        if (rowsAffected > 0)
+        {
+            foreach (var applicant in selectedApplicants)
+            {
+                applicant.BatchName = selectedBatch.Name;
+            }
+            SnackBar.Add($"Added {rowsAffected} applicant(s) to batch '{selectedBatch.Name}'", Severity.Success);
+            selectedBatch = null;
+        }
+        else
+        {
+            SnackBar.Add("Adding to batch failed", Severity.Error);
+        }
+    }
+
+    private Task<IEnumerable<Batch>> SearchBatches(string value, CancellationToken token)
+    {
+        if (string.IsNullOrEmpty(value))
+            return Task.FromResult(allBatches.AsEnumerable());
+
+        return Task.FromResult(allBatches.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase)));
     }
 }

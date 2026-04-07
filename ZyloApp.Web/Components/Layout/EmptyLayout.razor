@@ -1,6 +1,9 @@
 ﻿@inherits LayoutComponentBase
 
+@rendermode @(new InteractiveServerRenderMode(prerender: false))
+
 <MudThemeProvider IsDarkMode="isDarkMode" />
+<MudPopoverProvider />
 
 <MudLayout>
     <MudMainContent>
@@ -12,7 +15,7 @@
                                  ToggledIcon="@Icons.Material.Sharp.LightMode" />
         </MudAppBar>
         @Body
-        <MudToolBar Gutters="false" Class="mt-16 px-1 border-t-2 border-solid mud-border-tertiary" Dense>
+        <MudToolBar Gutters="false" Class="mt-16 px-1 border-t-2 border-solid mud-border-warning" Dense>
             <MudText Typo="Typo.subtitle2" Style="font-size:1rem">@DateTime.Now.Year &copy; ZyloBrains</MudText>
             <MudSpacer />
             <MudText Typo="Typo.subtitle2" Style="font-size:1rem">With Love ❤️</MudText>
