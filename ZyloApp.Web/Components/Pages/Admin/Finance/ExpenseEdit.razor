@@ -1,12 +1,14 @@
-﻿@page "/expense/add"
+﻿@page "/expenses/add"
+@page "/expenses/edit/{Id:int}"
 
 @attribute [Authorize(Roles = Role.SuperAdmin)]
 
 @inject ApplicationDbContext Db
 @inject ISnackbar SnackBar
 @inject IFileStorageService ImageUploader
+@inject NavigationManager Navigation
 
-<PageTitle>Add Expense</PageTitle>
+<PageTitle>@pageTitle</PageTitle>
 
 <MudContainer>
     <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
@@ -47,7 +49,7 @@
                    Color="Color.Tertiary"
                    Class="mt-3"
                    StartIcon="@Icons.Material.Filled.Save">
-            Add Expense
+            @buttonText
         </MudButton>
         <MudButton Variant="Variant.Outlined"
                    Class="mt-3 ml-3"
@@ -63,9 +65,22 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
+    [Parameter]
+    public int? Id { get; set; }
+
     Expense model = new() { Amount = 0.0f, Date = DateTime.Now };
     private IBrowserFile? selectedBill;
-    private string billPreview = string.Empty;
+    private bool IsAdd => Id is null or 0;
+    private string pageTitle => IsAdd ? "Add Expense" : "Edit Expense";
+    private string buttonText => IsAdd ? "Add Expense" : "Save Changes";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!IsAdd)
+        {
+            model = await Db.Expenses.FirstOrDefaultAsync(x => x.Id == Id) ?? new();
+        }
+    }
 
     private async Task FileChanged(IBrowserFile file)
     {
@@ -73,12 +88,6 @@
             return;
 
         selectedBill = file;
-
-        var fileStream = file.OpenReadStream();
-        using MemoryStream ms = new();
-        await fileStream.CopyToAsync(ms);
-        var base64data = Convert.ToBase64String(ms.ToArray());
-        billPreview = $"data:image/png;base64," + base64data;
     }
 
     private async Task OnValidSubmit(EditContext context)
@@ -95,21 +104,27 @@
         var state = await AuthTask;
         var userName = state.User.Identity?.Name;
 
-        model.AddCreatedStamps(userName);
+        if (IsAdd)
+        {
+            model.AddCreatedStamps(userName);
+            Db.Expenses.Add(model);
+        }
+        else
+        {
+            model.AddLastUpdatedStamps(userName);
+            Db.Expenses.Update(model);
+        }
 
-        Db.Expenses.Add(model);
         var rowsAffected = await Db.SaveChangesAsync();
 
         if (rowsAffected > 0)
         {
-            SnackBar.Add("New expense added successfully", Severity.Success);
-
-            // Reset it back to default for new entry else it will try to update same model
-            model.Id = default;
+            SnackBar.Add(IsAdd ? "New expense added successfully" : "Expense updated successfully", Severity.Success);
+            Navigation.NavigateTo("/expenses");
         }
         else
         {
-            SnackBar.Add("New expense save failed", Severity.Error);
+            SnackBar.Add(IsAdd ? "New expense save failed" : "Expense update failed", Severity.Error);
         }
     }
 }

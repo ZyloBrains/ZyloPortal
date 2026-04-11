@@ -1,0 +1,12 @@
+@inject IDialogService DialogService
+
+<MudDialog ContentClass="d-flex justify-center">
+    <DialogContent>
+        <MudImage Src="@ImagePath" Fluid="true" />
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter]
+    public string ImagePath { get; set; } = string.Empty;
+}
