@@ -17,12 +17,13 @@
              Dense="true">
 
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Trainee timesheets</MudText>
+        <MudText Typo="Typo.h6">Trainee Timesheets</MudText>
         <MudSpacer />
         <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
+        <PropertyColumn Property="x => x.Student.Name" Title="Name" Groupable="true" />
         <PropertyColumn Property="x => x.Date" Grouping Groupable="true">
             <GroupTemplate>
                 <span style="font-weight:bold">
@@ -43,12 +44,11 @@
             </CellTemplate>
         </TemplateColumn>
         <PropertyColumn Property="x => x.WorkLog" Title="Task" Filterable="false"/>
-        <PropertyColumn Property="x => x.Student.Name" Title="Name" Groupable="true"/>
-        <TemplateColumn Title="Team" Groupable="true">
+        @* <TemplateColumn Title="Team" Groupable="true">
             <CellTemplate>
                 @(context.Item.Student?.Team?.Name ?? "Not Assigned")
             </CellTemplate>
-        </TemplateColumn>
+        </TemplateColumn> *@
     </Columns>
     <PagerContent>
         <MudDataGridPager T="Attendance" PageSizeOptions="[200, 500, 1000]" />
@@ -68,7 +68,6 @@
 
         attendances = await Db.Attendances
             .Include(x => x.Student)
-            .ThenInclude(x => x.Team)
             .OrderByDescending(x => x.Date)
             .ToListAsync();
 
