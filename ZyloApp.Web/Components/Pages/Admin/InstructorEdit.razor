@@ -100,7 +100,7 @@
     private async Task OnValidSubmit(EditContext context)
     {
         // Save instructor profile image first if it's selected
-        var (success, message) = await ImageUploader.UploadFileAsync(model.Profile, "profile-images");
+        var (success, message) = await ImageUploader.UploadProfileAsync(model.Profile, BlobContainer.ProfileImages);
         if (success)
         {
             model.ProfilePath = message;

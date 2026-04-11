@@ -16,9 +16,6 @@ public static class StudentMapper
             ApplicantType = model.ApplicantType,
             TrainingTrack = model.TrainingTrack,
             ProfileImagePath = model.ProfileImagePath,
-            GeneralProgramming = model.GeneralProgramming,
-            DbExperience = model.DbExperience,
-            WebExperience = model.WebExperience,
             CollegeId = model.CollegeId,
             CollegeName = model.College?.Name ?? "None",
             TechProgramId = model.TechProgramId,
@@ -40,5 +37,5 @@ public static class StudentMapper
     }
 
     public static List<StudentViewModel> ToViewModel(this List<Student> models)
-        => models.Select(x => x.ToViewModel()).ToList();
+        => [.. models.Select(x => x.ToViewModel())];
 }

@@ -1,17 +1,21 @@
-﻿@page "/expense/add"
+﻿@page "/expenses/add"
+@page "/expenses/edit/{Id:int}"
 
 @attribute [Authorize(Roles = Role.SuperAdmin)]
 
 @inject ApplicationDbContext Db
 @inject ISnackbar SnackBar
+@inject IFileStorageService ImageUploader
+@inject NavigationManager Navigation
 
-<PageTitle>Add Expense</PageTitle>
+<PageTitle>@pageTitle</PageTitle>
 
 <MudContainer>
     <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
 
         <MudTextField Variant="Variant.Outlined" Label="Title" Class="mt-3" @bind-Value="model.Title" />
         <MudTextField Variant="Variant.Outlined" Label="Description" Class="mt-3" @bind-Value="model.Description" />
+        <MudDatePicker Label="Date" @bind-Date="model.Date" Class="mt-3" Variant="Variant.Outlined" />
         <MudNumericField Variant="Variant.Outlined" Label="Amount" Class="mt-3" @bind-Value="model.Amount" />
         <MudTextField Variant="Variant.Outlined" Label="Paid By" Class="mt-3" @bind-Value="model.PaidBy" />
         <MudSelect Variant="Variant.Outlined"
@@ -24,18 +28,34 @@
             }
         </MudSelect>
 
+        <MudSelect Variant="Variant.Outlined"
+                   @bind-Value="model.Frequency"
+                   Label="Frequency"
+                   Class="mt-3">
+            @foreach (var item in Enum.GetValues<Frequency>())
+            {
+                <MudSelectItem Value="@item">@item</MudSelectItem>
+            }
+        </MudSelect>
+
+        <ImageUpload Class="mt-3"
+                     ImagePath="@model.BillImagePath"
+                     ImageChanged="FileChanged"
+                     Square="true"
+                     Label="Upload Bill/Goods" />
+
         <MudButton ButtonType="ButtonType.Submit"
                    Variant="Variant.Filled"
                    Color="Color.Tertiary"
                    Class="mt-3"
                    StartIcon="@Icons.Material.Filled.Save">
-            Add Expense
+            @buttonText
         </MudButton>
         <MudButton Variant="Variant.Outlined"
                    Class="mt-3 ml-3"
-                   Href="/expenses"                   
+                   Href="/expenses"
                    StartIcon="@Icons.Material.Filled.ArrowBack">
-            Navigate to Expenses
+            Back to Expenses
         </MudButton>
     </EditForm>
 </MudContainer>
@@ -45,28 +65,66 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
-    Expense model = new() { Amount = 0.0f };
+    [Parameter]
+    public int? Id { get; set; }
+
+    Expense model = new() { Amount = 0.0f, Date = DateTime.Now };
+    private IBrowserFile? selectedBill;
+    private bool IsAdd => Id is null or 0;
+    private string pageTitle => IsAdd ? "Add Expense" : "Edit Expense";
+    private string buttonText => IsAdd ? "Add Expense" : "Save Changes";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!IsAdd)
+        {
+            model = await Db.Expenses.FirstOrDefaultAsync(x => x.Id == Id) ?? new();
+        }
+    }
+
+    private async Task FileChanged(IBrowserFile file)
+    {
+        if (file is null)
+            return;
+
+        selectedBill = file;
+    }
 
     private async Task OnValidSubmit(EditContext context)
     {
+        if (selectedBill != null)
+        {
+            var (success, imageUrl) = await ImageUploader.UploadFileAsync(selectedBill, BlobContainer.BillImages);
+            if (success)
+            {
+                model.BillImagePath = imageUrl;
+            }
+        }
+
         var state = await AuthTask;
         var userName = state.User.Identity?.Name;
 
-        model.AddCreatedStamps(userName);
+        if (IsAdd)
+        {
+            model.AddCreatedStamps(userName);
+            Db.Expenses.Add(model);
+        }
+        else
+        {
+            model.AddLastUpdatedStamps(userName);
+            Db.Expenses.Update(model);
+        }
 
-        Db.Expenses.Add(model);
         var rowsAffected = await Db.SaveChangesAsync();
 
         if (rowsAffected > 0)
         {
-            SnackBar.Add("New expense added successfully", Severity.Success);
-
-            // Reset it back to default for new entry else it will try to update same model
-            model.Id = default;
+            SnackBar.Add(IsAdd ? "New expense added successfully" : "Expense updated successfully", Severity.Success);
+            Navigation.NavigateTo("/expenses");
         }
         else
         {
-            SnackBar.Add("New expense save failed", Severity.Error);
+            SnackBar.Add(IsAdd ? "New expense save failed" : "Expense update failed", Severity.Error);
         }
     }
 }

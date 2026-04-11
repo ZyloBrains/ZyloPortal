@@ -1,9 +1,11 @@
-﻿@page "/expenses"
+@page "/expenses"
 
 @using System.Globalization
 @attribute [Authorize(Roles = Role.SuperAdmin)]
 @inject ApplicationDbContext db
 @inject ISnackbar SnackBar
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
 
 <PageTitle>Expenses</PageTitle>
 
@@ -14,13 +16,10 @@
              Hover="true"
              QuickFilter="@_quickFilter"
              Loading="loadingData"
-             ReadOnly="false"
-             Dense="true"
-             EditMode="DataGridEditMode.Form"
-             EditTrigger="DataGridEditTrigger.Manual"
-             CommittedItemChanges="@CommittedItemChanges">
+             ReadOnly="true"
+             Dense="true">
     <ToolBarContent>
-        <MudFab Href="/expense/add"
+        <MudFab Href="/expenses/add"
                 StartIcon="@Icons.Material.Filled.Add"
                 title="Add expense"
                 Size="Size.Small"
@@ -35,22 +34,29 @@
                       Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="x => x.Created" Title="Date" />
-        <PropertyColumn Property="x => x.Title" Title="Title" />
-        <PropertyColumn Property="x => x.Description" Title="Description" />
+        <PropertyColumn Property="x => x.Title" Title="Particulars" />
+        <PropertyColumn Property="x => x.Description" Title="Details" />
+        <PropertyColumn Property="x => x.Date" Title="Date" Format="d" />
         <PropertyColumn Property="x => x.ExpenseType" Title="Expense Type" Groupable="true" />
+        <PropertyColumn Property="x => x.Frequency" Title="Frequency" Groupable="true" />
         <TemplateColumn Title="Amount" AggregateDefinition="AmountAggregation">
             <CellTemplate>
                 @context.Item.Amount.AsCurrency()
             </CellTemplate>
-            <EditTemplate>
-                <MudTextField Label="Amount" Variant="Variant.Outlined" T="float" @bind-Value="@context.Item.Amount" />
-            </EditTemplate>
         </TemplateColumn>
         <PropertyColumn Property="x => x.PaidBy" Title="Paid By" Groupable="true" />
+        <TemplateColumn Title="Bill">
+            <CellTemplate>
+                @if (!string.IsNullOrEmpty(context.Item.BillImagePath))
+                {
+                    <MudImage Src="@context.Item.BillImagePath" Width="50" Height="50" ObjectFit="ObjectFit.Cover" Class="rounded-lg cursor-pointer" @onclick="() => OpenBillImage(context.Item)" />
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="x => x.LastUpdatedBy" Title="Updated By" Groupable="true" />
         <TemplateColumn CellClass="d-flex justify-end">
             <CellTemplate>
-                <MudIconButton Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
+                <MudIconButton Icon="@Icons.Material.Outlined.Edit" Href="@($"/expenses/edit/{context.Item.Id}")" />
             </CellTemplate>
         </TemplateColumn>
     </Columns>
@@ -59,10 +65,13 @@
     </PagerContent>
 </MudDataGrid>
 
-@code {
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+</style>
 
-    [CascadingParameter]
-    private Task<AuthenticationState> AuthTask { get; set; } = null!;
+@code {
 
     private List<Expense> expenses = [];
     private string _searchString = string.Empty;
@@ -92,6 +101,9 @@
         if (x.ExpenseType.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
+        if (x.Frequency.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
         return false;
     };
 
@@ -107,34 +119,21 @@
         loadingData = false;
     }
 
-    async Task CommittedItemChanges(Expense item)
+    private async Task OpenBillImage(Expense item)
     {
-        if (item is null)
-            return;
-
-        var state = await AuthTask;
-        var userName = state.User.Identity?.Name;
-
-        item.AddLastUpdatedStamps(userName);
-
-        var rowsAffected = db.Expenses
-            .Where(x => x.Id == item.Id)
-            .ExecuteUpdate(x => x
-                .SetProperty(y => y.Title, item.Title)
-                .SetProperty(y => y.Description, item.Description)
-                .SetProperty(y => y.Amount, item.Amount)
-                .SetProperty(y => y.PaidBy, item.PaidBy)
-                .SetProperty(y => y.LastUpdated, item.LastUpdated)
-                .SetProperty(y => y.LastUpdatedBy, item.LastUpdatedBy)
-            );
-
-        if (rowsAffected > 0)
+        var parameters = new DialogParameters<BillingImageDialog>
         {
-            SnackBar.Add("Expense updated successfully", Severity.Success);
-        }
-        else
+            { x => x.ImagePath, item.BillImagePath }
+        };
+
+        var options = new DialogOptions
         {
-            SnackBar.Add("Expense update failed", Severity.Error);
-        }
+            MaxWidth = MaxWidth.Medium,
+            CloseButton = true,
+            CloseOnEscapeKey = true,
+            FullWidth = true
+        };
+
+        await DialogService.ShowAsync<BillingImageDialog>($"{item.Title} ({item.Amount.AsCurrency()})", parameters, options);
     }
 }

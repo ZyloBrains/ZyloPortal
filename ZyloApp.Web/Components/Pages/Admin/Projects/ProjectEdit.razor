@@ -39,8 +39,13 @@
     </MudSelect>
     
     <MudAutocomplete T="string" Label="Project Lead" @bind-Value="model.LeadId" 
-                     SearchFunc="SearchLeads" ToStringFunc="GetLeadName"
-                     Class="mt-3 mb-5" Clearable="true" />
+                     SearchFunc="SearchLeads" 
+                     ToStringFunc="GetLeadName"
+                     Class="mt-3 mb-5" 
+                     Clearable="true"
+                     ShowProgressIndicator="true"
+                     ProgressIndicatorColor="Color.Default"
+                     MaxItems="null" />
     
     <MudText Class="mb-1" Typo="Typo.body1">Project Requirements</MudText>    
     <RichTextEditor @bind-Content="@model.Requirements"

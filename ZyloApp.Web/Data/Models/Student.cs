@@ -14,9 +14,6 @@ public class Student : BaseEntity
     public string Name { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public GeneralProgrammingExperience GeneralProgramming { get; set; } = GeneralProgrammingExperience.None;
-    public WebExperience WebExperience { get; set; } = WebExperience.None;
-    public DbExperience DbExperience { get; set; } = DbExperience.None;
     public DateTime? FormSubmitted { get; set; } = DateTime.UtcNow;
     public Status Status { get; set; } = Status.Applied;
     public ApplicantType ApplicantType { get; set; } = ApplicantType.StudentInternship;

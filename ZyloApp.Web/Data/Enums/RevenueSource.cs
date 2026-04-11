@@ -3,9 +3,10 @@ public enum RevenueSource
 {
     GuestLectures = 1,
     ProfessionalTraining,
+    Workshop,
     ProjectWork,
     Outsourcing,
-    Other,
-    Investment,
-    Product
+    Product,
+    DigitalMarketing,
+    Other
 }
