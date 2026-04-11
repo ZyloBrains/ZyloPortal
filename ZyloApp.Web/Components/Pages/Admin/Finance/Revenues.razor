@@ -75,6 +75,23 @@
             </EditTemplate>
         </TemplateColumn>
 
+        <TemplateColumn Title="Frequency">
+            <CellTemplate>
+                @context.Item.Frequency
+            </CellTemplate>
+            <EditTemplate>
+                <MudSelect Variant="Variant.Outlined"
+                           @bind-Value="context.Item.Frequency"
+                           Label="Frequency"
+                           Dense="true">
+                    @foreach (var item in Enum.GetValues<Frequency>())
+                    {
+                        <MudSelectItem Value="@item">@item</MudSelectItem>
+                    }
+                </MudSelect>
+            </EditTemplate>
+        </TemplateColumn>
+
         <TemplateColumn CellClass="d-flex justify-end">
             <CellTemplate>
                 <MudIconButton Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
@@ -119,6 +136,9 @@
         if (x.Source.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
+        if (x.Frequency.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
         return false;
     };
 
@@ -150,6 +170,7 @@
                 .SetProperty(y => y.Particulars, item.Particulars)
                 .SetProperty(y => y.Source, item.Source)
                 .SetProperty(y => y.Amount, item.Amount)
+                .SetProperty(y => y.Frequency, item.Frequency)
                 .SetProperty(y => y.LastUpdated, item.LastUpdated)
                 .SetProperty(y => y.LastUpdatedBy, item.LastUpdatedBy)
             );

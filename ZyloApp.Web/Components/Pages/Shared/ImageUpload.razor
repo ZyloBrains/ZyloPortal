@@ -7,20 +7,20 @@
         <MudPaper Outlined="true"
                   Class="relative rounded-lg border-2 border-dashed pa-4 mud-width-full mud-height-full z-10">
             <MudStack Row AlignItems="AlignItems.Center" Spacing="20">
-                <MudStack AlignItems="AlignItems.Center">
-                    <MudAvatar Style="height:100px; width:100px; font-size:2rem;">
-                        <MudImage Src="@ExistingImagePath" />
-                    </MudAvatar>
-                    <MudText>Current Profile</MudText>
-                </MudStack>
-                <MudStack AlignItems="AlignItems.Center">
-                    <MudAvatar Style="height:100px; width:100px; font-size:2rem;">
-                        <MudImage Src="@profileImagePreview" FallbackSrc="/img/person.png" />
-                    </MudAvatar>
-                    <MudText Typo="Typo.body1">
-                        @Label - Click or Drag & drop
-                    </MudText>
-                </MudStack>
+                <MudAvatar Style="height:100px; width:100px; font-size:2rem;" Square="@Square">
+                    @if (!string.IsNullOrEmpty(profileImagePreview))
+                    {
+                        <MudImage Src="@profileImagePreview" FallbackSrc="/img/dummy.png" />
+                    }
+                    else if (!string.IsNullOrEmpty(ImagePath))
+                    {
+                        <MudImage Src="@(ImagePath ?? "/img/dummy.png")" />                        
+                    }
+                </MudAvatar>
+                    
+                <MudText Typo="Typo.h6">
+                    @Label - Click or Drag/drop
+                </MudText>
             </MudStack>
         </MudPaper>
     </ActivatorContent>
@@ -32,10 +32,13 @@
     public string Label { get; set; } = "Your Image";
 
     [Parameter]
-    public string? ExistingImagePath { get; set; }
+    public string? ImagePath { get; set; }
 
     [Parameter]
     public string? Class { get; set; } = "d-flex";
+
+    [Parameter]
+    public bool Square { get; set; } = false;
 
     [Parameter]
     public EventCallback<IBrowserFile> ImageChanged { get; set; }
@@ -49,7 +52,7 @@
 
         // Prepare preview
         var fileStream = file.OpenReadStream();
-        using (MemoryStream ms = new MemoryStream())
+        using (var ms = new MemoryStream())
         {
             await fileStream.CopyToAsync(ms);
             var base64data = Convert.ToBase64String(ms.ToArray());

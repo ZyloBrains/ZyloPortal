@@ -22,6 +22,15 @@
         </MudSelect>
         <MudNumericField Variant="Variant.Outlined" Label="Amount" Class="mt-4" @bind-Value="model.Amount" />
         <MudDatePicker Label="Date" @bind-Date="model.Date" Class="mt-4" Variant="Variant.Outlined" />
+        <MudSelect Variant="Variant.Outlined"
+                   @bind-Value="model.Frequency"
+                   Label="Frequency"
+                   Class="mt-4">
+            @foreach (var item in Enum.GetValues<Frequency>())
+            {
+                <MudSelectItem Value="@item">@item</MudSelectItem>
+            }
+        </MudSelect>
 
         <MudButton ButtonType="ButtonType.Submit"
                    Variant="Variant.Filled"
@@ -44,7 +53,7 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
-    Revenue model = new() { Amount = 0.0f };
+    Revenue model = new() { Amount = 0.0f, Date = DateTime.Now };
 
     private async Task OnValidSubmit(EditContext context)
     {        

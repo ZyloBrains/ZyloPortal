@@ -1,7 +1,6 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Http;
 
 namespace ZyloApp.Web.Services;
 public class AzureBlobFileStorage : IFileStorageService
@@ -16,6 +15,29 @@ public class AzureBlobFileStorage : IFileStorageService
     }
 
     public async Task<(bool, string)> UploadFileAsync(IBrowserFile file, string containerName, CancellationToken cancellationToken = default)
+    {
+        if (file is null)
+            return (false, "No iamge selected to upload.");
+        
+        // validate allowed size or type here if needed
+        var containerClient = _blobServiceClient.GetBlobContainerClient(containerName);
+        await containerClient.CreateIfNotExistsAsync(PublicAccessType.Blob, cancellationToken: cancellationToken);
+
+        // generate unique blob name
+        var uniqueName = Path.GetRandomFileName();
+        var fullFileName = $"{uniqueName}_{file.Name}";
+        var blobClient = containerClient.GetBlobClient(fullFileName);
+
+        await using (var stream = file.OpenReadStream(cancellationToken: cancellationToken))
+        {
+            await blobClient.UploadAsync(stream, cancellationToken: cancellationToken);
+        }
+
+        // return the absolute URI to save in DB
+        return (true, blobClient.Uri.ToString());
+    }
+
+    public async Task<(bool, string)> UploadProfileAsync(IBrowserFile file, string containerName, CancellationToken cancellationToken = default)
     {        
         if (file is null)
             return (false, "No iamge selected, please update clear face shot later on or ignore this message if already uploaded.");
@@ -32,7 +54,7 @@ public class AzureBlobFileStorage : IFileStorageService
         var fullFileName = $"{uniqueName}_{file.Name}";
         var blobClient = containerClient.GetBlobClient(fullFileName);
         
-        await using (var stream = file.OpenReadStream())
+        await using (var stream = file.OpenReadStream(cancellationToken: cancellationToken))
         {
             await blobClient.UploadAsync(stream, cancellationToken: cancellationToken);
         }

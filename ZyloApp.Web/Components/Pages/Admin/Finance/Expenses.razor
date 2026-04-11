@@ -35,10 +35,17 @@
                       Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
-        <PropertyColumn Property="x => x.Created" Title="Date" />
-        <PropertyColumn Property="x => x.Title" Title="Title" />
-        <PropertyColumn Property="x => x.Description" Title="Description" />
-        <PropertyColumn Property="x => x.ExpenseType" Title="Expense Type" Groupable="true" />
+        <PropertyColumn Property="x => x.Title" Title="Particulars" />
+        <PropertyColumn Property="x => x.Description" Title="Details" />
+        <TemplateColumn Title="Date">
+            <CellTemplate>
+                @context.Item.Date?.ToString("D")
+            </CellTemplate>
+            <EditTemplate>
+                <MudDatePicker Label="Date" @bind-Date="@context.Item.Date" Class="mt-3" Variant="Variant.Outlined" />            </EditTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="x => x.ExpenseType" Title="Expense Type" Groupable="true" Editable="true" />
+        <PropertyColumn Property="x => x.Frequency" Title="Frequency" Groupable="true" />
         <TemplateColumn Title="Amount" AggregateDefinition="AmountAggregation">
             <CellTemplate>
                 @context.Item.Amount.AsCurrency()
@@ -48,6 +55,15 @@
             </EditTemplate>
         </TemplateColumn>
         <PropertyColumn Property="x => x.PaidBy" Title="Paid By" Groupable="true" />
+        <TemplateColumn Title="Bill">
+            <CellTemplate>
+                @if (!string.IsNullOrEmpty(context.Item.BillImagePath))
+                {
+                    <MudImage Src="@context.Item.BillImagePath" Width="50" Height="50" ObjectFit="ObjectFit.Cover" />
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="x => x.LastUpdatedBy" Title="Updated By" Groupable="true" Editable="false" Required="false" />
         <TemplateColumn CellClass="d-flex justify-end">
             <CellTemplate>
                 <MudIconButton Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
@@ -92,6 +108,9 @@
         if (x.ExpenseType.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
+        if (x.Frequency.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
         return false;
     };
 
@@ -124,6 +143,8 @@
                 .SetProperty(y => y.Description, item.Description)
                 .SetProperty(y => y.Amount, item.Amount)
                 .SetProperty(y => y.PaidBy, item.PaidBy)
+                .SetProperty(y => y.ExpenseType, item.ExpenseType)
+                .SetProperty(y => y.Frequency, item.Frequency)
                 .SetProperty(y => y.LastUpdated, item.LastUpdated)
                 .SetProperty(y => y.LastUpdatedBy, item.LastUpdatedBy)
             );

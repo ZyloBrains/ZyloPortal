@@ -4,6 +4,7 @@
 
 @inject ApplicationDbContext Db
 @inject ISnackbar SnackBar
+@inject IFileStorageService ImageUploader
 
 <PageTitle>Add Expense</PageTitle>
 
@@ -12,6 +13,7 @@
 
         <MudTextField Variant="Variant.Outlined" Label="Title" Class="mt-3" @bind-Value="model.Title" />
         <MudTextField Variant="Variant.Outlined" Label="Description" Class="mt-3" @bind-Value="model.Description" />
+        <MudDatePicker Label="Date" @bind-Date="model.Date" Class="mt-3" Variant="Variant.Outlined" />
         <MudNumericField Variant="Variant.Outlined" Label="Amount" Class="mt-3" @bind-Value="model.Amount" />
         <MudTextField Variant="Variant.Outlined" Label="Paid By" Class="mt-3" @bind-Value="model.PaidBy" />
         <MudSelect Variant="Variant.Outlined"
@@ -24,6 +26,22 @@
             }
         </MudSelect>
 
+        <MudSelect Variant="Variant.Outlined"
+                   @bind-Value="model.Frequency"
+                   Label="Frequency"
+                   Class="mt-3">
+            @foreach (var item in Enum.GetValues<Frequency>())
+            {
+                <MudSelectItem Value="@item">@item</MudSelectItem>
+            }
+        </MudSelect>
+
+        <ImageUpload Class="mt-3"
+                     ImagePath="@model.BillImagePath"
+                     ImageChanged="FileChanged"
+                     Square="true"
+                     Label="Upload Bill/Goods" />
+
         <MudButton ButtonType="ButtonType.Submit"
                    Variant="Variant.Filled"
                    Color="Color.Tertiary"
@@ -33,9 +51,9 @@
         </MudButton>
         <MudButton Variant="Variant.Outlined"
                    Class="mt-3 ml-3"
-                   Href="/expenses"                   
+                   Href="/expenses"
                    StartIcon="@Icons.Material.Filled.ArrowBack">
-            Navigate to Expenses
+            Back to Expenses
         </MudButton>
     </EditForm>
 </MudContainer>
@@ -45,10 +63,35 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
-    Expense model = new() { Amount = 0.0f };
+    Expense model = new() { Amount = 0.0f, Date = DateTime.Now };
+    private IBrowserFile? selectedBill;
+    private string billPreview = string.Empty;
+
+    private async Task FileChanged(IBrowserFile file)
+    {
+        if (file is null)
+            return;
+
+        selectedBill = file;
+
+        var fileStream = file.OpenReadStream();
+        using MemoryStream ms = new();
+        await fileStream.CopyToAsync(ms);
+        var base64data = Convert.ToBase64String(ms.ToArray());
+        billPreview = $"data:image/png;base64," + base64data;
+    }
 
     private async Task OnValidSubmit(EditContext context)
     {
+        if (selectedBill != null)
+        {
+            var (success, imageUrl) = await ImageUploader.UploadFileAsync(selectedBill, BlobContainer.BillImages);
+            if (success)
+            {
+                model.BillImagePath = imageUrl;
+            }
+        }
+
         var state = await AuthTask;
         var userName = state.User.Identity?.Name;
 
