@@ -1,12 +1,11 @@
 ﻿namespace ZyloApp.Web.Extensions;
 public static class DateTimeExtensions
 {
+    private static readonly TimeZoneInfo NepalZone = TimeZoneInfo.FindSystemTimeZoneById("Asia/Kathmandu");
+
     public static DateTime ToNepalTime(this DateTime dateTime)
     {
-        TimeZoneInfo nepalZone = TimeZoneInfo.FindSystemTimeZoneById("Nepal Standard Time");
-        DateTime nepalTime = TimeZoneInfo.ConvertTime(dateTime, TimeZoneInfo.Utc, nepalZone);
-
-        return nepalTime;
+        return TimeZoneInfo.ConvertTime(dateTime, TimeZoneInfo.Utc, NepalZone);
     }
 
     public static DateTime ToNepalTime(this DateTime? dateTime)
@@ -14,18 +13,17 @@ public static class DateTimeExtensions
         if (dateTime is null)
             return DateTime.MinValue;
 
-        TimeZoneInfo nepalZone = TimeZoneInfo.FindSystemTimeZoneById("Nepal Standard Time");
-        DateTime nepalTime = TimeZoneInfo.ConvertTime(dateTime.Value, TimeZoneInfo.Utc, nepalZone);
-
-        return nepalTime;
+        return TimeZoneInfo.ConvertTime(dateTime.Value, TimeZoneInfo.Utc, NepalZone);
     }
 
     public static TimeOnly ToNepalTime(this TimeOnly? time, DateOnly date)
     {
-        var dateTime = new DateTime(date, time!.Value, DateTimeKind.Utc);        
-        var timeStampNepal = TimeOnly.FromDateTime(dateTime);
+        if (!time.HasValue)
+            return TimeOnly.MinValue;
 
-        return timeStampNepal;
+        var utcDateTime = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc).Add(time.Value.ToTimeSpan());
+        var nepalDateTime = TimeZoneInfo.ConvertTime(utcDateTime, TimeZoneInfo.Utc, NepalZone);
+        return TimeOnly.FromDateTime(nepalDateTime);
     }
 
     public static DateTime[] Until(this DateTime start, DateTime end)

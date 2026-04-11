@@ -32,10 +32,14 @@
                 </span>
             </GroupTemplate>
         </PropertyColumn>
-        <PropertyColumn Property="x => x.PunchIn" Filterable="false"/>
+        <TemplateColumn Title="Punchin" Filterable="false">
+            <CellTemplate>
+                @(context.Item.PunchIn.ToNepalTime(context.Item.Date))
+            </CellTemplate>
+        </TemplateColumn>
         <TemplateColumn Title="Punchout" Filterable="false">
             <CellTemplate>
-                @(IsPunchOutEmpty(context.Item.PunchOut) ? "No Punch Out" : context.Item.PunchOut)
+                @(IsPunchOutEmpty(context.Item.PunchOut) ? "No Punch Out" : context.Item.PunchOut.ToNepalTime(context.Item.Date))
             </CellTemplate>
         </TemplateColumn>
         <TemplateColumn Title="Duration" Filterable="false">
@@ -43,7 +47,7 @@
                 @(IsPunchOutEmpty(context.Item.PunchOut) ? "N/A" : (context.Item!.PunchOut - context.Item!.PunchIn)!.Value.Humanize(2))
             </CellTemplate>
         </TemplateColumn>
-        <PropertyColumn Property="x => x.WorkLog" Title="Task" Filterable="false"/>
+        <PropertyColumn Property="x => x.WorkLog" Title="Task" Filterable="false" />
         @* <TemplateColumn Title="Team" Groupable="true">
             <CellTemplate>
                 @(context.Item.Student?.Team?.Name ?? "Not Assigned")
