@@ -2,23 +2,25 @@
     <MudNavMenu Class="mud-width-full">
         <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home" IconColor="Color.Success">Home</MudNavLink>
         <MudNavLink Href="/enroll" Icon="@Icons.Material.Filled.Person3" IconColor="Color.Success">Enroll</MudNavLink>
-        <MudNavLink Href="/consultants" Icon="@Icons.Material.Sharp.AccountBox" IconColor="Color.Success">Consultants</MudNavLink>        
+        <MudNavLink Href="/consultants" Icon="@Icons.Material.Sharp.AccountBox" IconColor="Color.Success">Consultants</MudNavLink>
         <AuthorizeView Roles="@Role.AdminsOrInstructor">
             <MudNavLink Href="/course/modules" Icon="@Icons.Material.Sharp.SelectAll" IconColor="Color.Success">Modules</MudNavLink>
         </AuthorizeView>
 
         <AuthorizeView Roles="@Role.TraineesOrAttendees">
             <MudDivider Class="my-2" />
-            <MudNavLink Href="/my/timesheet" Icon="@Icons.Material.Sharp.AddTask" IconColor="Color.Secondary">My Timesheet</MudNavLink>
-            <MudNavLink Href="/my/classes" Icon="@Icons.Material.Sharp.Class" IconColor="Color.Secondary">My Classes</MudNavLink>
-            <MudNavLink Href="/my/assignments" Icon="@Icons.Material.Sharp.Assignment" IconColor="Color.Secondary">My Assignments</MudNavLink>
-            <MudNavLink Href="/my/batchnteam" Icon="@Icons.Material.Sharp.Groups3" IconColor="Color.Secondary">My Batch and Team</MudNavLink>
-            <MudNavLink Href="/my/project" Icon="@Icons.Material.Sharp.AppRegistration" IconColor="Color.Secondary">My Project Contribution</MudNavLink>
-            <MudNavLink Href="/accomplishments" Icon="@Icons.Material.Sharp.CardMembership" IconColor="Color.Secondary">My Accomplishments</MudNavLink>
-            @* <AuthorizeView Roles="@Role.Employee" Context="employee">
+            <MudNavGroup Title="Learning" Icon="@Icons.Material.Filled.PersonOutline" IconColor="Color.Secondary">
+                <MudNavLink Href="/my/timesheet" Icon="@Icons.Material.Sharp.AddTask" IconColor="Color.Secondary">My Timesheet</MudNavLink>
+                <MudNavLink Href="/my/classes" Icon="@Icons.Material.Sharp.Class" IconColor="Color.Secondary">My Classes</MudNavLink>
+                <MudNavLink Href="/my/assignments" Icon="@Icons.Material.Sharp.Assignment" IconColor="Color.Secondary">My Assignments</MudNavLink>
+                <MudNavLink Href="/my/batchnteam" Icon="@Icons.Material.Sharp.Groups3" IconColor="Color.Secondary">My Batch and Team</MudNavLink>
+                <MudNavLink Href="/my/project" Icon="@Icons.Material.Sharp.AppRegistration" IconColor="Color.Secondary">My Project Contribution</MudNavLink>
+                <MudNavLink Href="/accomplishments" Icon="@Icons.Material.Sharp.CardMembership" IconColor="Color.Secondary">My Accomplishments</MudNavLink>
+                @* <AuthorizeView Roles="@Role.Employee" Context="employee">
                 <MudNavLink Href="/my/batchmates" Icon="@Icons.Material.Sharp.Groups3" IconColor="Color.Secondary">My Batch Mates</MudNavLink>
                 <MudNavLink Href="/my/accomplishments" Icon="@Icons.Material.Sharp.CardMembership" IconColor="Color.Secondary">My Accomplishments</MudNavLink>
             </AuthorizeView> *@
+            </MudNavGroup>
         </AuthorizeView>
 
         <AuthorizeView Roles="@Role.Admins">
@@ -93,7 +95,6 @@
         <AuthorizeView Roles="@Role.Admins">
             <MudNavGroup Title="Core" Icon="@Icons.Material.Filled.VerifiedUser" IconColor="Color.Info">
                 <MudNavLink Href="/programs" Icon="@Icons.Material.Filled.Book" IconColor="Color.Info">Programs</MudNavLink>
-                <MudNavLink Href="/colleges" Icon="@Icons.Material.Filled.School" IconColor="Color.Info">Colleges</MudNavLink>
                 <MudNavLink Href="/tags" Icon="@Icons.Material.Filled.Tag" IconColor="Color.Info">Tags</MudNavLink>
                 <MudNavLink Href="/teams" Icon="@Icons.Material.Sharp.GroupWork" IconColor="Color.Info">Teams</MudNavLink>
                 <MudNavLink Href="/widgets/add" Icon="@Icons.Material.Filled.Widgets" IconColor="Color.Info">Add Widget</MudNavLink>

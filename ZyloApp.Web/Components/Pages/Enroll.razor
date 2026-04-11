@@ -53,13 +53,13 @@
         @if (model.ApplicantType == ApplicantType.SoftwareEngineeringAspirant || model.ApplicantType == ApplicantType.StudentInternship)
         {
             <MudStack Row="true">
-                <MudAutocomplete T="College"
+                <MudAutocomplete T="Organization"
                                  Label="Select College"
                                  Variant="Variant.Outlined"
                                  @bind-Value="model.College"
                                  Class="mt-4"
                                  SearchFunc="@SearchColleges"
-                                 ToStringFunc="@(e=> e==null ? null : $"{e.Name} ({e.Location})")"
+                                 ToStringFunc="@(e=> e==null ? null : $"{e.Name} ({e.Details})")"
                                  ShowProgressIndicator="true"
                                  ProgressIndicatorColor="Color.Default"
                                  MaxItems="null" />
@@ -98,7 +98,7 @@
     private Student model = new();
     bool alreadyApplied = false;
     bool alreadyAppliedPhone = false;
-    List<College> colleges = [];
+    List<Organization> colleges = [];
     List<TechProgram> techPrograms = [];
     private bool profileSuccess = false;
     private string message = "";
@@ -198,11 +198,13 @@
         model.ProfileImage = file;
     }
 
-    private async Task<IEnumerable<College>> SearchColleges(string value, CancellationToken token)
+    private async Task<IEnumerable<Organization>> SearchColleges(string value, CancellationToken token)
     {
         if (!colleges.Any())
         {
-            colleges = await Db.Colleges.ToListAsync(token);
+            colleges = await Db.Organizations
+            .Where(x => x.OrganizationType == OrganizationType.College)
+            .ToListAsync(token);
         }
 
         if (value is null or "")

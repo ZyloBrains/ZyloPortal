@@ -12,7 +12,6 @@ namespace ZyloApp.Web.Data;
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
     : IdentityDbContext<ApplicationUser>(options)
 {
-    public DbSet<College> Colleges { get; set; }
     public DbSet<TechProgram> TechPrograms { get; set; }
     public DbSet<Student> Students { get; set; }
     public DbSet<FinAccount> FinAccounts { get; set; }
@@ -92,31 +91,31 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
 
         optionsBuilder.UseSeeding((context, _) =>
          {
-             var colleges = context.Set<College>().ToList();
+             var colleges = context.Set<Organization>().ToList();
 
              if (colleges == null || colleges.Count == 0)
              {
-                 context.Set<College>().AddRange(
+                 context.Set<Organization>().AddRange(
                      [
-                         new College { Name = "Mechi Multiple Campus", Location = "Bhadrapur, Jhapa" },
-                        new College { Name = "Dhankuta Multiple Campus", Location = "Dhankuta" },
-                        new College { Name = "Central Campus of Technology", Location = "Dharan" },
-                        new College { Name = "Mahendra Morang Adarsha Multiple Campus", Location = "Biratnagar" },
-                        new College { Name = "Mahendra Bindeshwori Multiple Campus", Location = "Rajbiraj" },
-                        new College { Name = "Surya Narayan Satya Na. Mo. Yadav Campus", Location = "Siraha" },
-                        new College { Name = "Ramsorup Ramsagar Multiple Campus", Location = "Janakpur" },
-                        new College { Name = "Thakur Ram Multiple Campus", Location = "Birgunj" },
-                        new College { Name = "Birendra Multiple Campus", Location = "Bharatpur" },
-                        new College { Name = "Prithivi Narayan Multiple Campus", Location = "Pokhara" },
-                        new College { Name = "SidhaNath Science Campus", Location = "Mahendranagar" },
-                        new College { Name = "Mahendra Multiple Campus", Location = "Nepalgunj" },
-                        new College { Name = "Butwal Multiple Campus", Location = "Butwal" },
-                        new College { Name = "Padma Kanya Multiple Campus", Location = "Bagbazar" },
-                        new College { Name = "Mahendra Multiple Campus", Location = "Ghorahi, Dang" },
-                        new College { Name = "Dhaulagiri Campus", Location = "Baglung" },
-                        new College { Name = "Gorkha Campus", Location = "Gorkha" },
-                        new College { Name = "Bhairahawa Multiple Campus", Location = "Bhairahawa" },
-                        new College { Name = "Degree Campus", Location = "Biratnagar" }
+                         new Organization { Name = "Mechi Multiple Campus", Details = "Bhadrapur, Jhapa" },
+                        new Organization { Name = "Dhankuta Multiple Campus", Details = "Dhankuta" },
+                        new Organization { Name = "Central Campus of Technology", Details = "Dharan" },
+                        new Organization { Name = "Mahendra Morang Adarsha Multiple Campus", Details = "Biratnagar" },
+                        new Organization { Name = "Mahendra Bindeshwori Multiple Campus", Details = "Rajbiraj" },
+                        new Organization { Name = "Surya Narayan Satya Na. Mo. Yadav Campus", Details = "Siraha" },
+                        new Organization { Name = "Ramsorup Ramsagar Multiple Campus", Details = "Janakpur" },
+                        new Organization { Name = "Thakur Ram Multiple Campus", Details = "Birgunj" },
+                        new Organization { Name = "Birendra Multiple Campus", Details = "Bharatpur" },
+                        new Organization { Name = "Prithivi Narayan Multiple Campus", Details = "Pokhara" },
+                        new Organization { Name = "SidhaNath Science Campus", Details = "Mahendranagar" },
+                        new Organization { Name = "Mahendra Multiple Campus", Details = "Nepalgunj" },
+                        new Organization { Name = "Butwal Multiple Campus", Details = "Butwal" },
+                        new Organization { Name = "Padma Kanya Multiple Campus", Details = "Bagbazar" },
+                        new Organization { Name = "Mahendra Multiple Campus", Details = "Ghorahi, Dang" },
+                        new Organization { Name = "Dhaulagiri Campus", Details = "Baglung" },
+                        new Organization { Name = "Gorkha Campus", Details = "Gorkha" },
+                        new Organization { Name = "Bhairahawa Multiple Campus", Details = "Bhairahawa" },
+                        new Organization { Name = "Degree Campus", Details = "Biratnagar" }
                      ]);
 
                  context.SaveChanges();
