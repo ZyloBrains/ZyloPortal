@@ -55,7 +55,6 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddMudServices();
-//builder.Services.AddBrowserTimeProvider();
 
 // read connection string secret value
 var blobConnectionString = builder.Configuration["BlobStorageConnectionString"];

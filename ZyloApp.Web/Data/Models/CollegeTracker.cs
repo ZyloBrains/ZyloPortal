@@ -11,5 +11,5 @@ public class CollegeTracker : BaseEntity
     public string Notes { get; set; } = string.Empty;
 
     public int CollegeId { get; set; }
-    public College? College { get; set; }
+    public Organization? College { get; set; }
 }

@@ -10,9 +10,12 @@ ZyloPortal is a comprehensive training and workforce management platform built w
 - Deployment: Azure App Service (GitHub Actions)
 
 ## To do list (2026 Apr onwards):
-- [ ] Applicants Screen - applicants can be added on existing batch in one go
+- [x] Applicants Screen - applicants can be added on existing batch in one go
+- [x] Load colleges from organization table and remove college entity altogether
+- [ ] Display NPT timezones on UI components
 - [ ] Add more user info (Fullname etc.) on User table
 - [ ] Add Employment table and link to User table
+- [ ] Load users (Fullname) on free text user fields e.g. PaidBy etc.
 
 
 ## Trainee Enrollment Flow

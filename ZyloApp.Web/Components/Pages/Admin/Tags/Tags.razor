@@ -7,7 +7,7 @@
 
 <MudTable Items="@tags" Dense Hover Filter="new Func<Tag, bool>(FilterFunc1)" @bind-SelectedItem="selectedTag" Loading="@loadingData">
     <ToolBarContent>
-        <MudFab Href="/add-tag" StartIcon="@Icons.Material.Filled.Add" Label="Add New Tag" Size="Size.Small" Color="Color.Tertiary"></MudFab>
+        <MudFab Href="/tags/add" StartIcon="@Icons.Material.Filled.Add" Label="Add New Tag" Size="Size.Small" Color="Color.Tertiary"></MudFab>
         <MudSpacer />
         <MudTextField @bind-Value="searchString" Placeholder="Search"
                       Adornment="Adornment.Start"
@@ -29,7 +29,7 @@
         <MudTd DataLabel="Description">@context.Description</MudTd>
         <MudTd DataLabel="ColorCode">@context.ColorCode</MudTd>
         <MudTd>
-            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/edit-tag/" + context.Id)" />
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/tags/edit/" + context.Id)" />
             <MudIconButton Icon="@Icons.Material.Sharp.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context)" />
             <MudMessageBox @ref="mbox" Title="Warning" CancelText="Cancel">
                 <MessageContent>

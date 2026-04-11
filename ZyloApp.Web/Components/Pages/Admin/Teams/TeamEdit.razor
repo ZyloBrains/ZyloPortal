@@ -1,5 +1,5 @@
-﻿@page "/add-team"
-@page "/edit-team/{Id:int}"
+﻿@page "/teams/add"
+@page "/teams/edit/{Id:int}"
 
 @attribute [Authorize(Roles = Role.Admins)]
 @inject ApplicationDbContext Db

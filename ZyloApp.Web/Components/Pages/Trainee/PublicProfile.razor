@@ -45,7 +45,7 @@ else
                 BatchId = x.BatchId,
                 AvatarPath = x.ProfileImagePath,
                 Program = $"{x.TechProgram!.Name} ({x.TechProgram.Affliation})",
-                College = $"{x.College!.Name}, {x.College.Location}"
+                College = $"{x.College!.Name}, {x.College.Details}"
             })
             .FirstOrDefaultAsync();
 

@@ -1,5 +1,5 @@
-﻿@page "/add-college"
-@page "/edit-college/{Id:int}"
+﻿@page "/programs/add"
+@page "/programs/edit/{Id:int}"
 
 @inject ApplicationDbContext Db
 @inject ISnackbar SnackBar
@@ -9,15 +9,16 @@
 
     <MudContainer>
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
-            <MudTextField Label="Title" @bind-Value="model.Name" Variant="Variant.Outlined" />
-            <MudTextField Label="Location" Class="mt-3" @bind-Value="model.Location" Variant="Variant.Outlined" />
+
+            <MudTextField Label="Program" @bind-Value="model.Name" Variant="Variant.Outlined" />
+            <MudTextField Label="Affliation" Class="mt-3" @bind-Value="model.Affliation" Variant="Variant.Outlined" />
 
             <MudButton ButtonType="ButtonType.Submit"
                        Variant="Variant.Filled"
                        Color="Color.Primary"
                        Class="mt-3"
                        StartIcon="@Icons.Material.Filled.Save">
-                Save College
+                Save Program
             </MudButton>
         </EditForm>
     </MudContainer>
@@ -30,7 +31,7 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
-    College model = new();
+    TechProgram model = new();
     string pageTitle = string.Empty;
     bool IsAdd => Id is null or 0;
 
@@ -38,12 +39,12 @@
     {
         if (IsAdd)
         {
-            pageTitle = "Add College";
+            pageTitle = "Add Program";
         }
         else
         {
-            pageTitle = "Edit College";
-            model = await Db.Colleges.FindAsync(Id) ?? new();
+            pageTitle = "Edit Program";
+            model = await Db.TechPrograms.FindAsync(Id) ?? new();
         }
     }
 
@@ -55,26 +56,26 @@
         if (IsAdd)
         {
             model.AddCreatedStamps(userName);
-            Db.Colleges.Add(model);
+            Db.TechPrograms.Add(model);
         }
         else
         {
             model.Id = Id!.Value;
             model.AddLastUpdatedStamps(userName);
-            Db.Colleges.Update(model);
+            Db.TechPrograms.Update(model);
         }
 
         var rowsAffected = await Db.SaveChangesAsync();
 
         if (rowsAffected > 0)
         {
-            SnackBar.Add("College saved successfully", Severity.Success);
+            SnackBar.Add("Program saved successfully", Severity.Success);
         }
         else
         {
-            SnackBar.Add("College save failed", Severity.Error);
+            SnackBar.Add("Program save failed", Severity.Error);
         }
 
-        Navigation.NavigateTo("/colleges");
+        Navigation.NavigateTo("/programs");
     }
 }

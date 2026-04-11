@@ -6,7 +6,7 @@
 
 <PageTitle>All project teams</PageTitle>
 
-<MudButton Href="/add-team" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" Variant="Variant.Filled" Size="Size.Large" Class="mb-3">New Team</MudButton>
+<MudButton Href="/teams/add" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" Variant="Variant.Filled" Size="Size.Large" Class="mb-3">New Team</MudButton>
 
 <MudGrid>
     @foreach (var team in teams)
@@ -23,7 +23,7 @@
                         <MudText Typo="Typo.h6">@team.Name</MudText>
                     </CardHeaderContent>
                     <CardHeaderActions>
-                        <MudIconButton Class="mt-5" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/edit-team/" + team.Id)" />
+                        <MudIconButton Class="mt-5" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/teams/edit/" + team.Id)" />
                         <MudIconButton Class="mt-5" Icon="@Icons.Material.Sharp.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(team)" />
                         <MudMessageBox @ref="mbox" Title="Warning" CancelText="Cancel">
                             <MessageContent>

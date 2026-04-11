@@ -1,4 +1,4 @@
-﻿@page "/my/timesheet"
+@page "/my/timesheet"
 
 @inject ApplicationDbContext Db
 @inject NavigationManager Navigation
@@ -25,7 +25,7 @@ else
                             <MudItem md="4" sm="12" Style="text-align:center">
                                 <MudText Align="Align.Center" Typo="Typo.h6" Class="mb-2">Punchin Time</MudText>
                                 <MudText Align="Align.Center" Typo="Typo.h2" Class="mb-2">
-                                    @(PunchInEmpty ? "00:00" : model.PunchIn)
+                                    @(PunchInEmpty ? "00:00" : model.PunchIn.ToNepalTime(model.Date))
                                 </MudText>
                                 <MudButton StartIcon="@Icons.Material.Sharp.PunchClock" OnClick="PunchIn"
                                            Variant="Variant.Filled" Color="Color.Tertiary" Disabled="@logExists">
@@ -35,7 +35,7 @@ else
                             <MudItem md="4" sm="12">
                                 <MudText Align="Align.Center" Typo="Typo.h6" Class="mb-2">Punchout Time</MudText>
                                 <MudText Align="Align.Center" Typo="Typo.h2" Class="mb-2">
-                                    @(PunchOutEmpty ? "00:00" : model.PunchOut)
+                                    @(PunchOutEmpty ? "00:00" : model.PunchOut.ToNepalTime(model.Date))
                                 </MudText>
                             </MudItem>                           
                         </MudGrid>
@@ -77,8 +77,8 @@ else
                 <RowTemplate>
                     <MudTd DataLabel="#">@(allAttendances.IndexOf(attendance) + 1)</MudTd>
                     <MudTd DataLabel="Date">@attendance.Date</MudTd>
-                    <MudTd DataLabel="PunchIn" >@attendance.PunchIn</MudTd>
-                    <MudTd DataLabel="PunchOut">@(IsPunchOutEmpty(attendance.PunchOut) ? "No PunchOut" : attendance.PunchOut)</MudTd>
+                    <MudTd DataLabel="PunchIn" >@attendance.PunchIn.ToNepalTime(attendance.Date)</MudTd>
+                    <MudTd DataLabel="PunchOut">@(IsPunchOutEmpty(attendance.PunchOut) ? "No PunchOut" : attendance.PunchOut.ToNepalTime(attendance.Date))</MudTd>
                     <MudTd DataLabel="Work Hours">@(IsPunchOutEmpty(attendance.PunchOut) ? "N/A" : (attendance.PunchOut - attendance.PunchIn)!.Value.Humanize(2))</MudTd>
                     <MudTd DataLabel="WorkLog">@attendance.WorkLog</MudTd>
                 </RowTemplate>

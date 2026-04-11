@@ -17,12 +17,13 @@
              Dense="true">
 
     <ToolBarContent>
-        <MudText Typo="Typo.h6">Trainee timesheets</MudText>
+        <MudText Typo="Typo.h6">Trainee Timesheets</MudText>
         <MudSpacer />
         <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
+        <PropertyColumn Property="x => x.Student.Name" Title="Name" Groupable="true" />
         <PropertyColumn Property="x => x.Date" Grouping Groupable="true">
             <GroupTemplate>
                 <span style="font-weight:bold">
@@ -31,10 +32,14 @@
                 </span>
             </GroupTemplate>
         </PropertyColumn>
-        <PropertyColumn Property="x => x.PunchIn" Filterable="false"/>
+        <TemplateColumn Title="Punchin" Filterable="false">
+            <CellTemplate>
+                @(context.Item.PunchIn.ToNepalTime(context.Item.Date))
+            </CellTemplate>
+        </TemplateColumn>
         <TemplateColumn Title="Punchout" Filterable="false">
             <CellTemplate>
-                @(IsPunchOutEmpty(context.Item.PunchOut) ? "No Punch Out" : context.Item.PunchOut)
+                @(IsPunchOutEmpty(context.Item.PunchOut) ? "No Punch Out" : context.Item.PunchOut.ToNepalTime(context.Item.Date))
             </CellTemplate>
         </TemplateColumn>
         <TemplateColumn Title="Duration" Filterable="false">
@@ -42,13 +47,12 @@
                 @(IsPunchOutEmpty(context.Item.PunchOut) ? "N/A" : (context.Item!.PunchOut - context.Item!.PunchIn)!.Value.Humanize(2))
             </CellTemplate>
         </TemplateColumn>
-        <PropertyColumn Property="x => x.WorkLog" Title="Task" Filterable="false"/>
-        <PropertyColumn Property="x => x.Student.Name" Title="Name" Groupable="true"/>
-        <TemplateColumn Title="Team" Groupable="true">
+        <PropertyColumn Property="x => x.WorkLog" Title="Task" Filterable="false" />
+        @* <TemplateColumn Title="Team" Groupable="true">
             <CellTemplate>
                 @(context.Item.Student?.Team?.Name ?? "Not Assigned")
             </CellTemplate>
-        </TemplateColumn>
+        </TemplateColumn> *@
     </Columns>
     <PagerContent>
         <MudDataGridPager T="Attendance" PageSizeOptions="[200, 500, 1000]" />
@@ -68,7 +72,6 @@
 
         attendances = await Db.Attendances
             .Include(x => x.Student)
-            .ThenInclude(x => x.Team)
             .OrderByDescending(x => x.Date)
             .ToListAsync();
 

@@ -70,7 +70,7 @@ else
                                                 <MudText Typo="Typo.h6">Team @team.Name</MudText>
                                             </CardHeaderContent>
                                             <CardHeaderActions>
-                                                <MudIconButton Class="mt-5" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/edit-team/" + team.Id)" />
+                                                <MudIconButton Class="mt-5" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/teams/edit/" + team.Id)" />
                                                 <MudIconButton Class="mt-5" Icon="@Icons.Material.Sharp.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDeleteTeam(team, batch)" />
                                                 <MudMessageBox @ref="mbox" Title="Warning" CancelText="Cancel">
                                                     <MessageContent>
@@ -105,7 +105,7 @@ else
                                 </MudItem>
                             }
                             <MudItem>
-                                <MudButton Href="@($"/add-team?batchId={@batch.Id}")" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" Variant="Variant.Filled" Size="Size.Large">New Team</MudButton>
+                                <MudButton Href="@($"/teams/add?batchId={@batch.Id}")" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary" Variant="Variant.Filled" Size="Size.Large">New Team</MudButton>
                             </MudItem>
                         </MudGrid>
                     </MudCardContent>
