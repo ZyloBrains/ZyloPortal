@@ -6,12 +6,11 @@
 
 <PageTitle>Timesheet Details</PageTitle>
 
-<MudDataGrid T="Attendance"
-             Items="@attendances"
+<MudDataGrid T="Attendance" @ref="_grid"
+             ServerData="@GetAttendances"
              SortMode="SortMode.Multiple"
              Filterable="true"
              Hover="true"
-             QuickFilter="@_quickFilter"
              Loading="loadingData"
              Hideable="true"
              Dense="true">
@@ -19,7 +18,7 @@
     <ToolBarContent>
         <MudText Typo="Typo.h6">Trainee Timesheets</MudText>
         <MudSpacer />
-        <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+        <MudTextField Value="@_searchString" ValueChanged="(string v) => OnSearch(v)" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
@@ -62,35 +61,42 @@
 
 @code {
 
-    List<Attendance> attendances = [];
+    private MudDataGrid<Attendance> _grid = null!;
     private string _searchString = string.Empty;
-    private bool loadingData = false;
+    private bool loadingData;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<GridData<Attendance>> GetAttendances(GridState<Attendance> state)
     {
         loadingData = true;
 
-        attendances = await Db.Attendances
+        var query = Db.Attendances
             .Include(x => x.Student)
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(_searchString))
+        {
+            query = query.Where(x =>
+                x.Student.Name.Contains(_searchString));
+        }
+
+        var totalItems = await query.CountAsync();
+        var items = await query
             .OrderByDescending(x => x.Date)
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
             .ToListAsync();
 
         loadingData = false;
+        return new GridData<Attendance> { Items = items, TotalItems = totalItems };
+    }
+
+    private async Task OnSearch(string value)
+    {
+        _searchString = value;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
     }
 
     private bool IsPunchOutEmpty(TimeOnly? time) => time == null || time == TimeOnly.MinValue;
-
-    private Func<Attendance, bool> _quickFilter => x =>
-    {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
-
-        if (x.Student.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Date.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
-    };
 }

@@ -8,9 +8,9 @@
 
 <PageTitle>Review Forms</PageTitle>
 
-<MudDataGrid T="ReviewFormViewModel"
+<MudDataGrid T="ReviewFormViewModel" @ref="_grid"
              MultiSelection="true"
-             Items="@reviewFormViewModels"
+             ServerData="@GetReviewForms"
              SortMode="SortMode.Multiple"
              Hover="true"
              Loading="loadingData"
@@ -25,7 +25,8 @@
                 Color="Color.Tertiary">
         </MudFab>
         <MudSpacer />
-        <MudTextField @bind-Value="_searchString"
+        <MudTextField Value="@_searchString"
+                      ValueChanged="(string v) => OnSearch(v)"
                       Placeholder="Search"
                       Adornment="Adornment.Start"
                       Immediate="true"
@@ -85,37 +86,45 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
-    private List<ReviewFormViewModel> reviewFormViewModels = [];
+    private MudDataGrid<ReviewFormViewModel> _grid = null!;
     private string _searchString = string.Empty;
-    private bool loadingData = false;
+    private bool loadingData;
 
-    private Func<ReviewFormViewModel, bool> _quickFilter => x =>
-    {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
-
-        if (x.Title.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.InstructorName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
-    };
-
-    protected override async Task OnInitializedAsync()
+    private async Task<GridData<ReviewFormViewModel>> GetReviewForms(GridState<ReviewFormViewModel> state)
     {
         loadingData = true;
 
-        var reviewForms = await db.Reviews
+        var query = db.Reviews
             .Include(x => x.ConsultantRatings)
             .Include(x => x.Training)
             .Include(x => x.Instructor)
-            .OrderByDescending(x => x.Created)
-            .ToListAsync() ?? [];
+            .AsNoTracking()
+            .AsQueryable();
 
-        reviewFormViewModels = reviewForms.ToViewModel();
+        if (!string.IsNullOrWhiteSpace(_searchString))
+        {
+            query = query.Where(x =>
+                x.Title.Contains(_searchString) ||
+                x.Instructor.Name.Contains(_searchString));
+        }
+
+        var totalItems = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(x => x.Created)
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
+            .ToListAsync();
+
+        var viewModels = items.ToViewModel();
 
         loadingData = false;
+        return new GridData<ReviewFormViewModel> { Items = viewModels, TotalItems = totalItems };
+    }
+
+    private async Task OnSearch(string value)
+    {
+        _searchString = value;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
     }
 }

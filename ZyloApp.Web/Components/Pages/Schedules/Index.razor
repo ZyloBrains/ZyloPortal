@@ -7,13 +7,14 @@
 
 <PageTitle>Class Schedules</PageTitle>
 
-<MudDataGrid T="ClassSchedule" Items="@schedules" Filterable="true" Hideable="true" Groupable="true" GroupExpanded="true" Loading="@loadingData" Dense>
+<MudDataGrid T="ClassSchedule" @ref="_grid" ServerData="@GetSchedules" Filterable="true" Hideable="true" Groupable="true" GroupExpanded="true" Loading="@loadingData" Dense>
     <ToolBarContent>
         <MudButton Variant="Variant.Outlined" Href="/schedule/add" StartIcon="@Icons.Material.Filled.Add" Color="Color.Tertiary">Add New Classes</MudButton>
         <MudSpacer />
-        <MudTextField @bind-Value="searchString" Placeholder="Search modules or instructors"
+        <MudTextField Value="searchString" ValueChanged="(string s) => OnSearch(s)" Placeholder="Search modules or instructors"
                       Adornment="Adornment.Start"
                       AdornmentIcon="@Icons.Material.Filled.Search"
+                      Immediate="true"
                       IconSize="Size.Medium"
                       Class="mt-0">
         </MudTextField>
@@ -77,37 +78,45 @@
 
 @code {
 
-    List<ClassSchedule> schedules = [];
-    private ClassSchedule selectedSchedule = new();
+    private MudDataGrid<ClassSchedule> _grid = null!;
     private bool loadingData;
     private string searchString = "";
     MudMessageBox mbox { get; set; } = null!;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<GridData<ClassSchedule>> GetSchedules(GridState<ClassSchedule> state)
     {
         loadingData = true;
-        schedules = await Db.ClassSchedules
+
+        var query = Db.ClassSchedules
             .Include(x => x.Batch)
             .Include(x => x.Module)
             .Include(x => x.Instructor)
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            query = query.Where(x =>
+                x.Module!.Description.Contains(searchString) ||
+                x.Instructor!.Name.Contains(searchString));
+        }
+
+        var totalItems = await query.CountAsync();
+        var items = await query
             .OrderByDescending(x => x.ClassStart)
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
             .ToListAsync();
+
         loadingData = false;
+        return new GridData<ClassSchedule> { Items = items, TotalItems = totalItems };
     }
 
-    private bool FilterFunc1(ClassSchedule classSchedule) => FilterFunc(classSchedule, searchString);
-
-    private bool FilterFunc(ClassSchedule classSchedule, string searchString)
+    private async Task OnSearch(string value)
     {
-        if (string.IsNullOrWhiteSpace(searchString))
-            return true;
-
-        if (classSchedule.Module!.Description.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-        if (classSchedule.Instructor!.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
+        searchString = value;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
     }
 
     private async Task ConfirmDelete(ClassSchedule schedule)
@@ -123,7 +132,8 @@
         if (rowsAffected > 0)
         {
             SnackBar.Add("Schedule Deleted successfully", Severity.Success);
-            schedules.Remove(schedule);
+            if (_grid is not null)
+                await _grid.ReloadServerData();
         }
         else
         {

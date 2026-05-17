@@ -7,7 +7,7 @@
 
 <PageTitle>Customized Training Plans</PageTitle>
 
-<MudDataGrid Items="@trainings"
+<MudDataGrid T="Training" @ref="_grid" ServerData="@GetTrainings"
              Dense="true"
              Hover="true"
              Outlined
@@ -89,25 +89,32 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
-    private List<Training> trainings = [];
-
-    private bool loadingData = false;
+    private MudDataGrid<Training> _grid = null!;
+    private bool loadingData;
     private string searchString = string.Empty;
     private MudMessageBox mbox { get; set; } = null!;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<GridData<Training>> GetTrainings(GridState<Training> state)
     {
         loadingData = true;
 
-        trainings = await Db.Training
+        var query = Db.Training
             .Include(x => x.Organization)
             .Include(x => x.Instructor)
             .Include(x => x.CourseQuote)
             .ThenInclude(y => y.Modules)
+            .AsNoTracking()
+            .AsQueryable();
+
+        var totalItems = await query.CountAsync();
+        var items = await query
             .OrderByDescending(x => x.Created)
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
             .ToListAsync();
 
         loadingData = false;
+        return new GridData<Training> { Items = items, TotalItems = totalItems };
     }
 
     private void TrainingStatusChanged(Training training, TrainingStatus status)
@@ -136,7 +143,8 @@
         if (rowsAffected > 0)
         {
             SnackBar.Add("Training plan deleted successfully", Severity.Success);
-            trainings.Remove(training);
+            if (_grid is not null)
+                await _grid.ReloadServerData();
         }
         else
         {

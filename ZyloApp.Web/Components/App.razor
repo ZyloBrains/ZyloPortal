@@ -20,22 +20,13 @@
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
 
-    <HeadOutlet @rendermode="@PageRenderMode" />
+    <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: false)" />
 </head>
 
 <body>
-    <Routes @rendermode="@PageRenderMode" />
+    <Routes @rendermode="new InteractiveServerRenderMode(prerender: false)" />
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script> 
 </body>
 
 </html>
-
-
-@code {
-    [CascadingParameter]    
-    private HttpContext HttpContext { get; set; } = default!;
-
-    private IComponentRenderMode? PageRenderMode => 
-        HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
-}

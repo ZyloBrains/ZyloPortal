@@ -7,12 +7,11 @@
 
 <PageTitle>Revenues</PageTitle>
 
-<MudDataGrid T="Revenue"
+<MudDataGrid T="Revenue" @ref="_grid"
              MultiSelection="true"
-             Items="@revenues"
+             ServerData="@GetRevenues"
              SortMode="SortMode.Multiple"
              Hover="true"
-             QuickFilter="@_quickFilter"
              Loading="loadingData"
              ReadOnly="false"
              Dense="true"
@@ -27,9 +26,11 @@
                 Color="Color.Tertiary">
         </MudFab>
         <MudSpacer />
-        <MudTextField @bind-Value="_searchString"
+        <MudTextField Value="@_searchString"
+                      ValueChanged="(string v) => OnSearch(v)"
                       Placeholder="Search"
                       Adornment="Adornment.Start"
+                      Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search"
                       IconSize="Size.Medium"
                       Class="mt-0">
@@ -108,9 +109,9 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
-    private List<Revenue> revenues = [];
+    private MudDataGrid<Revenue> _grid = null!;
     private string _searchString = string.Empty;
-    private bool loadingData = false;
+    private bool loadingData;
 
     AggregateDefinition<Revenue> AmountAggregation = new()
         {
@@ -122,36 +123,36 @@
             }
         };
 
-    private Func<Revenue, bool> _quickFilter => x =>
-    {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
-
-        if (x.Particulars.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Amount.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Source.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Frequency.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
-    };
-
-    protected override async Task OnInitializedAsync()
+    private async Task<GridData<Revenue>> GetRevenues(GridState<Revenue> state)
     {
         loadingData = true;
 
-        revenues = await db.Revenues
-            .AsNoTracking()
+        var query = db.Revenues.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(_searchString))
+        {
+            query = query.Where(x =>
+                x.Particulars.Contains(_searchString) ||
+                x.Source.ToString().Contains(_searchString) ||
+                x.Frequency.ToString().Contains(_searchString));
+        }
+
+        var totalItems = await query.CountAsync();
+        var items = await query
             .OrderByDescending(x => x.Date)
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
             .ToListAsync();
 
         loadingData = false;
+        return new GridData<Revenue> { Items = items, TotalItems = totalItems };
+    }
+
+    private async Task OnSearch(string value)
+    {
+        _searchString = value;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
     }
 
     async Task CommittedItemChanges(Revenue item)
