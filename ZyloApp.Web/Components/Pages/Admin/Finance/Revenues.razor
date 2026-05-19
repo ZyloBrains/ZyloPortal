@@ -25,12 +25,24 @@
                 Size="Size.Small"
                 Color="Color.Tertiary">
         </MudFab>
+        <MudSelect Value="_selectedYear"
+                   ValueChanged="(int y) => OnYearChanged(y)"
+                   Label="Year"
+                   Variant="Variant.Outlined"
+                   Dense="true"
+                   Class="mt-0 ml-2"
+                   Style="width: 100px"
+                   Immediate="true">
+            @foreach (var year in _availableYears)
+            {
+                <MudSelectItem Value="@year">@year</MudSelectItem>
+            }
+        </MudSelect>
         <MudSpacer />
         <MudTextField Value="@_searchString"
                       ValueChanged="(string v) => OnSearch(v)"
                       Placeholder="Search"
                       Adornment="Adornment.Start"
-                      Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search"
                       IconSize="Size.Medium"
                       Class="mt-0">
@@ -65,6 +77,11 @@
             </EditTemplate>
         </TemplateColumn>
 
+        <TemplateColumn Title="Month" Groupable="true">
+            <CellTemplate>
+                @context.Item.Date?.ToString("MMM yyyy")
+            </CellTemplate>
+        </TemplateColumn>
         <TemplateColumn Title="Date">
             <CellTemplate>
                 @context.Item.Date?.ToString("D")
@@ -112,6 +129,8 @@
     private MudDataGrid<Revenue> _grid = null!;
     private string _searchString = string.Empty;
     private bool loadingData;
+    private int _selectedYear = DateTime.Now.Year;
+    private int[] _availableYears => Enumerable.Range(DateTime.Now.Year - 4, 6).ToArray();
 
     AggregateDefinition<Revenue> AmountAggregation = new()
         {
@@ -129,6 +148,8 @@
 
         var query = db.Revenues.AsNoTracking();
 
+        query = query.Where(x => x.Date!.Value.Year == _selectedYear);
+
         if (!string.IsNullOrWhiteSpace(_searchString))
         {
             query = query.Where(x =>
@@ -139,7 +160,7 @@
 
         var totalItems = await query.CountAsync();
         var items = await query
-            .OrderByDescending(x => x.Date)
+            .OrderBy(x => x.Date)
             .Skip(state.Page * state.PageSize)
             .Take(state.PageSize)
             .ToListAsync();
@@ -151,6 +172,13 @@
     private async Task OnSearch(string value)
     {
         _searchString = value;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
+    }
+
+    private async Task OnYearChanged(int year)
+    {
+        _selectedYear = year;
         if (_grid is not null)
             await _grid.ReloadServerData();
     }

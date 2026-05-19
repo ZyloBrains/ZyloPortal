@@ -1,66 +1,103 @@
 ﻿@page "/budgeting"
 
-@inject ApplicationDbContext Db
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
-<PageTitle>Batch Budgeting</PageTitle>
+<PageTitle>Finance Dashboard</PageTitle>
 
-@if (batchBudgets is null)
+@if (loadingData)
 {
     <Loading />
-}
-else if(batchBudgets is [])
-{
-    <ApplicationAlert Type="Severity.Warning" Text="No budget plans found for any batch." />
 }
 else
 {
     <MudGrid>
         <MudItem md="12">
-            <MudFab Href="/budgeting/adjust"
-                    Class="mt-2"
-                    StartIcon="@Icons.Material.Filled.Add"
-                    title="Adjust Batch Budgets"
-                    Size="MudBlazor.Size.Small"
-                    Color="MudBlazor.Color.Tertiary">
-            </MudFab>
+            <MudPaper Elevation="5" Class="pa-5">
+                <MudText Typo="Typo.h6" Class="mb-4">Monthly Revenue vs Expenses</MudText>
+                <MudChart ChartType="ChartType.Bar" Width="100%" Height="400px" LegendPosition="Position.Bottom"
+                          ChartSeries="@financeSeries"
+                          InputLabels="@monthlyFinanceLabels" />
+            </MudPaper>
         </MudItem>
-        @foreach (var batchBudget in batchBudgets ?? [])
-        {
-            <MudItem md="4">
-                <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
-                    <MudText Typo="Typo.h6" Class="mb-3">@batchBudget.Key</MudText>
-                    <MudChart  ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
-                              InputData="@batchBudget.Value.Values"
-                              InputLabels="@batchBudget.Value.Labels">
-                        <CustomGraphics>
-                            <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="25">Total</text>
-                            <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@batchBudget.Value.Values.Sum().ToString()</text>
-                        </CustomGraphics>
-                    </MudChart>
-                </MudPaper>
-            </MudItem>
-        }
+        <MudItem md="4">
+            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
+                <MudText Typo="Typo.subtitle1">Total Revenue</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Success">@totalRevenue.ToString("N0")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem md="4">
+            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
+                <MudText Typo="Typo.subtitle1">Total Expenses</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Error">@totalExpenses.ToString("N0")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem md="4">
+            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
+                <MudText Typo="Typo.subtitle1">Average Gross Margin</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Primary">@avgMargin.ToString("N1")%</MudText>
+            </MudPaper>
+        </MudItem>
     </MudGrid>
 }
 
 @code {
 
-    private record BatchBudgetRoot(string Batch, float? Revenue)
-    {
-        public IEnumerable<BatchBudget>? Budgets { get; set; }
-    }
+    bool loadingData = false;
 
-    private string _searchString = string.Empty;
-    private KeyValuePair<string, (string[] Labels, double[] Values)>[] batchBudgets = null!;
-
+    string[] monthlyFinanceLabels = [];
+    double[] monthlyRevenueData = [];
+    double[] monthlyExpenseData = [];
+    double[] monthlyMarginData = [];
+    List<MudBlazor.ChartSeries> financeSeries = [];
+    double totalRevenue;
+    double totalExpenses;
+    double avgMargin;
 
     protected override async Task OnInitializedAsync()
     {
-        var batchBudgetsDb = await Db.BatchBudgets
-            .Include(x => x.Batch)
-            .GroupBy(x => x.Batch.Name)
+        loadingData = true;
+
+        using var Db = DbFactory.CreateDbContext();
+
+        var monthlyRevenue = await Db.Revenues
+            .Where(r => r.Date != null)
+            .GroupBy(r => new { r.Date.Value.Year, r.Date.Value.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(r => r.Amount) })
             .ToListAsync();
 
-        batchBudgets = batchBudgetsDb.Select(x => new KeyValuePair<string, (string[], double[])>(x.Key, (x.Select(y => y.BudgetType.ToString()).ToArray(), x.Select(y => (double)y.Allocation).ToArray()))).ToArray();
+        var monthlyExpenses = await Db.Expenses
+            .Where(e => e.Date != null)
+            .GroupBy(e => new { e.Date.Value.Year, e.Date.Value.Month })
+            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(e => e.Amount) })
+            .ToListAsync();
+
+        var allMonths = monthlyRevenue.Select(x => (x.Year, x.Month))
+            .Union(monthlyExpenses.Select(x => (x.Year, x.Month)))
+            .OrderBy(x => x.Year).ThenBy(x => x.Month)
+            .ToList();
+
+        var monthNames = new[] { "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+        monthlyFinanceLabels = allMonths.Select(x => $"{monthNames[x.Month]} {x.Year}").ToArray();
+        monthlyRevenueData = allMonths.Select(x => (double)(monthlyRevenue.FirstOrDefault(r => r.Year == x.Year && r.Month == x.Month)?.Total ?? 0)).ToArray();
+        monthlyExpenseData = allMonths.Select(x => (double)(monthlyExpenses.FirstOrDefault(e => e.Year == x.Year && e.Month == x.Month)?.Total ?? 0)).ToArray();
+        monthlyMarginData = allMonths.Select(x =>
+        {
+            var rev = (double)(monthlyRevenue.FirstOrDefault(r => r.Year == x.Year && r.Month == x.Month)?.Total ?? 0);
+            var exp = (double)(monthlyExpenses.FirstOrDefault(e => e.Year == x.Year && e.Month == x.Month)?.Total ?? 0);
+            if (rev == 0) return 0;
+            return Math.Round((rev - exp) / rev * 100, 1);
+        }).ToArray();
+
+        financeSeries =
+        [
+            new() { Name = "Revenue", Data = monthlyRevenueData },
+            new() { Name = "Expenses", Data = monthlyExpenseData }
+        ];
+
+        totalRevenue = monthlyRevenueData.Sum();
+        totalExpenses = monthlyExpenseData.Sum();
+        avgMargin = monthlyMarginData.Length > 0 ? monthlyMarginData.Average() : 0;
+
+        loadingData = false;
     }
 }
