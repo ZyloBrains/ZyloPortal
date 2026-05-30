@@ -204,7 +204,7 @@
         allBatches = await Db.Batches.OrderBy(x => x.Name).AsNoTracking().ToListAsync();
     }
 
-    private async Task<GridData<StudentViewModel>> GetApplicants(GridState<StudentViewModel> state)
+    private async Task<GridData<StudentViewModel>> GetApplicants(GridState<StudentViewModel> state, CancellationToken ct)
     {
         loadingData = true;
 

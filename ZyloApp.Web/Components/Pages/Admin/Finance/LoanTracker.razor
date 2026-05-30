@@ -140,7 +140,7 @@
             }
         };
 
-    private async Task<GridData<LoanViewModel>> GetLoans(GridState<LoanViewModel> state)
+    private async Task<GridData<LoanViewModel>> GetLoans(GridState<LoanViewModel> state, CancellationToken ct)
     {
         loadingData = true;
 
@@ -172,11 +172,11 @@
             await _grid.ReloadServerData();
     }
 
-    async Task CommittedItemChanges(LoanViewModel item)
+    async Task<DataGridEditFormAction> CommittedItemChanges(LoanViewModel item)
     {
         if (item is null)
-            return;
-            var model = item.ToModel();
+            return DataGridEditFormAction.Close;
+        var model = item.ToModel();
         var state = await AuthTask;
         var userName = state.User.Identity?.Name;
 
@@ -203,6 +203,8 @@
         {
             SnackBar.Add("Loan update failed", Severity.Error);
         }
+
+        return DataGridEditFormAction.Close;
     }
    
 }

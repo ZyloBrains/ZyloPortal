@@ -28,9 +28,10 @@
                    Label="Tags"
                    Dense="true"
                    MultiSelection="true"
-                   @bind-SelectedValues="@tagsSelected"
+                    SelectedValues="@tagsSelected"
+                   SelectedValuesChanged="@((IReadOnlyCollection<Tag> v) => tagsSelected = v)"
                    Class="mt-3"
-                   MultiSelectionTextFunc="@(new Func<List<string>, string>(GetMultiSelectionText))"
+                   MultiSelectionTextFunc="@((IReadOnlyList<string> v) => GetMultiSelectionText(v))"
                    Variant="Variant.Outlined">
             @foreach (var tag in tags)
             {
@@ -75,7 +76,7 @@
 
     Instructor model = new();
     List<Tag> tags = new();
-    IEnumerable<Tag> tagsSelected = [];
+    IReadOnlyCollection<Tag> tagsSelected = [];
     string pageTitle = string.Empty;
     bool IsAdd => Id is null or 0;
     string password = string.Empty;
@@ -176,7 +177,7 @@
         }
     }
 
-    private string GetMultiSelectionText(List<string> selectedValues)
+    private string GetMultiSelectionText(IReadOnlyList<string> selectedValues)
     {
         return $"{selectedValues.Count} tag{(selectedValues.Count > 1 ? "s have" : " has")} been selected";
     }

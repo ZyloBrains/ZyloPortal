@@ -17,7 +17,8 @@
                MultiSelection
                Dense
                Placeholder="Select course modules"
-               @bind-SelectedValues="@selectedModules"
+                SelectedValues="@selectedModules"
+                SelectedValuesChanged="@((IReadOnlyCollection<Widget> v) => selectedModules = v)"
                ToStringFunc="x => x.Description"
                Variant="Variant.Outlined"
                Class="my-3">
@@ -39,7 +40,7 @@
 
     CourseQuote model = new() { PricePerUnit = 2500f };
     List<Widget> techModules = [];
-    IEnumerable<Widget> selectedModules = [];
+    IReadOnlyCollection<Widget> selectedModules = [];
 
     protected override async Task OnInitializedAsync()
     {

@@ -89,7 +89,7 @@
     private string _searchString = string.Empty;
     private bool loadingData;
 
-    private async Task<GridData<ReviewFormViewModel>> GetReviewForms(GridState<ReviewFormViewModel> state)
+    private async Task<GridData<ReviewFormViewModel>> GetReviewForms(GridState<ReviewFormViewModel> state, CancellationToken ct)
     {
         loadingData = true;
 

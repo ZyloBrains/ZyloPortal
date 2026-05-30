@@ -63,7 +63,7 @@
     private string searchString = string.Empty;
     private MudMessageBox mbox { get; set; } = null!;
 
-    private async Task<GridData<CourseQuote>> GetQuotes(GridState<CourseQuote> state)
+    private async Task<GridData<CourseQuote>> GetQuotes(GridState<CourseQuote> state, CancellationToken ct)
     {
         loadingData = true;
 

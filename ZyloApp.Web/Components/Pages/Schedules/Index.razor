@@ -82,7 +82,7 @@
     private string searchString = "";
     MudMessageBox mbox { get; set; } = null!;
 
-    private async Task<GridData<ClassSchedule>> GetSchedules(GridState<ClassSchedule> state)
+    private async Task<GridData<ClassSchedule>> GetSchedules(GridState<ClassSchedule> state, CancellationToken ct)
     {
         loadingData = true;
 

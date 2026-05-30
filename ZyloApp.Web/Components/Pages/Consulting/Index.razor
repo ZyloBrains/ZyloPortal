@@ -94,7 +94,7 @@
     private string searchString = string.Empty;
     private MudMessageBox mbox { get; set; } = null!;
 
-    private async Task<GridData<Training>> GetTrainings(GridState<Training> state)
+    private async Task<GridData<Training>> GetTrainings(GridState<Training> state, CancellationToken ct)
     {
         loadingData = true;
 

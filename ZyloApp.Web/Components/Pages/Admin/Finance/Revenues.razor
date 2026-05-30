@@ -142,7 +142,7 @@
             }
         };
 
-    private async Task<GridData<Revenue>> GetRevenues(GridState<Revenue> state)
+    private async Task<GridData<Revenue>> GetRevenues(GridState<Revenue> state, CancellationToken ct)
     {
         loadingData = true;
 
@@ -183,10 +183,10 @@
             await _grid.ReloadServerData();
     }
 
-    async Task CommittedItemChanges(Revenue item)
+    async Task<DataGridEditFormAction> CommittedItemChanges(Revenue item)
     {
         if (item is null)
-            return;
+            return DataGridEditFormAction.Close;
 
         var state = await AuthTask;
         var userName = state.User.Identity?.Name;
@@ -207,5 +207,7 @@
         _ = rowsAffected > 0 ?
             SnackBar.Add("Revenue source updated successfully", Severity.Success) :
             SnackBar.Add("Revenue update failed", Severity.Error);
+
+        return DataGridEditFormAction.Close;
     }
 }

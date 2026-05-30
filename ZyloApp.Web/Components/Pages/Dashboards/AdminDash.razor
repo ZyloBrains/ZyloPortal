@@ -16,9 +16,9 @@ else
     <MudGrid>
         <MudItem md="4">
             <MudPaper Elevation="5" Class="pa-5">
-                <MudChart ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
-                          InputData="@studentByTypesCount"
-                          InputLabels="@studentByTypesKeys">
+                <MudChart T="double" ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
+                          ChartSeries="@studentByTypesSeries"
+                          ChartLabels="@studentByTypesKeys">
                     <CustomGraphics>
                         <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="25">Total</text>
                         <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@studentByTypesCount.Sum().ToString()</text>
@@ -29,9 +29,9 @@ else
 
         <MudItem md="4">
             <MudPaper Elevation="5" Class="pa-5">
-                <MudChart ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
-                          InputData="@studentByStatusCount"
-                          InputLabels="@studentByStatusKeys">
+                <MudChart T="double" ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
+                          ChartSeries="@studentByStatusSeries"
+                          ChartLabels="@studentByStatusKeys">
                     <CustomGraphics>
                         <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="25">Total</text>
                         <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@studentByStatusCount.Sum().ToString()</text>
@@ -42,9 +42,9 @@ else
 
         <MudItem md="4">
             <MudPaper Elevation="5" Class="pa-5">
-                <MudChart ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
-                          InputData="@studentByBatchCount"
-                          InputLabels="@studentByBatchKeys">
+                <MudChart T="double" ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
+                          ChartSeries="@studentByBatchSeries"
+                          ChartLabels="@studentByBatchKeys">
                     <CustomGraphics>
                         <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="25">Total</text>
                         <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@studentByBatchCount.Sum().ToString()</text>
@@ -146,6 +146,9 @@ else
     double[] studentByStatusCount = [];
     string[] studentByBatchKeys = [];
     double[] studentByBatchCount = [];
+    List<ChartSeries<double>> studentByTypesSeries = [];
+    List<ChartSeries<double>> studentByStatusSeries = [];
+    List<ChartSeries<double>> studentByBatchSeries = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -185,6 +188,10 @@ else
 
             studentByBatchKeys = studentsByBatch.Select(x => x.Label).ToArray();
             studentByBatchCount = studentsByBatch.Select(x => x.Count).ToArray();
+
+            studentByTypesSeries = studentByTypesCount.AsChartDataSet();
+            studentByStatusSeries = studentByStatusCount.AsChartDataSet();
+            studentByBatchSeries = studentByBatchCount.AsChartDataSet();
 
             lastnDaysIds = GetLastNDaysStudnets(days);
 

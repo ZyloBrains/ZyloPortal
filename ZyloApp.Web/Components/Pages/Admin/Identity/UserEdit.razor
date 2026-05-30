@@ -22,7 +22,8 @@
                    Variant="Variant.Outlined"
                    Label="Roles assigned"
                    MultiSelection="true"
-                   @bind-SelectedValues="@selectedRoles"
+                   SelectedValues="@selectedRoles"
+                   SelectedValuesChanged="@((IReadOnlyCollection<string> v) => selectedRoles = v)"
                    Class="my-3">
             @foreach (var role in roles)
             {
@@ -54,15 +55,15 @@
 
     ApplicationUser model = new();
     List<string?> roles = [];
-    IEnumerable<string> selectedRoles = [];
-    IEnumerable<string> userRoles = [];
+    IReadOnlyCollection<string> selectedRoles = [];
+    IReadOnlyCollection<string> userRoles = [];
 
     protected override async Task OnInitializedAsync()
     {
         model = await UserManager.FindByIdAsync(Id) ?? new();
         roles = await RoleManager.Roles.Select(x => x.Name).ToListAsync() ?? [];
-        userRoles = await UserManager.GetRolesAsync(model);
-        selectedRoles = userRoles;
+        userRoles = (await UserManager.GetRolesAsync(model)).ToList();
+        selectedRoles = userRoles.ToList();
     }
 
     private async Task OnValidSubmit(EditContext context)

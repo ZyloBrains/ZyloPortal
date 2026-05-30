@@ -64,7 +64,7 @@
     private string _searchString = string.Empty;
     private bool loadingData;
 
-    private async Task<GridData<Attendance>> GetAttendances(GridState<Attendance> state)
+    private async Task<GridData<Attendance>> GetAttendances(GridState<Attendance> state, CancellationToken ct)
     {
         loadingData = true;
 

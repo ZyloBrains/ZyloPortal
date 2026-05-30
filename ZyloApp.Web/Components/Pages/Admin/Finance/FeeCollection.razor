@@ -142,7 +142,7 @@
             }
         };
 
-    private async Task<GridData<StudentFeeViewModel>> GetStudentFees(GridState<StudentFeeViewModel> state)
+    private async Task<GridData<StudentFeeViewModel>> GetStudentFees(GridState<StudentFeeViewModel> state, CancellationToken ct)
     {
         loadingData = true;
 
@@ -179,10 +179,10 @@
             await _grid.ReloadServerData();
     }
 
-    async Task CommittedItemChanges(StudentFeeViewModel item)
+    async Task<DataGridEditFormAction> CommittedItemChanges(StudentFeeViewModel item)
     {
         if (item is null)
-            return;
+            return DataGridEditFormAction.Close;
 
         var state = await AuthTask;
         var userName = state.User.Identity?.Name;
@@ -202,5 +202,7 @@
         {
             SnackBar.Add("Fee Account Save Failed", Severity.Error);
         }
+
+        return DataGridEditFormAction.Close;
     }
 }
