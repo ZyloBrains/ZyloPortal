@@ -62,12 +62,12 @@
 
         <AuthorizeView Roles="@Role.SuperAdmin">
             <MudNavGroup Title="Finance" Icon="@Icons.Material.Filled.Money" IconColor="Color.Tertiary">
+                <MudNavLink Href="/budgeting" Icon="@Icons.Material.Filled.PieChart" IconColor="Color.Tertiary">Dashboard</MudNavLink>
                 <MudNavLink Href="/revenues" Icon="@Icons.Material.Filled.CurrencyRupee" IconColor="Color.Tertiary">Revenue Sources</MudNavLink>
                 <MudNavLink Href="/expenses" Icon="@Icons.Material.Filled.MoneyOffCsred" IconColor="Color.Tertiary">Expenses</MudNavLink>
                 <MudNavLink Href="/financial-statement" Icon="@Icons.Material.Filled.AccountBalance" IconColor="Color.Tertiary">Statement</MudNavLink>
                 <MudNavLink Href="/feecollection" Icon="@Icons.Material.Filled.Payments" IconColor="Color.Tertiary">Fee Collection</MudNavLink>
                 <MudNavLink Href="/loan" Icon="@Icons.Material.Filled.AccountTree" IconColor="Color.Tertiary">Loan Tracker</MudNavLink>
-                <MudNavLink Href="/budgeting" Icon="@Icons.Material.Filled.PieChart" IconColor="Color.Tertiary">Batch Budgeting</MudNavLink>
             </MudNavGroup>
             <MudNavGroup Title="User Accounts" Icon="@Icons.Material.Filled.ManageAccounts" IconColor="Color.Warning">
                 <MudNavLink Href="/identity/roles" Icon="@Icons.Material.Filled.Security" IconColor="Color.Warning">Roles</MudNavLink>
