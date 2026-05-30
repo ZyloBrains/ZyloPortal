@@ -1,4 +1,5 @@
 ﻿@page "/budgeting"
+@using MudBlazor.Charts
 
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 
@@ -14,9 +15,12 @@ else
         <MudItem md="12">
             <MudPaper Elevation="5" Class="pa-5">
                 <MudText Typo="Typo.h6" Class="mb-4">Monthly Revenue vs Expenses</MudText>
-                <MudChart ChartType="ChartType.Bar" Width="100%" Height="400px" LegendPosition="Position.Bottom"
-                          ChartSeries="@financeSeries"
-                          InputLabels="@monthlyFinanceLabels" />
+                <MudPaper Class="doc-section-component-container">
+                    <MudChart ChartType="ChartType.StackedBar" ChartSeries="@StackedDataSet" ChartLabels="@monthlyFinanceLabels"
+                              ChartOptions="@_barChartOptions" MatchBoundsToSize="true" Width="100%" Height="500px">
+                        <Line ChartSeries="@LineDataSet" ChartOptions="@_lineChartOptions" />
+                    </MudChart>
+                </MudPaper>
             </MudPaper>
         </MudItem>
         <MudItem md="4">
@@ -44,14 +48,33 @@ else
 
     bool loadingData = false;
 
-    string[] monthlyFinanceLabels = [];
-    double[] monthlyRevenueData = [];
-    double[] monthlyExpenseData = [];
-    double[] monthlyMarginData = [];
-    List<MudBlazor.ChartSeries> financeSeries = [];
+    string[] monthlyFinanceLabels = Array.Empty<string>();
+    double[] monthlyRevenueData = Array.Empty<double>();
+    double[] monthlyExpenseData = Array.Empty<double>();
     double totalRevenue;
     double totalExpenses;
     double avgMargin;
+
+    List<ChartSeries<double>> budgetSeries = new();
+
+    private List<ChartSeries<double>> StackedDataSet = new();
+
+    private StackedBarChartOptions _barChartOptions = new StackedBarChartOptions()
+    {
+        ChartPalette = new[] { "#00c853", "#f44336" },
+        BarWidthRatio = .75,
+        YAxisTicks = 400,
+        YAxisSuggestedMax = 1600,
+    };
+
+    private List<ChartSeries<double>> LineDataSet = new();
+
+    private LineChartOptions _lineChartOptions = new LineChartOptions()
+    {
+        ChartPalette = new[] { "#eeff1b" },
+        ShowDataMarkers = true,
+        LineStrokeWidth = 2.8,
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -60,43 +83,55 @@ else
         using var Db = DbFactory.CreateDbContext();
 
         var monthlyRevenue = await Db.Revenues
-            .Where(r => r.Date != null)
-            .GroupBy(r => new { r.Date.Value.Year, r.Date.Value.Month })
-            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(r => r.Amount) })
-            .ToListAsync();
+        .Where(r => r.Date != null && r.Date.Value.Year == DateTime.Now.Year)
+        .GroupBy(r => new { r.Date.Value.Year, r.Date.Value.Month })
+        .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(r => r.Amount) })
+        .ToListAsync();
 
         var monthlyExpenses = await Db.Expenses
-            .Where(e => e.Date != null)
-            .GroupBy(e => new { e.Date.Value.Year, e.Date.Value.Month })
-            .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(e => e.Amount) })
-            .ToListAsync();
+        .Where(e => e.Date != null && e.Date.Value.Year == DateTime.Now.Year)
+        .GroupBy(e => new { e.Date.Value.Year, e.Date.Value.Month })
+        .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(e => e.Amount) })
+        .ToListAsync();
 
-        var allMonths = monthlyRevenue.Select(x => (x.Year, x.Month))
-            .Union(monthlyExpenses.Select(x => (x.Year, x.Month)))
-            .OrderBy(x => x.Year).ThenBy(x => x.Month)
-            .ToList();
+        var monthNames = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+        monthlyFinanceLabels = monthNames.Select(x => $"{x} {DateTime.Now.Year}").ToArray();
 
-        var monthNames = new[] { "", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-        monthlyFinanceLabels = allMonths.Select(x => $"{monthNames[x.Month]} {x.Year}").ToArray();
-        monthlyRevenueData = allMonths.Select(x => (double)(monthlyRevenue.FirstOrDefault(r => r.Year == x.Year && r.Month == x.Month)?.Total ?? 0)).ToArray();
-        monthlyExpenseData = allMonths.Select(x => (double)(monthlyExpenses.FirstOrDefault(e => e.Year == x.Year && e.Month == x.Month)?.Total ?? 0)).ToArray();
-        monthlyMarginData = allMonths.Select(x =>
-        {
-            var rev = (double)(monthlyRevenue.FirstOrDefault(r => r.Year == x.Year && r.Month == x.Month)?.Total ?? 0);
-            var exp = (double)(monthlyExpenses.FirstOrDefault(e => e.Year == x.Year && e.Month == x.Month)?.Total ?? 0);
-            if (rev == 0) return 0;
-            return Math.Round((rev - exp) / rev * 100, 1);
-        }).ToArray();
+        // populate per-month arrays used elsewhere
+        monthlyRevenueData = Enumerable.Range(1, 12)
+            .Select(i => monthlyRevenue.FirstOrDefault(r => r.Month == i)?.Total ?? 0.0)
+            .ToArray();
 
-        financeSeries =
-        [
-            new() { Name = "Revenue", Data = monthlyRevenueData },
-            new() { Name = "Expenses", Data = monthlyExpenseData }
+        monthlyExpenseData = Enumerable.Range(1, 12)
+            .Select(i => monthlyExpenses.FirstOrDefault(e => e.Month == i)?.Total ?? 0.0)
+            .ToArray();
+
+        // Build stacked dataset: each series item contains a ChartData<double>
+        StackedDataSet = [
+            new ChartSeries<double> { Name = "Revenue", Data = new ChartData<double>(monthlyRevenueData) },
+            new ChartSeries<double> { Name = "Expenses", Data = new ChartData<double>(monthlyExpenseData.Select(x => -x).ToArray()) },
         ];
 
         totalRevenue = monthlyRevenueData.Sum();
         totalExpenses = monthlyExpenseData.Sum();
-        avgMargin = monthlyMarginData.Length > 0 ? monthlyMarginData.Average() : 0;
+
+        var margins = monthlyRevenueData.Select((rev, i) =>
+        {
+            var exp = monthlyExpenseData[i];
+            if (rev == 0) return 0.0;
+            return Math.Round((rev - exp) / rev * 100, 1);
+        }).ToArray();
+
+        LineDataSet = new List<ChartSeries<double>>
+        {
+            new ChartSeries<double>
+            {
+                Name = "Margin",
+                Data = new ChartData<double>(margins)
+            }
+        };
+
+        avgMargin = margins.Length > 0 ? margins.Average() : 0;
 
         loadingData = false;
     }
