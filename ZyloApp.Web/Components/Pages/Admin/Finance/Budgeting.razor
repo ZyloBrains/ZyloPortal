@@ -63,9 +63,17 @@ else
         </MudItem>
         <MudItem md="6" sm="12">
             <MudPaper Elevation="5" Class="pa-5">
-                <MudText Typo="Typo.h6" Class="mb-4">Year @_selectedYear Revenue by Frequency</MudText>
-                <MudChart ChartType="ChartType.Donut" ChartSeries="@_projectedSeries" ChartLabels="@_projectedLabels" Width="100%" Height="500px">
+                <MudText Typo="Typo.h6" Class="mb-4">Revenue by Project @(_selectedYear)</MudText>
+                <MudChart ChartType="ChartType.StackedBar" ChartSeries="@_projectRevenueSeries" ChartLabels="@_projectRevenueLabels"
+                          ChartOptions="@_projectRevenueOptions" MatchBoundsToSize="true" Width="100%" Height="500px">
                 </MudChart>
+            </MudPaper>
+        </MudItem>
+        <MudItem md="6" sm="12">
+            <MudPaper Elevation="5" Class="pa-5">
+                <MudText Typo="Typo.h6" Class="mb-4">Year @_selectedYear Revenue by Frequency</MudText>
+                    <MudChart ChartType="ChartType.Donut" ChartSeries="@_projectedSeries" ChartLabels="@_projectedLabels" LegendPosition="Position.Right" Height="500px">
+                    </MudChart>
             </MudPaper>
         </MudItem>
     </MudGrid>
@@ -107,7 +115,16 @@ else
 
     private string[] _projectedLabels = [];
     private List<ChartSeries<double>> _projectedSeries = [];
-    
+
+    private string[] _projectRevenueLabels = [];
+    private List<ChartSeries<double>> _projectRevenueSeries = [];
+
+    private StackedBarChartOptions _projectRevenueOptions = new()
+    {
+        ChartPalette = new[] { "#2196f3", "#ff9800" },
+        BarWidthRatio = 0.75,
+    };
+
     protected override async Task OnInitializedAsync()
     {
         await LoadBudgetData();
@@ -183,6 +200,23 @@ else
         _projectedSeries =
         [
             new ChartSeries<double> { Name = "Revenue", Data = new ChartData<double>(data) },
+        ];
+
+        // Load project revenue data
+        var projects = (await Db.Projects
+            .Where(p => p.InitialCost > 0 || (p.AmcCost.HasValue && p.AmcCost.Value > 0))
+            .ToListAsync())
+            .OrderByDescending(p => p.InitialCost + (p.AmcCost ?? 0))
+            .ToList();
+
+        _projectRevenueLabels = projects.Select(p => p.Title).ToArray();
+        var initialCosts = projects.Select(p => (double)p.InitialCost).ToArray();
+        var amcCosts = projects.Select(p => (double)(p.AmcCost ?? 0)).ToArray();
+
+        _projectRevenueSeries =
+        [
+            new ChartSeries<double> { Name = "Initial Cost", Data = new ChartData<double>(initialCosts), TooltipTitleFormat = "Rs. {{Y_VALUE}}" },
+            new ChartSeries<double> { Name = "AMC", Data = new ChartData<double>(amcCosts), TooltipTitleFormat = "Rs. {{Y_VALUE}}" }
         ];
 
         loadingData = false;
