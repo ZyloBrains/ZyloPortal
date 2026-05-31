@@ -18,6 +18,8 @@ else
                Dense="true"
                Class="mb-4"
                Style="width: 100px"
+               Adornment="Adornment.Start"
+               AdornmentIcon="@Icons.Material.Filled.CalendarToday"
                Immediate="true">
         @foreach (var year in _availableYears)
         {
@@ -25,6 +27,24 @@ else
         }
     </MudSelect>
     <MudGrid>
+        <MudItem md="4">
+            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
+                <MudText Typo="Typo.subtitle1">Revenue @(_selectedYear)</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Success">@totalRevenue.ToString("N0")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem md="4">
+            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
+                <MudText Typo="Typo.subtitle1">Expenses @(_selectedYear)</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Error">@totalExpenses.ToString("N0")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem md="4">
+            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
+                <MudText Typo="Typo.subtitle1">Gross Margin @(_selectedYear)</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Primary">@avgMargin.ToString("N1")%</MudText>
+            </MudPaper>
+        </MudItem>
         <MudItem md="6" sm="12">
             <MudPaper Elevation="5" Class="pa-5">
                 <MudText Typo="Typo.h6" Class="mb-4">Monthly Revenue vs Expenses</MudText>
@@ -40,25 +60,7 @@ else
                           ChartOptions="@_lineChartOptions" MatchBoundsToSize="true" Width="100%" Height="500px">
                 </MudChart>
             </MudPaper>
-        </MudItem>
-        <MudItem md="4">
-            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
-                <MudText Typo="Typo.subtitle1">Total Revenue</MudText>
-                <MudText Typo="Typo.h4" Color="Color.Success">@totalRevenue.ToString("N0")</MudText>
-            </MudPaper>
-        </MudItem>
-        <MudItem md="4">
-            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
-                <MudText Typo="Typo.subtitle1">Total Expenses</MudText>
-                <MudText Typo="Typo.h4" Color="Color.Error">@totalExpenses.ToString("N0")</MudText>
-            </MudPaper>
-        </MudItem>
-        <MudItem md="4">
-            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
-                <MudText Typo="Typo.subtitle1">Average Gross Margin</MudText>
-                <MudText Typo="Typo.h4" Color="Color.Primary">@avgMargin.ToString("N1")%</MudText>
-            </MudPaper>
-        </MudItem>
+        </MudItem>        
     </MudGrid>
 }
 
@@ -91,9 +93,9 @@ else
 
     private LineChartOptions _lineChartOptions = new LineChartOptions()
     {
-        ChartPalette = new[] { "#3333ff" },
+        ChartPalette = new[] { "#00bfff" },
         ShowDataMarkers = true,
-        LineStrokeWidth = 2.8,
+        LineStrokeWidth = 2.8
     };
 
     protected override async Task OnInitializedAsync()
@@ -152,7 +154,8 @@ else
             new ChartSeries<double>
             {
                 Name = "Margin",
-                Data = new ChartData<double>(margins)
+                Data = new ChartData<double>(margins),
+                TooltipTitleFormat = "{{Y_VALUE}}%"
             }
         };
 
