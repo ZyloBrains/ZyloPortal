@@ -60,7 +60,14 @@ else
                           ChartOptions="@_lineChartOptions" MatchBoundsToSize="true" Width="100%" Height="500px">
                 </MudChart>
             </MudPaper>
-        </MudItem>        
+        </MudItem>
+        <MudItem md="6" sm="12">
+            <MudPaper Elevation="5" Class="pa-5">
+                <MudText Typo="Typo.h6" Class="mb-4">Year @_selectedYear Revenue by Frequency</MudText>
+                <MudChart ChartType="ChartType.Donut" ChartSeries="@_projectedSeries" ChartLabels="@_projectedLabels" Width="100%" Height="500px">
+                </MudChart>
+            </MudPaper>
+        </MudItem>
     </MudGrid>
 }
 
@@ -98,6 +105,9 @@ else
         LineStrokeWidth = 2.8
     };
 
+    private string[] _projectedLabels = [];
+    private List<ChartSeries<double>> _projectedSeries = [];
+    
     protected override async Task OnInitializedAsync()
     {
         await LoadBudgetData();
@@ -109,11 +119,13 @@ else
 
         using var Db = DbFactory.CreateDbContext();
 
-        var monthlyRevenue = await Db.Revenues
-        .Where(r => r.Date != null && r.Date.Value.Year == _selectedYear)
+        var revenueItems = await Db.Revenues
+            .Where(r => r.Date != null && r.Date.Value.Year == _selectedYear)
+            .ToListAsync();
+
+        var monthlyRevenue = revenueItems
         .GroupBy(r => new { r.Date.Value.Year, r.Date.Value.Month })
-        .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(r => r.Amount) })
-        .ToListAsync();
+        .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(r => r.Amount) });
 
         var monthlyExpenses = await Db.Expenses
         .Where(e => e.Date != null && e.Date.Value.Year == _selectedYear)
@@ -133,7 +145,6 @@ else
             .Select(i => monthlyExpenses.FirstOrDefault(e => e.Month == i)?.Total ?? 0.0)
             .ToArray();
 
-        // Build stacked dataset: each series item contains a ChartData<double>
         StackedDataSet = [
             new ChartSeries<double> { Name = "Revenue", Data = new ChartData<double>(monthlyRevenueData) },
             new ChartSeries<double> { Name = "Expenses", Data = new ChartData<double>(monthlyExpenseData.Select(x => -x).ToArray()) },
@@ -160,6 +171,19 @@ else
         };
 
         avgMargin = margins.Length > 0 ? margins.Average() : 0;
+
+        // Load revenue by frequency for the selected year
+        var freqTotals = revenueItems
+            .GroupBy(r => r.Frequency)
+            .Select(g => new { Frequency = g.Key, Total = g.Sum(r => r.Amount) })
+            .ToDictionary(g => g.Frequency.ToString(), g => (double)g.Total);
+
+        _projectedLabels = freqTotals.Keys.ToArray();
+        var data = freqTotals.Values.ToArray();
+        _projectedSeries =
+        [
+            new ChartSeries<double> { Name = "Revenue", Data = new ChartData<double>(data) },
+        ];
 
         loadingData = false;
     }
