@@ -9,4 +9,7 @@ public class Revenue : BaseEntity
     public float Amount { get; set; }
     public DateTime? Date { get; set; } = DateTime.UtcNow;
     public Frequency Frequency { get; set; } = Frequency.OneTime;
+    public bool IsActive { get; set; } = true;
+    public int? ProjectId { get; set; }
+    public Project? Project { get; set; }
 }

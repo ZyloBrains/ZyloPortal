@@ -68,6 +68,24 @@
             </EditTemplate>
         </TemplateColumn>
 
+        <TemplateColumn Title="Project">
+            <CellTemplate>
+                @context.Item.Project?.Title
+            </CellTemplate>
+            <EditTemplate>
+                <MudSelect Variant="Variant.Outlined"
+                           @bind-Value="context.Item.ProjectId"
+                           Label="Project"
+                           Class="mt-4"
+                           Clearable="true">
+                    @foreach (var project in _projects)
+                    {
+                        <MudSelectItem T="int?" Value="@project.Id">@project.Title</MudSelectItem>
+                    }
+                </MudSelect>
+            </EditTemplate>
+        </TemplateColumn>
+
         <TemplateColumn Title="Amount" AggregateDefinition="AmountAggregation">
             <CellTemplate>
                 @context.Item.Amount.AsCurrency()
@@ -110,6 +128,15 @@
             </EditTemplate>
         </TemplateColumn>
 
+        <TemplateColumn Title="Active">
+            <CellTemplate>
+                <MudSwitch @bind-Value="@context.Item.IsActive" ReadOnly="true" Color="Color.Success" />
+            </CellTemplate>
+            <EditTemplate>
+                <MudSwitch @bind-Value="@context.Item.IsActive" Label="Active" Color="Color.Success" />
+            </EditTemplate>
+        </TemplateColumn>
+
         <TemplateColumn CellClass="d-flex justify-end">
             <CellTemplate>
                 <MudIconButton Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
@@ -131,6 +158,12 @@
     private bool loadingData;
     private int _selectedYear = DateTime.Now.Year;
     private int[] _availableYears => Enumerable.Range(DateTime.Now.Year - 4, 6).ToArray();
+    private List<Project> _projects = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _projects = await db.Projects.AsNoTracking().OrderBy(p => p.Title).ToListAsync();
+    }
 
     AggregateDefinition<Revenue> AmountAggregation = new()
         {
@@ -146,7 +179,7 @@
     {
         loadingData = true;
 
-        var query = db.Revenues.AsNoTracking();
+        IQueryable<Revenue> query = db.Revenues.AsNoTracking().Include(x => x.Project);
 
         query = query.Where(x => x.Date!.Value.Year == _selectedYear);
 
@@ -201,6 +234,8 @@
                 .SetProperty(y => y.Amount, item.Amount)
                 .SetProperty(y => y.Frequency, item.Frequency)
                 .SetProperty(y => y.Date, item.Date)
+                .SetProperty(y => y.IsActive, item.IsActive)
+                .SetProperty(y => y.ProjectId, item.ProjectId)
                 .SetProperty(y => y.LastUpdated, item.LastUpdated)
                 .SetProperty(y => y.LastUpdatedBy, item.LastUpdatedBy)
             );

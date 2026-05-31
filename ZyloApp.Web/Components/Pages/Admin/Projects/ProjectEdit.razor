@@ -14,8 +14,8 @@
     <MudTextField Label="RepoUrl" Class="mt-3" @bind-Value="model.RepoUrl" />
     <MudTextField Label="BoardUrl" Class="mt-3" @bind-Value="model.BoardUrl" />
     
-    <MudNumericField Label="Budget Allocated" Class="mt-3" @bind-Value="model.AllocatedBudget" />
-    <MudNumericField Label="Spent Budget" Class="mt-3" @bind-Value="model.SpentBudget" />
+    <MudNumericField Label="Initial Cost" Class="mt-3" @bind-Value="model.InitialCost" />
+    <MudNumericField Label="AMC Cost" Class="mt-3" @bind-Value="model.AmcCost" />
     
     <MudSelect T="ProjectProgressStatus" Label="Progress Status" Class="mt-3" @bind-Value="model.ProgressStatus">
         @foreach (ProjectProgressStatus status in Enum.GetValues(typeof(ProjectProgressStatus)))
