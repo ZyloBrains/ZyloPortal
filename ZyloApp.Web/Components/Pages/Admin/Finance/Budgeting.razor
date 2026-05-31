@@ -11,6 +11,19 @@
 }
 else
 {
+    <MudSelect Value="_selectedYear"
+               ValueChanged="(int y) => OnYearChanged(y)"
+               Label="Year"
+               Variant="Variant.Outlined"
+               Dense="true"
+               Class="mb-4"
+               Style="width: 100px"
+               Immediate="true">
+        @foreach (var year in _availableYears)
+        {
+            <MudSelectItem Value="@year">@year</MudSelectItem>
+        }
+    </MudSelect>
     <MudGrid>
         <MudItem md="6" sm="12">
             <MudPaper Elevation="5" Class="pa-5">
@@ -59,6 +72,8 @@ else
     double totalRevenue;
     double totalExpenses;
     double avgMargin;
+    private int _selectedYear = DateTime.Now.Year;
+    private int[] _availableYears => Enumerable.Range(DateTime.Now.Year - 4, 6).ToArray();
 
     List<ChartSeries<double>> budgetSeries = new();
 
@@ -83,24 +98,29 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadBudgetData();
+    }
+
+    private async Task LoadBudgetData()
+    {
         loadingData = true;
 
         using var Db = DbFactory.CreateDbContext();
 
         var monthlyRevenue = await Db.Revenues
-        .Where(r => r.Date != null && r.Date.Value.Year == DateTime.Now.Year)
+        .Where(r => r.Date != null && r.Date.Value.Year == _selectedYear)
         .GroupBy(r => new { r.Date.Value.Year, r.Date.Value.Month })
         .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(r => r.Amount) })
         .ToListAsync();
 
         var monthlyExpenses = await Db.Expenses
-        .Where(e => e.Date != null && e.Date.Value.Year == DateTime.Now.Year)
+        .Where(e => e.Date != null && e.Date.Value.Year == _selectedYear)
         .GroupBy(e => new { e.Date.Value.Year, e.Date.Value.Month })
         .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(e => e.Amount) })
         .ToListAsync();
 
         var monthNames = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-        monthlyFinanceLabels = monthNames.Select(x => $"{x} {DateTime.Now.Year}").ToArray();
+        monthlyFinanceLabels = monthNames.Select(x => $"{x} {_selectedYear}").ToArray();
 
         // populate per-month arrays used elsewhere
         monthlyRevenueData = Enumerable.Range(1, 12)
@@ -139,5 +159,11 @@ else
         avgMargin = margins.Length > 0 ? margins.Average() : 0;
 
         loadingData = false;
+    }
+
+    private async Task OnYearChanged(int year)
+    {
+        _selectedYear = year;
+        await LoadBudgetData();
     }
 }
