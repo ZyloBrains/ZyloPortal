@@ -4,12 +4,27 @@
 
 <PageTitle>Financial Statement</PageTitle>
 
+<div class="d-flex align-center my-4">
+    <MudSelect T="int"
+               Label="Select Year"
+               Variant="Variant.Outlined"
+               Value="selectedYear"
+               ValueChanged="@OnYearChanged"
+               Style="width: 200px">
+        @foreach (var year in years)
+        {
+            <MudSelectItem Value="year">@year</MudSelectItem>
+        }
+    </MudSelect>
+</div>
+
 <MudDataGrid Items="@budgets"
              Loading="@loading"
              NoRecordsContent="noTransactions"
              Dense>
     <Columns>
         <PropertyColumn Property="x => x.Title" Title="Particulars" />
+        <PropertyColumn Property="x => x.MonthYear" Title="Month" Grouping Groupable="true" />
         <PropertyColumn Property="x => x.Date" Title="Date" Filterable="true" Groupable="true">            
             <CellTemplate>
                 @context?.Item?.Date.Value.ToLongDateString()
@@ -55,12 +70,28 @@
 
     private List<AccountViewModel> budgets = [];
     bool loading = true;
+    int selectedYear = DateTime.Now.Year;
+    List<int> years = [];
     private RenderFragment noTransactions = @<ApplicationAlert Type="Severity.Warning" Text="No transactions recorded yet." />;
-    // private MudDataGrid<AccountViewModel> grid;
 
     protected override async Task OnInitializedAsync()
     {
-        var currentYear = DateTime.Now.Year;
+        years = [.. Enumerable.Range(2024, DateTime.Now.Year - 2024 + 1)];
+        await LoadData();
+    }
+
+    private async Task OnYearChanged(int year)
+    {
+        selectedYear = year;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        loading = true;
+        budgets = [];
+
+        var currentYear = selectedYear;
         var feeCollection = await Db.FinAccounts
             .Where(x => x.Enabled && x.Created.Value.Year == currentYear)
             .Select(y => new
@@ -71,7 +102,6 @@
             })
             .ToListAsync();
 
-        // Fee credits
         if (feeCollection is not null)
         {
             foreach (var fee in feeCollection)
@@ -87,7 +117,6 @@
             }
         }
 
-        // Other revenue source credits
         var otherRevenues = await Db.Revenues.Where(x => x.Date.Value.Year == currentYear).ToArrayAsync();
         if (otherRevenues is not null)
         {
@@ -104,10 +133,8 @@
             }
         }
 
-        // Operations debits
         var expenses = await Db.Expenses.Where(x => x.Created.Value.Year == currentYear).ToListAsync();
 
-        // Account debits
         if (expenses is not null)
         {
             foreach (var expense in expenses)
@@ -125,26 +152,11 @@
 
         budgets = budgets.OrderBy(x => x.Date).ToList();
 
-        // Maintain balance at each step
         for (int counter = 0; counter < budgets.Count; counter++)
         {
             var accumulation = budgets.Take(counter + 1);
             budgets[counter].Balance = accumulation.Sum(x => x.Credit) - accumulation.Sum(x => x.Debit);
         }
-
-        // Apply a default filter: Date == Current Year
-        // var dateColumn = grid.GetColumnByPropertyName(nameof(AccountViewModel.Date));
-        // if (dateColumn != null)
-        // {
-        //     grid.FilterDefinitions.Add(
-        //         new FilterDefinition<AccountViewModel>
-        //         {
-        //             Column = dateColumn,
-        //             Operator = FilterOperator.DateTime.OnOrAfter,
-        //             Value = new DateTime(DateTime.Now.Year, 1, 1)
-        //         }
-        //     );
-        // }
 
         loading = false;
     }
