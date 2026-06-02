@@ -43,6 +43,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<Site> Sites { get; set; }
     public DbSet<Section> Sections { get; set; }
     public DbSet<SectionItem> SectionItems { get; set; }
+    public DbSet<Quotation> Quotations { get; set; }
+    public DbSet<QuotationItem> QuotationItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
