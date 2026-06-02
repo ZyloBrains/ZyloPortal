@@ -9,12 +9,11 @@
 
 <PageTitle>Expenses</PageTitle>
 
-<MudDataGrid T="Expense"
+<MudDataGrid T="Expense" @ref="_grid"
              MultiSelection="true"
-             Items="@expenses"
+             ServerData="@GetExpenses"
              SortMode="SortMode.Multiple"
              Hover="true"
-             QuickFilter="@_quickFilter"
              Loading="loadingData"
              ReadOnly="true"
              Dense="true">
@@ -24,11 +23,24 @@
                 title="Add expense"
                 Size="Size.Small"
                 Color="Color.Tertiary" />
+        <MudSelect Value="_selectedYear"
+                   ValueChanged="(int y) => OnYearChanged(y)"
+                   Label="Year"                   
+                   Variant="Variant.Outlined"
+                   Dense="true"
+                   Class="mt-0 ml-2"
+                   Style="width: 100px"
+                   Immediate="true">
+            @foreach (var year in _availableYears)
+            {
+                <MudSelectItem Value="@year">@year</MudSelectItem>
+            }
+        </MudSelect>
         <MudSpacer />
-        <MudTextField @bind-Value="_searchString"
+        <MudTextField Value="@_searchString"
+                      ValueChanged="(string v) => OnSearch(v)"
                       Placeholder="Search"
                       Adornment="Adornment.Start"
-                      Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search"
                       IconSize="Size.Medium"
                       Class="mt-0"></MudTextField>
@@ -36,7 +48,11 @@
     <Columns>
         <PropertyColumn Property="x => x.Title" Title="Particulars" />
         <PropertyColumn Property="x => x.Description" Title="Details" />
-        <PropertyColumn Property="x => x.Date" Title="Date" Format="d" />
+        <TemplateColumn Title="Month" Groupable="true">
+            <CellTemplate>
+                @context.Item.Date?.ToString("MMM yyyy")
+            </CellTemplate>
+        </TemplateColumn>
         <PropertyColumn Property="x => x.ExpenseType" Title="Expense Type" Groupable="true" />
         <PropertyColumn Property="x => x.Frequency" Title="Frequency" Groupable="true" />
         <TemplateColumn Title="Amount" AggregateDefinition="AmountAggregation">
@@ -73,9 +89,11 @@
 
 @code {
 
-    private List<Expense> expenses = [];
+    private MudDataGrid<Expense> _grid = null!;
     private string _searchString = string.Empty;
-    private bool loadingData = false;
+    private bool loadingData;
+    private int _selectedYear = DateTime.Now.Year;
+    private int[] _availableYears => Enumerable.Range(DateTime.Now.Year - 4, 6).ToArray();
 
     AggregateDefinition<Expense> AmountAggregation = new()
     {
@@ -87,36 +105,47 @@
         }
     };
 
-    private Func<Expense, bool> _quickFilter => x =>
-    {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
-
-        if (x.Title.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Description.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.ExpenseType.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Frequency.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
-    };
-
-    protected override async Task OnInitializedAsync()
+    private async Task<GridData<Expense>> GetExpenses(GridState<Expense> state, CancellationToken ct)
     {
         loadingData = true;
 
-        expenses = await db.Expenses
+        var query = db.Expenses.AsNoTracking();
+
+        query = query.Where(x => x.Date!.Value.Year == _selectedYear);
+
+        if (!string.IsNullOrWhiteSpace(_searchString))
+        {
+            query = query.Where(x =>
+                x.Title.Contains(_searchString) ||
+                x.Description.Contains(_searchString) ||
+                x.ExpenseType.ToString().Contains(_searchString) ||
+                x.Frequency.ToString().Contains(_searchString));
+        }
+
+        var totalItems = await query.CountAsync();
+        var items = await query
+            .OrderBy(x => x.Date)
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
             .AsNoTracking()
-            .OrderByDescending(x => x.Created)
             .ToListAsync();
 
         loadingData = false;
+        return new GridData<Expense> { Items = items, TotalItems = totalItems };
+    }
+
+    private async Task OnSearch(string value)
+    {
+        _searchString = value;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
+    }
+
+    private async Task OnYearChanged(int year)
+    {
+        _selectedYear = year;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
     }
 
     private async Task OpenBillImage(Expense item)

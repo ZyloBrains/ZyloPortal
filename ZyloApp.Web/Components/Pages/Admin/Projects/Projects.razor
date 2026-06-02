@@ -36,7 +36,7 @@
         <MudTh>Organization</MudTh>
         <MudTh>Domain</MudTh>
         <MudTh>Status</MudTh>
-        <MudTh>Budget</MudTh>
+        <MudTh>Cost</MudTh>
         <MudTh>Repository</MudTh>
         <MudTh>Board</MudTh>
         <MudTh></MudTh>
@@ -48,7 +48,13 @@
         <MudTd DataLabel="Organization">@(context.OrganizationName ?? "N/A")</MudTd>
         <MudTd DataLabel="Domain">@context.BusinessDomain</MudTd>
         <MudTd DataLabel="Status">@context.ProgressStatus</MudTd>
-        <MudTd DataLabel="Budget">@context.AllocatedBudget.AsCurrency()</MudTd>
+        <MudTd DataLabel="Cost">
+            <span>Initial: @context.InitialCost.AsCurrency()</span>
+            @if (context.AmcCost.HasValue)
+            {
+                <span class="ml-2">| AMC: @context.AmcCost?.AsCurrency()</span>
+            }
+        </MudTd>
         <MudTd DataLabel="RepoUrl"><MudLink Href="@context.RepoUrl" Target="_blank">Browse<MudIcon Icon="@Icons.Material.Sharp.OpenInNew" Size="Size.Small" /></MudLink></MudTd>
         <MudTd DataLabel="BoardUrl"><MudLink Href="@context.BoardUrl" Target="_blank">Browse<MudIcon Icon="@Icons.Material.Sharp.OpenInNew" Size="Size.Small" /></MudLink></MudTd>
         <MudTd>

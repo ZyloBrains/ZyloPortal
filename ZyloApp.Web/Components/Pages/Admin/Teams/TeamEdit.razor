@@ -41,9 +41,10 @@
                    Label="Members"
                    HelperText="Members will be fetched from batch selected"
                    MultiSelection="true"
-                   @bind-SelectedValues="@studentsSelected"
+                   SelectedValues="@studentsSelected"
+                   SelectedValuesChanged="@((IReadOnlyCollection<string> v) => studentsSelected = v)"
                    Class="my-3"
-                   MultiSelectionTextFunc="@(new Func<List<string>, string>(GetMultiSelectionText))"
+                   MultiSelectionTextFunc="@((IReadOnlyList<string> v) => GetMultiSelectionText(v))"
                    Variant="Variant.Outlined">
             @foreach (var student in students)
             {
@@ -74,7 +75,7 @@
     Team model = new();
     string pageTitle = string.Empty;
     bool IsAdd => Id is null or 0;
-    IEnumerable<string> studentsSelected = [];
+    IReadOnlyCollection<string> studentsSelected = [];
     List<ListItem> students = new();
     List<Batch> batches = new();
     List<Project> projects = new();
@@ -101,7 +102,7 @@
             if (students is null)
                 return;
 
-            studentsSelected = students.Where(x => x.TeamId == Id).Select(x => x.Id);
+            studentsSelected = students.Where(x => x.TeamId == Id).Select(x => x.Id).ToList();
         }
     }
 
@@ -153,7 +154,7 @@
         students = await Db.Students.Where(x => x.BatchId == batch.Id).Select(x => new ListItem(x.Id, $"{x.Name} ({x.Email})", x.TeamId)).ToListAsync();
     }
 
-    private string GetMultiSelectionText(List<string> selectedValues)
+    private string GetMultiSelectionText(IReadOnlyList<string> selectedValues)
     {
         return $"{selectedValues.Count} student{(selectedValues.Count > 1 ? "s have" : " has")} been selected";
     }

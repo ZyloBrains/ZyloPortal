@@ -26,16 +26,39 @@
 <body>
     <Routes @rendermode="@PageRenderMode" />
     <script src="_framework/blazor.web.js"></script>
-    <script src="_content/MudBlazor/MudBlazor.min.js"></script> 
+    <script src="_content/MudBlazor/MudBlazor.min.js"></script>
+    <script>
+        window.printQuotation = function (elementId) {
+            var printContent = document.getElementById(elementId);
+            if (!printContent) return;
+            var styles = '';
+            document.querySelectorAll('link[rel="stylesheet"], style').forEach(function(el) {
+                styles += el.outerHTML;
+            });
+            var html = '<!DOCTYPE html><html><head>' + styles + '</head><body>';
+            html += printContent.innerHTML;
+            html += '</body></html>';
+            var win = window.open('', '_blank');
+            if (win) {
+                win.document.write(html);
+                win.document.close();
+                win.focus();
+                win.print();
+            } else {
+                window.print();
+            }
+        };
+    </script>
 </body>
 
 </html>
 
-
 @code {
-    [CascadingParameter]    
+    [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
-    private IComponentRenderMode? PageRenderMode => 
-        HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
+    private IComponentRenderMode? PageRenderMode =>
+        HttpContext.AcceptsInteractiveRouting()
+            ? new InteractiveServerRenderMode(prerender: false)
+            : null;
 }

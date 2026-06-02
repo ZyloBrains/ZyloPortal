@@ -6,15 +6,14 @@
 
 <PageTitle>Course Quotes</PageTitle>
 
-<MudDataGrid Items="@quotes"
+<MudDataGrid T="CourseQuote" @ref="_grid" ServerData="@GetQuotes"
              Hover="true"
              Outlined
-             Loading="@loadingData"
-             QuickFilter="new Func<CourseQuote,bool>(FilterFunc1)">
+             Loading="@loadingData">
     <ToolBarContent>
         <MudButton Variant="Variant.Outlined" Class="rounded" StartIcon="@Icons.Material.Outlined.Add" Href="/admin/quotes/add" Color="Color.Tertiary">Quote</MudButton>
         <MudSpacer />
-        <MudTextField @bind-Value="searchString" Placeholder="Search organization by code and description..."
+        <MudTextField Value="searchString" ValueChanged="(string s) => OnSearch(s)" Placeholder="Search organization by code and description..."
                       Adornment="Adornment.Start"
                       AdornmentIcon="@Icons.Material.Filled.Search"
                       Class="mt-0">
@@ -59,17 +58,39 @@
 
 @code {
 
-    private List<CourseQuote> quotes = [];
-
-    private bool loadingData = false;
+    private MudDataGrid<CourseQuote> _grid = null!;
+    private bool loadingData;
     private string searchString = string.Empty;
     private MudMessageBox mbox { get; set; } = null!;
 
-    protected override async Task OnInitializedAsync()
+    private async Task<GridData<CourseQuote>> GetQuotes(GridState<CourseQuote> state, CancellationToken ct)
     {
         loadingData = true;
-        quotes = await Db.CourseQuotes.Include(x => x.Modules).ToListAsync();
+
+        var query = Db.CourseQuotes.Include(x => x.Modules).AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchString))
+        {
+            query = query.Where(x =>
+                x.Code!.Contains(searchString) ||
+                x.Description.Contains(searchString));
+        }
+
+        var totalItems = await query.CountAsync();
+        var items = await query
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
+            .ToListAsync();
+
         loadingData = false;
+        return new GridData<CourseQuote> { Items = items, TotalItems = totalItems };
+    }
+
+    private async Task OnSearch(string value)
+    {
+        searchString = value;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
     }
 
     private async Task ConfirmDelete(CourseQuote quote)
@@ -84,25 +105,12 @@
         if (rowsAffected > 0)
         {
             SnackBar.Add("Quote deleted successfully", Severity.Success);
-            quotes.Remove(quote);
+            if (_grid is not null)
+                await _grid.ReloadServerData();
         }
         else
         {
             SnackBar.Add("Quote deletion failed", Severity.Error);
         }
-    }
-
-    private bool FilterFunc1(CourseQuote quote) => FilterFunc(quote, searchString);
-
-    private bool FilterFunc(CourseQuote quote, string searchString)
-    {
-        if (string.IsNullOrWhiteSpace(searchString))
-            return true;
-        if (quote.Code!.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-        if (quote.Description.Contains(searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
     }
 }

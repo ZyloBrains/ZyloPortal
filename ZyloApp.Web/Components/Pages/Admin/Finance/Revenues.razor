@@ -7,12 +7,11 @@
 
 <PageTitle>Revenues</PageTitle>
 
-<MudDataGrid T="Revenue"
+<MudDataGrid T="Revenue" @ref="_grid"
              MultiSelection="true"
-             Items="@revenues"
+             ServerData="@GetRevenues"
              SortMode="SortMode.Multiple"
              Hover="true"
-             QuickFilter="@_quickFilter"
              Loading="loadingData"
              ReadOnly="false"
              Dense="true"
@@ -26,8 +25,22 @@
                 Size="Size.Small"
                 Color="Color.Tertiary">
         </MudFab>
+        <MudSelect Value="_selectedYear"
+                   ValueChanged="(int y) => OnYearChanged(y)"
+                   Label="Year"
+                   Variant="Variant.Outlined"
+                   Dense="true"
+                   Class="mt-0 ml-2"
+                   Style="width: 100px"
+                   Immediate="true">
+            @foreach (var year in _availableYears)
+            {
+                <MudSelectItem Value="@year">@year</MudSelectItem>
+            }
+        </MudSelect>
         <MudSpacer />
-        <MudTextField @bind-Value="_searchString"
+        <MudTextField Value="@_searchString"
+                      ValueChanged="(string v) => OnSearch(v)"
                       Placeholder="Search"
                       Adornment="Adornment.Start"
                       AdornmentIcon="@Icons.Material.Filled.Search"
@@ -55,6 +68,24 @@
             </EditTemplate>
         </TemplateColumn>
 
+        <TemplateColumn Title="Project">
+            <CellTemplate>
+                @context.Item.Project?.Title
+            </CellTemplate>
+            <EditTemplate>
+                <MudSelect Variant="Variant.Outlined"
+                           @bind-Value="context.Item.ProjectId"
+                           Label="Project"
+                           Class="mt-4"
+                           Clearable="true">
+                    @foreach (var project in _projects)
+                    {
+                        <MudSelectItem T="int?" Value="@project.Id">@project.Title</MudSelectItem>
+                    }
+                </MudSelect>
+            </EditTemplate>
+        </TemplateColumn>
+
         <TemplateColumn Title="Amount" AggregateDefinition="AmountAggregation">
             <CellTemplate>
                 @context.Item.Amount.AsCurrency()
@@ -64,6 +95,11 @@
             </EditTemplate>
         </TemplateColumn>
 
+        <TemplateColumn Title="Month" Groupable="true">
+            <CellTemplate>
+                @context.Item.Date?.ToString("MMM yyyy")
+            </CellTemplate>
+        </TemplateColumn>
         <TemplateColumn Title="Date">
             <CellTemplate>
                 @context.Item.Date?.ToString("D")
@@ -92,6 +128,15 @@
             </EditTemplate>
         </TemplateColumn>
 
+        <TemplateColumn Title="Active">
+            <CellTemplate>
+                <MudSwitch @bind-Value="@context.Item.IsActive" ReadOnly="true" Color="Color.Success" />
+            </CellTemplate>
+            <EditTemplate>
+                <MudSwitch @bind-Value="@context.Item.IsActive" Label="Active" Color="Color.Success" />
+            </EditTemplate>
+        </TemplateColumn>
+
         <TemplateColumn CellClass="d-flex justify-end">
             <CellTemplate>
                 <MudIconButton Icon="@Icons.Material.Outlined.Edit" OnClick="@context.Actions.StartEditingItemAsync" />
@@ -108,9 +153,17 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
-    private List<Revenue> revenues = [];
+    private MudDataGrid<Revenue> _grid = null!;
     private string _searchString = string.Empty;
-    private bool loadingData = false;
+    private bool loadingData;
+    private int _selectedYear = DateTime.Now.Year;
+    private int[] _availableYears => Enumerable.Range(DateTime.Now.Year - 4, 6).ToArray();
+    private List<Project> _projects = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _projects = await db.Projects.AsNoTracking().OrderBy(p => p.Title).ToListAsync();
+    }
 
     AggregateDefinition<Revenue> AmountAggregation = new()
         {
@@ -122,42 +175,51 @@
             }
         };
 
-    private Func<Revenue, bool> _quickFilter => x =>
-    {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
-
-        if (x.Particulars.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Amount.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Source.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Frequency.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
-    };
-
-    protected override async Task OnInitializedAsync()
+    private async Task<GridData<Revenue>> GetRevenues(GridState<Revenue> state, CancellationToken ct)
     {
         loadingData = true;
 
-        revenues = await db.Revenues
-            .AsNoTracking()
-            .OrderByDescending(x => x.Date)
+        IQueryable<Revenue> query = db.Revenues.AsNoTracking().Include(x => x.Project);
+
+        query = query.Where(x => x.Date!.Value.Year == _selectedYear);
+
+        if (!string.IsNullOrWhiteSpace(_searchString))
+        {
+            query = query.Where(x =>
+                x.Particulars.Contains(_searchString) ||
+                x.Source.ToString().Contains(_searchString) ||
+                x.Frequency.ToString().Contains(_searchString));
+        }
+
+        var totalItems = await query.CountAsync();
+        var items = await query
+            .OrderBy(x => x.Date)
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
             .ToListAsync();
 
         loadingData = false;
+        return new GridData<Revenue> { Items = items, TotalItems = totalItems };
     }
 
-    async Task CommittedItemChanges(Revenue item)
+    private async Task OnSearch(string value)
+    {
+        _searchString = value;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
+    }
+
+    private async Task OnYearChanged(int year)
+    {
+        _selectedYear = year;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
+    }
+
+    async Task<DataGridEditFormAction> CommittedItemChanges(Revenue item)
     {
         if (item is null)
-            return;
+            return DataGridEditFormAction.Close;
 
         var state = await AuthTask;
         var userName = state.User.Identity?.Name;
@@ -171,6 +233,9 @@
                 .SetProperty(y => y.Source, item.Source)
                 .SetProperty(y => y.Amount, item.Amount)
                 .SetProperty(y => y.Frequency, item.Frequency)
+                .SetProperty(y => y.Date, item.Date)
+                .SetProperty(y => y.IsActive, item.IsActive)
+                .SetProperty(y => y.ProjectId, item.ProjectId)
                 .SetProperty(y => y.LastUpdated, item.LastUpdated)
                 .SetProperty(y => y.LastUpdatedBy, item.LastUpdatedBy)
             );
@@ -178,5 +243,7 @@
         _ = rowsAffected > 0 ?
             SnackBar.Add("Revenue source updated successfully", Severity.Success) :
             SnackBar.Add("Revenue update failed", Severity.Error);
+
+        return DataGridEditFormAction.Close;
     }
 }

@@ -9,16 +9,15 @@
 
 <PageTitle>Applicants</PageTitle>
 
-<MudDataGrid T="StudentViewModel"
+<MudDataGrid T="StudentViewModel" @ref="_grid"
              MultiSelection="true"
-             Items="@studentList"
+             ServerData="@GetApplicants"
              @bind-SelectedItems="selectedApplicants"
              SortMode="SortMode.Multiple"
              Filterable="true"
              FilterMode="DataGridFilterMode.ColumnFilterRow"
              FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
              Hover="true"
-             QuickFilter="@_quickFilter"
              Loading="loadingData"
              Hideable="true"
              RowClassFunc="HighlightRow"
@@ -80,10 +79,10 @@
         </MudToolBar>
 
         <MudSpacer />
-        <MudTextField @bind-Value="_searchString"
-                      Placeholder="@($"Search {studentList.Count} applicants by name, email, status or phone...")"
+        <MudTextField Value="@_searchString"
+                      ValueChanged="(string v) => OnSearch(v)"
+                      Placeholder="Search applicants by name, email, status or phone..."
                       Adornment="Adornment.Start"
-                      Immediate="true"
                       AdornmentIcon="@Icons.Material.Filled.Search"></MudTextField>
                       
     </ToolBarContent>
@@ -192,41 +191,36 @@
     [SupplyParameterFromQuery]
     public string? Highlight { get; set; } = "";
 
-    private List<StudentViewModel> studentList = [];
+    private MudDataGrid<StudentViewModel> _grid = null!;
     private HashSet<StudentViewModel> selectedApplicants = [];
     private string _searchString = string.Empty;
-    private bool loadingData = false;
+    private bool loadingData;
     private Status selectedStatus = Status.Applied;
-    private List<(string BatchName, int? BatchId)> batches = [];
     private Batch? selectedBatch;
     private IEnumerable<Batch> allBatches = [];
-    private Func<StudentViewModel, bool> _quickFilter => x =>
+
+    protected override async Task OnInitializedAsync()
     {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
+        allBatches = await Db.Batches.OrderBy(x => x.Name).AsNoTracking().ToListAsync();
+    }
 
-        if (x.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Email.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Status.ToString().Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Phone.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
-    };
-
-    protected override void OnInitialized()
+    private async Task<GridData<StudentViewModel>> GetApplicants(GridState<StudentViewModel> state, CancellationToken ct)
     {
         loadingData = true;
 
-        allBatches = Db.Batches.OrderBy(x => x.Name).AsNoTracking().ToList();
+        var query = Db.Students.AsNoTracking().AsQueryable();
 
-        var studentModels = Db.Students
+        if (!string.IsNullOrWhiteSpace(_searchString))
+        {
+            query = query.Where(x =>
+                x.Name.Contains(_searchString) ||
+                x.Email.Contains(_searchString) ||
+                x.Phone.Contains(_searchString) ||
+                x.Status.ToString().Contains(_searchString));
+        }
+
+        var totalItems = await query.CountAsync();
+        var studentModels = await query
             .Select(x => new
             {
                 x.Id,
@@ -244,40 +238,44 @@
                 Program = x.TechProgram.Name,
                 UserId = x.User.Id
             })
-            .AsNoTracking()
             .OrderByDescending(x => x.FormSubmitted)
-            .ToList() ?? [];
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
+            .ToListAsync();
 
-        foreach (var item in studentModels)
+        var items = studentModels.Select(item => new StudentViewModel
         {
-            studentList.Add(new()
-            {
-                Id = item.Id,
-                Name = item.Name,
-                Email = item.Email,
-                ProfileImagePath = item.ProfileImagePath,
-                Phone = item.Phone,
-                ApplicantType = item.ApplicantType,
-                Status = item.Status,
-                TrainingTrack = item.TrainingTrack,
-                FormSubmitted = item.FormSubmitted,
-                BatchName = item.Batch,
-                TeamName = item.Team,
-                CollegeName = item.College,
-                ProgramName = item.Program,
-                ApplicationUserId = item.UserId
-            });
-        }
+            Id = item.Id,
+            Name = item.Name,
+            Email = item.Email,
+            ProfileImagePath = item.ProfileImagePath,
+            Phone = item.Phone,
+            ApplicantType = item.ApplicantType,
+            Status = item.Status,
+            TrainingTrack = item.TrainingTrack,
+            FormSubmitted = item.FormSubmitted,
+            BatchName = item.Batch,
+            TeamName = item.Team,
+            CollegeName = item.College,
+            ProgramName = item.Program,
+            ApplicationUserId = item.UserId
+        }).ToList();
 
         loadingData = false;
+        return new GridData<StudentViewModel> { Items = items, TotalItems = totalItems };
+    }
+
+    private async Task OnSearch(string value)
+    {
+        _searchString = value;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
     }
 
     private async Task StatusChanged(Status status)
     {
-        loadingData = true;
         selectedStatus = status;
 
-        // Change status of all selected trainees to specified one
         var rowsAffected = await Db.Students
                 .Where(s => selectedApplicants.Select(z => z.Id).Contains(s.Id))
                 .ExecuteUpdateAsync(x => x
@@ -288,57 +286,50 @@
             SnackBar.Add($"Selected trainees set to status '{status}'", Severity.Success) :
             SnackBar.Add("Setting for trainees status failed", Severity.Error);
 
-        loadingData = false;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
     }
 
     private async Task RemoveFromBatch()
     {
-        if (selectedApplicants.Any())
-        {
-            var rowsAffected = await Db.Students
-                .Where(s => selectedApplicants.Select(z => z.Id).Contains(s.Id))
-                .ExecuteUpdateAsync(x => x
-                    .SetProperty(y => y.BatchId, null as int?)
-                    .SetProperty(y => y.ApplicationUserId, null as string)
-                    .SetProperty(y => y.Status, Status.Applied)
-                );
+        if (!selectedApplicants.Any()) return;
 
-            if (rowsAffected > 0)
-            {
-                SnackBar.Add("Selected trainees debatched", Severity.Success);
-            }
-            else
-            {
-                SnackBar.Add("Debatching failed", Severity.Error);
-            }
-        }
+        var rowsAffected = await Db.Students
+            .Where(s => selectedApplicants.Select(z => z.Id).Contains(s.Id))
+            .ExecuteUpdateAsync(x => x
+                .SetProperty(y => y.BatchId, null as int?)
+                .SetProperty(y => y.ApplicationUserId, null as string)
+                .SetProperty(y => y.Status, Status.Applied)
+            );
+
+        _ = rowsAffected > 0 ?
+            SnackBar.Add("Selected trainees debatched", Severity.Success) :
+            SnackBar.Add("Debatching failed", Severity.Error);
+
+        if (_grid is not null)
+            await _grid.ReloadServerData();
     }
 
     private async Task RemoveApplicants()
     {
-        if (selectedApplicants.Any())
-        {
-            var rowsAffected = await Db.Students
-                .Where(s => selectedApplicants.Select(z => z.Id).Contains(s.Id))
-                .ExecuteDeleteAsync();
+        if (!selectedApplicants.Any()) return;
 
-            if (rowsAffected > 0)
-            {
-                SnackBar.Add("Selected trainees removed from system", Severity.Success);
-                studentList.RemoveAll(x => selectedApplicants.Select(z => z.Id).Contains(x.Id));
-            }
-            else
-            {
-                SnackBar.Add("Removing applicants failed", Severity.Error);
-            }
-        }
+        var rowsAffected = await Db.Students
+            .Where(s => selectedApplicants.Select(z => z.Id).Contains(s.Id))
+            .ExecuteDeleteAsync();
+
+        _ = rowsAffected > 0 ?
+            SnackBar.Add("Selected trainees removed from system", Severity.Success) :
+            SnackBar.Add("Removing applicants failed", Severity.Error);
+
+        if (_grid is not null)
+            await _grid.ReloadServerData();
     }
 
     private async Task UpdateUserCreds(StudentViewModel studentViewModel)
     {
         loadingData = true;
 
-        // Reset password for existing user
         var existingUser = await UserManager.FindByIdAsync(studentViewModel.ApplicationUserId);
         if (existingUser is null)
         {
@@ -354,7 +345,7 @@
             SnackBar.Add($"Password reset for '{studentViewModel.Email}' successfully", Severity.Success) :
             SnackBar.Add(string.Join(", ", resultReset.Errors.Select(error => error.Description)), Severity.Error);
 
-        studentViewModel.Password = password; // For UI
+        studentViewModel.Password = password;
         loadingData = false;
     }
 
@@ -362,7 +353,6 @@
     {
         loadingData = true;
 
-        // Register new user programatically
         var user = Activator.CreateInstance<ApplicationUser>();
         await UserStore.SetUserNameAsync(user, studentViewModel.Email, CancellationToken.None);
         var emailStore = (IUserEmailStore<ApplicationUser>)UserStore;
@@ -375,7 +365,6 @@
             ? Role.Employee
             : Role.Trainee);
 
-        // Save userid to students table
         _ = await Db.Students
                .Where(s => s.Id == studentViewModel.Id)
                .ExecuteUpdateAsync(x => x
@@ -386,7 +375,7 @@
             SnackBar.Add($"User '{studentViewModel.Email}' registered successfully", Severity.Success) :
             SnackBar.Add(string.Join(", ", result.Errors.Select(error => error.Description)), Severity.Error);
 
-        studentViewModel.Password = password; // For UI
+        studentViewModel.Password = password;
         loadingData = false;
     }
 
@@ -416,10 +405,6 @@
 
         if (rowsAffected > 0)
         {
-            foreach (var applicant in selectedApplicants)
-            {
-                applicant.BatchName = selectedBatch.Name;
-            }
             SnackBar.Add($"Added {rowsAffected} applicant(s) to batch '{selectedBatch.Name}'", Severity.Success);
             selectedBatch = null;
         }
@@ -427,6 +412,9 @@
         {
             SnackBar.Add("Adding to batch failed", Severity.Error);
         }
+
+        if (_grid is not null)
+            await _grid.ReloadServerData();
     }
 
     private Task<IEnumerable<Batch>> SearchBatches(string value, CancellationToken token)

@@ -38,9 +38,10 @@
                    Dense="true"
                    Label="Batch Members"
                    MultiSelection="true"
-                   @bind-SelectedValues="@studentsSelected"
+                   SelectedValues="@studentsSelected"
+                   SelectedValuesChanged="@((IReadOnlyCollection<string> v) => studentsSelected = v)"
                    Class="my-3"
-                   MultiSelectionTextFunc="@(new Func<List<string>, string>(GetMultiSelectionText))" >
+                   MultiSelectionTextFunc="@((IReadOnlyList<string> v) => GetMultiSelectionText(v))" >
             @foreach (var student in students)
             {
                 <MudSelectItem Value="@student.Id">@student.DisplayName</MudSelectItem>
@@ -66,7 +67,7 @@
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
     Batch model = new();
-    IEnumerable<string> studentsSelected = [];
+    IReadOnlyCollection<string> studentsSelected = [];
     List<ListItem> students = new();
     record ListItem(string Id, string DisplayName, int? BatchId);
     string pageTitle = string.Empty;
@@ -104,7 +105,7 @@
             model = await Db.Batches.FindAsync(Id) ?? new();
             batchRange = new DateRange(model.Start, model.End);
             selectedTrack = model.Name.Split()[1];
-            studentsSelected = students.Where(x => x.BatchId == Id).Select(x => x.Id);
+            studentsSelected = students.Where(x => x.BatchId == Id).Select(x => x.Id).ToList();
         }
     }
 
@@ -178,7 +179,7 @@
     }
 
 
-    private string GetMultiSelectionText(List<string> selectedValues)
+    private string GetMultiSelectionText(IReadOnlyList<string> selectedValues)
     {
         return $"{selectedValues.Count} student{(selectedValues.Count > 1 ? "s have" : " has")} been selected";
     }

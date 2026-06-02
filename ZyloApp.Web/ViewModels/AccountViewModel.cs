@@ -9,5 +9,6 @@ public class AccountViewModel
     public float? Balance { get; set; }
     public string Notes { get; set; } = string.Empty;
     public DateTime? Date { get; set; }
+    public string MonthYear => Date?.ToString("MMMM yyyy") ?? "No Date";
     public FundStatus Status { get; set; } = FundStatus.None;
 }

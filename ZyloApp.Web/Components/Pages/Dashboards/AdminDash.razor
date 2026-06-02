@@ -16,9 +16,9 @@ else
     <MudGrid>
         <MudItem md="4">
             <MudPaper Elevation="5" Class="pa-5">
-                <MudChart ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
-                          InputData="@studentByTypesCount"
-                          InputLabels="@studentByTypesKeys">
+                <MudChart T="double" ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
+                          ChartSeries="@studentByTypesSeries"
+                          ChartLabels="@studentByTypesKeys">
                     <CustomGraphics>
                         <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="25">Total</text>
                         <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@studentByTypesCount.Sum().ToString()</text>
@@ -29,9 +29,9 @@ else
 
         <MudItem md="4">
             <MudPaper Elevation="5" Class="pa-5">
-                <MudChart ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
-                          InputData="@studentByStatusCount"
-                          InputLabels="@studentByStatusKeys">
+                <MudChart T="double" ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
+                          ChartSeries="@studentByStatusSeries"
+                          ChartLabels="@studentByStatusKeys">
                     <CustomGraphics>
                         <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="25">Total</text>
                         <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@studentByStatusCount.Sum().ToString()</text>
@@ -42,9 +42,9 @@ else
 
         <MudItem md="4">
             <MudPaper Elevation="5" Class="pa-5">
-                <MudChart ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
-                          InputData="@studentByBatchCount"
-                          InputLabels="@studentByBatchKeys">
+                <MudChart T="double" ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
+                          ChartSeries="@studentByBatchSeries"
+                          ChartLabels="@studentByBatchKeys">
                     <CustomGraphics>
                         <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="25">Total</text>
                         <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@studentByBatchCount.Sum().ToString()</text>
@@ -77,7 +77,6 @@ else
             </MudPaper>
         </MudItem>
     </MudGrid>
-
     <MudTabs Class="mt-8 border-2" Outlined="true" Rounded="true" ApplyEffectsToContainer="true">
         <MudTabPanel Text="Trainee Profiles" Style="font-size:1rem;padding:1rem;">
             <MudTable Items="@traineeProfiles" Hover="true">
@@ -147,6 +146,9 @@ else
     double[] studentByStatusCount = [];
     string[] studentByBatchKeys = [];
     double[] studentByBatchCount = [];
+    List<ChartSeries<double>> studentByTypesSeries = [];
+    List<ChartSeries<double>> studentByStatusSeries = [];
+    List<ChartSeries<double>> studentByBatchSeries = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -161,68 +163,69 @@ else
             .ThenInclude(b => b.Organization)
             .ToListAsync();
 
-        if (allStudents is null || !allStudents.Any())
+        if (allStudents is not null && allStudents.Any())
         {
-            loadingData = false;
-            return;
-        }
+            // Group by application type
+            var studentsByTypes = allStudents
+               .GroupBy(x => x.ApplicantType)
+               .Select(y => new StudentAggregate(y.Key.ToString(), y.Count()));
 
-        // Group by application type
-        var studentsByTypes = allStudents
-           .GroupBy(x => x.ApplicantType)
-           .Select(y => new StudentAggregate(y.Key.ToString(), y.Count()));
+            studentByTypesKeys = studentsByTypes.Select(x => x.Label).ToArray();
+            studentByTypesCount = studentsByTypes.Select(x => x.Count).ToArray();
 
-        studentByTypesKeys = studentsByTypes.Select(x => x.Label).ToArray();
-        studentByTypesCount = studentsByTypes.Select(x => x.Count).ToArray();
+            // Group students by stage
+            var studentsByStatus = allStudents
+                .GroupBy(x => x.Status)
+                .Select(y => new StudentAggregate(y.Key.ToString(), y.Count()));
 
-        // Group students by stage
-        var studentsByStatus = allStudents
-            .GroupBy(x => x.Status)
-            .Select(y => new StudentAggregate(y.Key.ToString(), y.Count()));
+            studentByStatusKeys = studentsByStatus.Select(x => x.Label).ToArray();
+            studentByStatusCount = studentsByStatus.Select(x => x.Count).ToArray();
 
-        studentByStatusKeys = studentsByStatus.Select(x => x.Label).ToArray();
-        studentByStatusCount = studentsByStatus.Select(x => x.Count).ToArray();
+            // Group by batch
+            var studentsByBatch = allStudents
+               .GroupBy(x => x.Batch?.Name ?? "No Batch")
+               .Select(y => new StudentAggregate(y.Key, y.Count()));
 
-        // Group by batch
-        var studentsByBatch = allStudents
-           .GroupBy(x => x.Batch?.Name ?? "No Batch")
-           .Select(y => new StudentAggregate(y.Key, y.Count()));
+            studentByBatchKeys = studentsByBatch.Select(x => x.Label).ToArray();
+            studentByBatchCount = studentsByBatch.Select(x => x.Count).ToArray();
 
-        studentByBatchKeys = studentsByBatch.Select(x => x.Label).ToArray();
-        studentByBatchCount = studentsByBatch.Select(x => x.Count).ToArray();
+            studentByTypesSeries = studentByTypesCount.AsChartDataSet();
+            studentByStatusSeries = studentByStatusCount.AsChartDataSet();
+            studentByBatchSeries = studentByBatchCount.AsChartDataSet();
 
-        lastnDaysIds = GetLastNDaysStudnets(days);
+            lastnDaysIds = GetLastNDaysStudnets(days);
 
-        // Trainee profile list
-        traineeProfiles = allStudents
-            .Where(x => x.Status != Status.Applied &&
-                (x.ApplicantType == ApplicantType.StudentInternship ||
-                x.ApplicantType == ApplicantType.SoftwareEngineeringAspirant))
-            .Select(x => new StudentLightViewModel
+            // Trainee profile list
+            traineeProfiles = allStudents
+                .Where(x => x.Status != Status.Applied &&
+                    (x.ApplicantType == ApplicantType.StudentInternship ||
+                    x.ApplicantType == ApplicantType.SoftwareEngineeringAspirant))
+                .Select(x => new StudentLightViewModel
+                        (
+                            x.Name,
+                            x.Id,
+                            x.ProfileImagePath ?? "/person.png",
+                            x.Status,
+                            "",
+                            x.Batch?.Name ?? "None"
+                        )
+                    ).ToArray();
+
+            // professionals profile list
+            employeeProfiles = allStudents
+                .Where(x => x.Status != Status.Applied &&
+                    x.ApplicantType == ApplicantType.Professional)
+                .Select(x => new ProfessionalViewModel
                     (
-                        x.Name,
                         x.Id,
+                        x.Name,
                         x.ProfileImagePath ?? "/person.png",
                         x.Status,
-                        "",
-                        x.Batch?.Name ?? "None"
+                        x.Training?.Title ?? "None",
+                        x.Training?.Organization?.Name ?? "None"
                     )
                 ).ToArray();
-
-        // professionals profile list
-        employeeProfiles = allStudents
-            .Where(x => x.Status != Status.Applied &&
-                x.ApplicantType == ApplicantType.Professional)
-            .Select(x => new ProfessionalViewModel
-                (
-                    x.Id,
-                    x.Name,
-                    x.ProfileImagePath ?? "/person.png",
-                    x.Status,
-                    x.Training?.Title ?? "None",
-                    x.Training?.Organization?.Name ?? "None"
-                )
-            ).ToArray();
+        }
 
         loadingData = false;
     }

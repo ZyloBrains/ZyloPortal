@@ -61,7 +61,8 @@
                    AdornmentIcon="@Icons.Material.Sharp.Assignment"
                    MultiSelection
                    Dense
-                   @bind-SelectedValues="@moduleAssignmentsSelected"
+                   SelectedValues="@moduleAssignmentsSelected"
+                   SelectedValuesChanged="@((IReadOnlyCollection<Assignment> v) => moduleAssignmentsSelected = v)"
                    ToStringFunc="x => x.Title"
                    Class="mt-4">
             @foreach (var assignment in moduleAssignments)
@@ -76,7 +77,8 @@
                    AdornmentIcon="@Icons.Material.Sharp.Apps"
                    MultiSelection
                    Dense
-                   @bind-SelectedValues="@trainingProjectsSelected"
+                   SelectedValues="@trainingProjectsSelected"
+                   SelectedValuesChanged="@((IReadOnlyCollection<Project> v) => trainingProjectsSelected = v)"
                    ToStringFunc="x => x.Title"
                    Class="mt-4">
             @foreach (var project in trainingProjects)
@@ -92,9 +94,10 @@
                    Dense="true"
                    HelperText="Tags that apply to this training plan"
                    MultiSelection="true"
-                   @bind-SelectedValues="@tagsSelected"
+                   SelectedValues="@tagsSelected"
+                   SelectedValuesChanged="@((IReadOnlyCollection<Tag> v) => tagsSelected = v)"
                    Class="my-4"
-                   MultiSelectionTextFunc="@(new Func<List<string>, string>(GetMultiSelectionText))">
+                   MultiSelectionTextFunc="@((IReadOnlyList<string> v) => GetMultiSelectionText(v))">
             @foreach (var tag in tags)
             {
                 <MudSelectItem Value="@tag">@tag.Name</MudSelectItem>
@@ -126,13 +129,13 @@
     IEnumerable<Organization> forOrganizations = [];
 
     IEnumerable<Assignment> moduleAssignments = [];
-    IEnumerable<Assignment> moduleAssignmentsSelected = [];
+    IReadOnlyCollection<Assignment> moduleAssignmentsSelected = [];
 
     IEnumerable<Project> trainingProjects = [];
-    IEnumerable<Project> trainingProjectsSelected = [];
+    IReadOnlyCollection<Project> trainingProjectsSelected = [];
 
     List<Tag> tags = [];
-    IEnumerable<Tag> tagsSelected = [];
+    IReadOnlyCollection<Tag> tagsSelected = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -228,7 +231,7 @@
         return forOrganizations.Where(x => x.Name.Contains(value, StringComparison.OrdinalIgnoreCase));
     }
 
-    private string GetMultiSelectionText(List<string> selectedValues)
+    private string GetMultiSelectionText(IReadOnlyList<string> selectedValues)
     {
         return $"{selectedValues.Count} tag{(selectedValues.Count > 1 ? "s have" : " has")} been selected";
     }

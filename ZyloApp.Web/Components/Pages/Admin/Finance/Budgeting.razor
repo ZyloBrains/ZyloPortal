@@ -1,66 +1,230 @@
 ﻿@page "/budgeting"
+@using MudBlazor.Charts
 
-@inject ApplicationDbContext Db
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
-<PageTitle>Batch Budgeting</PageTitle>
+<PageTitle>Finance Dashboard</PageTitle>
 
-@if (batchBudgets is null)
+@if (loadingData)
 {
     <Loading />
 }
-else if(batchBudgets is [])
-{
-    <ApplicationAlert Type="Severity.Warning" Text="No budget plans found for any batch." />
-}
 else
 {
-    <MudGrid>
-        <MudItem md="12">
-            <MudFab Href="/budgeting/adjust"
-                    Class="mt-2"
-                    StartIcon="@Icons.Material.Filled.Add"
-                    title="Adjust Batch Budgets"
-                    Size="MudBlazor.Size.Small"
-                    Color="MudBlazor.Color.Tertiary">
-            </MudFab>
-        </MudItem>
-        @foreach (var batchBudget in batchBudgets ?? [])
+    <MudSelect Value="_selectedYear"
+               ValueChanged="(int y) => OnYearChanged(y)"
+               Label="Year"
+               Variant="Variant.Outlined"
+               Dense="true"
+               Class="mb-4"
+               Style="width: 100px"
+               Adornment="Adornment.Start"
+               AdornmentIcon="@Icons.Material.Filled.CalendarToday"
+               Immediate="true">
+        @foreach (var year in _availableYears)
         {
-            <MudItem md="4">
-                <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
-                    <MudText Typo="Typo.h6" Class="mb-3">@batchBudget.Key</MudText>
-                    <MudChart  ChartType="ChartType.Donut" Width="350px" Height="350px" LegendPosition="Position.Right"
-                              InputData="@batchBudget.Value.Values"
-                              InputLabels="@batchBudget.Value.Labels">
-                        <CustomGraphics>
-                            <text class="donut-inner-text" x="50%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="25">Total</text>
-                            <text class="donut-inner-text" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="50">@batchBudget.Value.Values.Sum().ToString()</text>
-                        </CustomGraphics>
-                    </MudChart>
-                </MudPaper>
-            </MudItem>
+            <MudSelectItem Value="@year">@year</MudSelectItem>
         }
+    </MudSelect>
+    <MudGrid>
+        <MudItem md="4">
+            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
+                <MudText Typo="Typo.subtitle1">Revenue @(_selectedYear)</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Success">@totalRevenue.ToString("N0")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem md="4">
+            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
+                <MudText Typo="Typo.subtitle1">Expenses @(_selectedYear)</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Error">@totalExpenses.ToString("N0")</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem md="4">
+            <MudPaper Elevation="5" Class="pa-5" Style="text-align:center">
+                <MudText Typo="Typo.subtitle1">Gross Margin @(_selectedYear)</MudText>
+                <MudText Typo="Typo.h4" Color="Color.Primary">@avgMargin.ToString("N1")%</MudText>
+            </MudPaper>
+        </MudItem>
+        <MudItem md="6" sm="12">
+            <MudPaper Elevation="5" Class="pa-5">
+                <MudText Typo="Typo.h6" Class="mb-4">Monthly Revenue vs Expenses</MudText>
+                <MudChart ChartType="ChartType.StackedBar" ChartSeries="@StackedDataSet" ChartLabels="@monthlyFinanceLabels"
+                          ChartOptions="@_barChartOptions" MatchBoundsToSize="true" Width="100%" Height="500px">
+                </MudChart>
+            </MudPaper>
+        </MudItem>
+        <MudItem md="6" sm="12">
+            <MudPaper Elevation="5" Class="pa-5">
+                <MudText Typo="Typo.h6" Class="mb-4">Monthly Margins</MudText>
+                <MudChart ChartType="ChartType.Line" ChartSeries="@LineDataSet" ChartLabels="@monthlyFinanceLabels"
+                          ChartOptions="@_lineChartOptions" MatchBoundsToSize="true" Width="100%" Height="500px">
+                </MudChart>
+            </MudPaper>
+        </MudItem>
+        <MudItem md="6" sm="12">
+            <MudPaper Elevation="5" Class="pa-5">
+                <MudText Typo="Typo.h6" Class="mb-4">Revenue by Project @(_selectedYear)</MudText>
+                <MudChart ChartType="ChartType.StackedBar" ChartSeries="@_projectRevenueSeries" ChartLabels="@_projectRevenueLabels"
+                          ChartOptions="@_projectRevenueOptions" MatchBoundsToSize="true" Width="100%" Height="500px">
+                </MudChart>
+            </MudPaper>
+        </MudItem>
+        <MudItem md="6" sm="12">
+            <MudPaper Elevation="5" Class="pa-5">
+                <MudText Typo="Typo.h6" Class="mb-4">Year @_selectedYear Revenue by Frequency</MudText>
+                    <MudChart ChartType="ChartType.Donut" ChartSeries="@_projectedSeries" ChartLabels="@_projectedLabels" LegendPosition="Position.Right" Height="500px">
+                    </MudChart>
+            </MudPaper>
+        </MudItem>
     </MudGrid>
 }
 
 @code {
 
-    private record BatchBudgetRoot(string Batch, float? Revenue)
+    bool loadingData = false;
+
+    string[] monthlyFinanceLabels = Array.Empty<string>();
+    double[] monthlyRevenueData = Array.Empty<double>();
+    double[] monthlyExpenseData = Array.Empty<double>();
+    double totalRevenue;
+    double totalExpenses;
+    double avgMargin;
+    private int _selectedYear = DateTime.Now.Year;
+    private int[] _availableYears => Enumerable.Range(DateTime.Now.Year - 4, 6).ToArray();
+
+    List<ChartSeries<double>> budgetSeries = new();
+
+    private List<ChartSeries<double>> StackedDataSet = new();
+
+    private StackedBarChartOptions _barChartOptions = new StackedBarChartOptions()
     {
-        public IEnumerable<BatchBudget>? Budgets { get; set; }
-    }
+        ChartPalette = new[] { "#00c853", "#f44336" },
+        BarWidthRatio = .75,
+        YAxisTicks = 400,
+        YAxisSuggestedMax = 1600,
+    };
 
-    private string _searchString = string.Empty;
-    private KeyValuePair<string, (string[] Labels, double[] Values)>[] batchBudgets = null!;
+    private List<ChartSeries<double>> LineDataSet = new();
 
+    private LineChartOptions _lineChartOptions = new LineChartOptions()
+    {
+        ChartPalette = new[] { "#00bfff" },
+        ShowDataMarkers = true,
+        LineStrokeWidth = 2.8
+    };
+
+    private string[] _projectedLabels = [];
+    private List<ChartSeries<double>> _projectedSeries = [];
+
+    private string[] _projectRevenueLabels = [];
+    private List<ChartSeries<double>> _projectRevenueSeries = [];
+
+    private StackedBarChartOptions _projectRevenueOptions = new()
+    {
+        ChartPalette = new[] { "#2196f3", "#ff9800" },
+        BarWidthRatio = 0.75,
+    };
 
     protected override async Task OnInitializedAsync()
     {
-        var batchBudgetsDb = await Db.BatchBudgets
-            .Include(x => x.Batch)
-            .GroupBy(x => x.Batch.Name)
+        await LoadBudgetData();
+    }
+
+    private async Task LoadBudgetData()
+    {
+        loadingData = true;
+
+        using var Db = DbFactory.CreateDbContext();
+
+        var revenueItems = await Db.Revenues
+            .Where(r => r.Date != null && r.Date.Value.Year == _selectedYear)
             .ToListAsync();
 
-        batchBudgets = batchBudgetsDb.Select(x => new KeyValuePair<string, (string[], double[])>(x.Key, (x.Select(y => y.BudgetType.ToString()).ToArray(), x.Select(y => (double)y.Allocation).ToArray()))).ToArray();
+        var monthlyRevenue = revenueItems
+        .GroupBy(r => new { r.Date.Value.Year, r.Date.Value.Month })
+        .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(r => r.Amount) });
+
+        var monthlyExpenses = await Db.Expenses
+        .Where(e => e.Date != null && e.Date.Value.Year == _selectedYear)
+        .GroupBy(e => new { e.Date.Value.Year, e.Date.Value.Month })
+        .Select(g => new { g.Key.Year, g.Key.Month, Total = g.Sum(e => e.Amount) })
+        .ToListAsync();
+
+        var monthNames = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+        monthlyFinanceLabels = monthNames.Select(x => $"{x} {_selectedYear}").ToArray();
+
+        // populate per-month arrays used elsewhere
+        monthlyRevenueData = Enumerable.Range(1, 12)
+            .Select(i => monthlyRevenue.FirstOrDefault(r => r.Month == i)?.Total ?? 0.0)
+            .ToArray();
+
+        monthlyExpenseData = Enumerable.Range(1, 12)
+            .Select(i => monthlyExpenses.FirstOrDefault(e => e.Month == i)?.Total ?? 0.0)
+            .ToArray();
+
+        StackedDataSet = [
+            new ChartSeries<double> { Name = "Revenue", Data = new ChartData<double>(monthlyRevenueData) },
+            new ChartSeries<double> { Name = "Expenses", Data = new ChartData<double>(monthlyExpenseData.Select(x => -x).ToArray()) },
+        ];
+
+        totalRevenue = monthlyRevenueData.Sum();
+        totalExpenses = monthlyExpenseData.Sum();
+
+        var margins = monthlyRevenueData.Select((rev, i) =>
+        {
+            var exp = monthlyExpenseData[i];
+            if (rev == 0) return 0.0;
+            return Math.Round((rev - exp) / rev * 100, 1);
+        }).ToArray();
+
+        LineDataSet = new List<ChartSeries<double>>
+        {
+            new ChartSeries<double>
+            {
+                Name = "Margin",
+                Data = new ChartData<double>(margins),
+                TooltipTitleFormat = "{{Y_VALUE}}%"
+            }
+        };
+
+        avgMargin = margins.Length > 0 ? margins.Average() : 0;
+
+        // Load revenue by frequency for the selected year
+        var freqTotals = revenueItems
+            .GroupBy(r => r.Frequency)
+            .Select(g => new { Frequency = g.Key, Total = g.Sum(r => r.Amount) })
+            .ToDictionary(g => g.Frequency.ToString(), g => (double)g.Total);
+
+        _projectedLabels = freqTotals.Keys.ToArray();
+        var data = freqTotals.Values.ToArray();
+        _projectedSeries =
+        [
+            new ChartSeries<double> { Name = "Revenue", Data = new ChartData<double>(data) },
+        ];
+
+        // Load project revenue data
+        var projects = (await Db.Projects
+            .Where(p => p.InitialCost > 0 || (p.AmcCost.HasValue && p.AmcCost.Value > 0))
+            .ToListAsync())
+            .OrderByDescending(p => p.InitialCost + (p.AmcCost ?? 0))
+            .ToList();
+
+        _projectRevenueLabels = projects.Select(p => p.Title).ToArray();
+        var initialCosts = projects.Select(p => (double)p.InitialCost).ToArray();
+        var amcCosts = projects.Select(p => (double)(p.AmcCost ?? 0)).ToArray();
+
+        _projectRevenueSeries =
+        [
+            new ChartSeries<double> { Name = "Initial Cost", Data = new ChartData<double>(initialCosts), TooltipTitleFormat = "Rs. {{Y_VALUE}}" },
+            new ChartSeries<double> { Name = "AMC", Data = new ChartData<double>(amcCosts), TooltipTitleFormat = "Rs. {{Y_VALUE}}" }
+        ];
+
+        loadingData = false;
+    }
+
+    private async Task OnYearChanged(int year)
+    {
+        _selectedYear = year;
+        await LoadBudgetData();
     }
 }

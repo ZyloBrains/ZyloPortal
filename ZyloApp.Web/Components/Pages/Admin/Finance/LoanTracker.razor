@@ -8,9 +8,9 @@
 
 <PageTitle>Loans</PageTitle>
 
-<MudDataGrid T="LoanViewModel"
+<MudDataGrid T="LoanViewModel" @ref="_grid"
              MultiSelection="true"
-             Items="@loansView"
+             ServerData="@GetLoans"
              SortMode="SortMode.Multiple"
              Hover="true"
              Loading="loadingData"
@@ -22,8 +22,7 @@
     <ToolBarContent>
         <MudFab Href="/loan/add" StartIcon="@Icons.Material.Filled.Add" title="Add loan" Size="Size.Small" Color="Color.Tertiary"></MudFab>
         <MudSpacer />
-        <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        <MudTextField Value="@_searchString" ValueChanged="(string v) => OnSearch(v)" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
         <PropertyColumn Property="x => x.Borrower" Title="Borrower" />
@@ -108,11 +107,9 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
-    private List<Loan> loans = [];
-    private List<LoanViewModel> loansView = [];
-
+    private MudDataGrid<LoanViewModel> _grid = null!;
     private string _searchString = string.Empty;
-    private bool loadingData = false;
+    private bool loadingData;
 
     AggregateDefinition<LoanViewModel> InterestAggregation = new()
         {
@@ -143,39 +140,43 @@
             }
         };
 
-    private Func<Loan, bool> _quickFilter => x =>
-    {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
-
-        if (x.Borrower.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Lender.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
-    };
-
-    protected override async Task OnInitializedAsync()
+    private async Task<GridData<LoanViewModel>> GetLoans(GridState<LoanViewModel> state, CancellationToken ct)
     {
         loadingData = true;
 
-        loans = await db.Loans
-            .AsNoTracking()
+        var query = db.Loans.AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(_searchString))
+        {
+            query = query.Where(x =>
+                x.Borrower.Contains(_searchString) ||
+                x.Lender.Contains(_searchString));
+        }
+
+        var totalItems = await query.CountAsync();
+        var items = await query
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
             .ToListAsync();
 
-        loansView = loans.ToViewModel();
-        
+        var viewModels = items.ToViewModel();
 
         loadingData = false;
+        return new GridData<LoanViewModel> { Items = viewModels, TotalItems = totalItems };
     }
 
-    async Task CommittedItemChanges(LoanViewModel item)
+    private async Task OnSearch(string value)
+    {
+        _searchString = value;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
+    }
+
+    async Task<DataGridEditFormAction> CommittedItemChanges(LoanViewModel item)
     {
         if (item is null)
-            return;
-            var model = item.ToModel();
+            return DataGridEditFormAction.Close;
+        var model = item.ToModel();
         var state = await AuthTask;
         var userName = state.User.Identity?.Name;
 
@@ -202,6 +203,8 @@
         {
             SnackBar.Add("Loan update failed", Severity.Error);
         }
+
+        return DataGridEditFormAction.Close;
     }
    
 }

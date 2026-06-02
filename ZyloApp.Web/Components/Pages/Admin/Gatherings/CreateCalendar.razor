@@ -25,7 +25,8 @@
                Variant="Variant.Outlined"
                MultiSelection="true"
                ToStringFunc="x => x.Text"
-               @bind-SelectedValues="@consultantsSelected">
+               SelectedValues="@consultantsSelected"
+               SelectedValuesChanged="@((IReadOnlyCollection<DropdownViewModel> v) => consultantsSelected = v)">
         @foreach (var consultant in consultants)
         {
             <MudSelectItem Value="@consultant">@consultant.Text</MudSelectItem>
@@ -56,7 +57,7 @@
 
     GatheringCalendar model = new();
     IEnumerable<Gathering> gatherings = [];
-    IEnumerable<DropdownViewModel> consultantsSelected = [];
+    IReadOnlyCollection<DropdownViewModel> consultantsSelected = [];
     IEnumerable<DropdownViewModel> consultants = [];
     private DateRange dateRange { get; set; }
 

@@ -7,12 +7,11 @@
 
 <PageTitle>Fee Accounts</PageTitle>
 
-<MudDataGrid T="StudentFeeViewModel"
+<MudDataGrid T="StudentFeeViewModel" @ref="_grid"
              MultiSelection="true"
-             Items="@StudentFees"
+             ServerData="@GetStudentFees"
              SortMode="SortMode.Multiple"
              Hover="true"
-             QuickFilter="@_quickFilter"
              Loading="loadingData"
              Groupable="true"
              Hideable="true"
@@ -24,8 +23,7 @@
     <ToolBarContent>
         <MudFab Href="/feecollection/add" StartIcon="@Icons.Material.Filled.Add" title="Add New Fee Account" Size="Size.Small" Color="Color.Tertiary"></MudFab>
         <MudSpacer />
-        <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
-                      AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        <MudTextField Value="@_searchString" ValueChanged="(string v) => OnSearch(v)" Placeholder="Search" Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
     </ToolBarContent>
     <Columns>
         <TemplateColumn Editable="false" Sortable="false" Filterable="false" Groupable="false">
@@ -90,9 +88,9 @@
     [CascadingParameter]
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
-    private List<StudentFeeViewModel> StudentFees = [];
+    private MudDataGrid<StudentFeeViewModel> _grid = null!;
     private string _searchString = string.Empty;
-    private bool loadingData = false;
+    private bool loadingData;
 
     AggregateDefinition<StudentFeeViewModel> FeeAggregation = new()
         {
@@ -144,40 +142,47 @@
             }
         };
 
-    private Func<StudentFeeViewModel, bool> _quickFilter => x =>
-    {
-        if (string.IsNullOrWhiteSpace(_searchString))
-            return true;
-
-        if (x.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Email.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (x.Phone.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        return false;
-    };
-
-    protected override async Task OnInitializedAsync()
+    private async Task<GridData<StudentFeeViewModel>> GetStudentFees(GridState<StudentFeeViewModel> state, CancellationToken ct)
     {
         loadingData = true;
 
-        StudentFees = await db.FinAccounts
+        var query = db.FinAccounts
             .Include(s => s.Student)
             .ThenInclude(b => b.Batch)
             .AsNoTracking()
-            .Select(x => x.ToViewModel()).ToListAsync();
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(_searchString))
+        {
+            query = query.Where(x =>
+                x.Student.Name.Contains(_searchString) ||
+                x.Student.Email.Contains(_searchString) ||
+                x.Student.Phone.Contains(_searchString));
+        }
+
+        var totalItems = await query.CountAsync();
+        var items = await query
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
+            .ToListAsync();
+
+        var viewModels = items.Select(x => x.ToViewModel()).ToList();
 
         loadingData = false;
+        return new GridData<StudentFeeViewModel> { Items = viewModels, TotalItems = totalItems };
     }
 
-    async Task CommittedItemChanges(StudentFeeViewModel item)
+    private async Task OnSearch(string value)
+    {
+        _searchString = value;
+        if (_grid is not null)
+            await _grid.ReloadServerData();
+    }
+
+    async Task<DataGridEditFormAction> CommittedItemChanges(StudentFeeViewModel item)
     {
         if (item is null)
-            return;
+            return DataGridEditFormAction.Close;
 
         var state = await AuthTask;
         var userName = state.User.Identity?.Name;
@@ -197,5 +202,7 @@
         {
             SnackBar.Add("Fee Account Save Failed", Severity.Error);
         }
+
+        return DataGridEditFormAction.Close;
     }
 }

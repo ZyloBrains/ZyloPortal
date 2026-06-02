@@ -5,7 +5,7 @@
 @inject ApplicationDbContext Db
 @inject ISnackbar SnackBar
 
-<PageTitle>New Revenue Item</PageTitle>
+<PageTitle>New Revenue Source</PageTitle>
 
 <MudContainer>
     <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
@@ -32,6 +32,25 @@
             }
         </MudSelect>
 
+        @if (model.Source == RevenueSource.ProjectWork)
+        {
+            <MudSelect Variant="Variant.Outlined"
+                       @bind-Value="model.ProjectId"
+                       Label="Project"
+                       Class="mt-4"
+                       Required="true"
+                       RequiredErrorText="Project is required for ProjectWork source">
+                @foreach (var project in _projects)
+                {
+                    <MudSelectItem T="int?" Value="@project.Id">@project.Title</MudSelectItem>
+                }
+            </MudSelect>
+        }
+        else
+        {
+            model.ProjectId = null;
+        }
+
         <MudButton ButtonType="ButtonType.Submit"
                    Variant="Variant.Filled"
                    Color="Color.Tertiary"
@@ -54,13 +73,23 @@
     private Task<AuthenticationState> AuthTask { get; set; } = null!;
 
     Revenue model = new() { Amount = 0.0f, Date = DateTime.Now };
+    private List<Project> _projects = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _projects = await Db.Projects.AsNoTracking().OrderBy(p => p.Title).ToListAsync();
+    }
 
     private async Task OnValidSubmit(EditContext context)
-    {        
+    {
+        if (model.Source == RevenueSource.ProjectWork && model.ProjectId is null)
+            return;
+
         var state = await AuthTask;
         var userName = state.User.Identity?.Name;
 
         model.AddCreatedStamps(userName);
+        model.IsActive = true;
 
         Db.Revenues.Add(model);
         var rowsAffected = await Db.SaveChangesAsync();
@@ -68,8 +97,7 @@
         if (rowsAffected > 0)
         {
             SnackBar.Add("New revenue item added successfully", Severity.Success);
-            // Reset it back to default for new entry else it will try to update same model
-            model.Id = default;
+            model = new() { Amount = 0.0f, Date = DateTime.Now };
         }
         else
         {

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZyloApp.Web.Data;
 
@@ -11,9 +12,11 @@ using ZyloApp.Web.Data;
 namespace ZyloApp.Web.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260531082355_RevenueAndProjectChanges")]
+    partial class RevenueAndProjectChanges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1061,108 +1064,6 @@ namespace ZyloApp.Web.Data.Migrations
                     b.ToTable("Projects");
                 });
 
-            modelBuilder.Entity("ZyloApp.Web.Data.Models.Quotation", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ClientAddress")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClientEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClientName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ClientPhone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("Created")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Currency")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<float?>("DiscountPercent")
-                        .HasColumnType("real");
-
-                    b.Property<DateTime?>("LastUpdated")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PaymentTerms")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ProjectName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("QuoteDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("QuoteNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<float?>("TaxPercent")
-                        .HasColumnType("real");
-
-                    b.Property<DateTime?>("ValidUntil")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Quotations");
-                });
-
-            modelBuilder.Entity("ZyloApp.Web.Data.Models.QuotationItem", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Category")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<int>("QuotationId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int");
-
-                    b.Property<float>("UnitPrice")
-                        .HasColumnType("real");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("QuotationId");
-
-                    b.ToTable("QuotationItems");
-                });
-
             modelBuilder.Entity("ZyloApp.Web.Data.Models.Revenue", b =>
                 {
                     b.Property<int>("Id")
@@ -2062,17 +1963,6 @@ namespace ZyloApp.Web.Data.Migrations
                     b.Navigation("Organization");
                 });
 
-            modelBuilder.Entity("ZyloApp.Web.Data.Models.QuotationItem", b =>
-                {
-                    b.HasOne("ZyloApp.Web.Data.Models.Quotation", "Quotation")
-                        .WithMany("Items")
-                        .HasForeignKey("QuotationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Quotation");
-                });
-
             modelBuilder.Entity("ZyloApp.Web.Data.Models.Revenue", b =>
                 {
                     b.HasOne("ZyloApp.Web.Data.Models.Project", "Project")
@@ -2239,11 +2129,6 @@ namespace ZyloApp.Web.Data.Migrations
             modelBuilder.Entity("ZyloApp.Web.Data.Models.Gatherings.Attendee", b =>
                 {
                     b.Navigation("Certificates");
-                });
-
-            modelBuilder.Entity("ZyloApp.Web.Data.Models.Quotation", b =>
-                {
-                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("ZyloApp.Web.Data.Models.ReviewForm", b =>

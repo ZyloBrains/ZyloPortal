@@ -17,7 +17,8 @@
                MultiSelection
                Dense
                Placeholder="Select course modules"
-               @bind-SelectedValues="@selectedModules"
+                SelectedValues="@selectedModules"
+                SelectedValuesChanged="@((IReadOnlyCollection<Widget> v) => selectedModules = v)"
                ToStringFunc="x => x.Description"
                Variant="Variant.Outlined"
                Class="my-3">
@@ -42,13 +43,13 @@
 
     CourseQuote? model = new();
     List<Widget> techModules = [];
-    IEnumerable<Widget> selectedModules = [];
+    IReadOnlyCollection<Widget> selectedModules = [];
 
     protected override async Task OnInitializedAsync()
     {
         techModules = await Db.Widgets.Where(x => x.Title == WidgetType.CourseModule).ToListAsync();
         model = await Db.CourseQuotes.Include(x => x.Modules).FirstOrDefaultAsync(x => x.Id == Id);
-        selectedModules = model.Modules;
+        selectedModules = model.Modules.ToList();
     }
 
     private async Task OnValidSubmit(EditContext context)

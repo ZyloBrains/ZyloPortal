@@ -1,0 +1,102 @@
+@page "/quotations"
+
+@attribute [Authorize(Roles = Role.SuperAdmin)]
+
+@inject ApplicationDbContext Db
+@inject NavigationManager Navigation
+
+<PageTitle>Quotations</PageTitle>
+
+<MudDataGrid Items="@_items"
+             Hover="true"
+             Loading="@_loading"
+             Dense>
+    <ToolBarContent>
+        <MudFab Href="/quotations/add"
+                StartIcon="@Icons.Material.Filled.Add"
+                title="New Quotation"
+                Size="Size.Small"
+                Color="Color.Tertiary" />
+        <MudSpacer />
+        <MudTextField @bind-Value="_search"
+                      Placeholder="Search client or project..."
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0">
+        </MudTextField>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x => x.QuoteNumber" Title="Quote #" Sortable="true" />
+        <PropertyColumn Property="x => x.QuoteDate" Title="Date" Sortable="true">
+            <CellTemplate>@context.Item.QuoteDate.ToString("yyyy-MM-dd")</CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="x => x.ClientName" Title="Client" Sortable="true" />
+        <PropertyColumn Property="x => x.ProjectName" Title="Project" Sortable="true" />
+        <PropertyColumn Property="x => x.Currency" Title="Currency" Sortable="true" />
+        <TemplateColumn Title="Total" Sortable="true" SortBy="x => x.TotalAmount">
+            <CellTemplate>
+                @($"{context.Item.Currency} {context.Item.TotalAmount:N2}")
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="x => x.Created" Title="Created" Sortable="true" />
+        <TemplateColumn Title="Actions">
+            <CellTemplate>
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Info"
+                               Href="@($"/quotations/view/{context.Item.Id}")" title="View / Print" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning"
+                               Href="@($"/quotations/edit/{context.Item.Id}")" title="Edit" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                               OnClick="@(() => DeleteQuotation(context.Item.Id))" title="Delete" />
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</MudDataGrid>
+
+@code {
+    private List<QuotationViewModel> _items = [];
+    private bool _loading;
+    private string _search = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        var query = Db.Quotations.Include(q => q.Items).AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(_search))
+        {
+            query = query.Where(q =>
+                q.ClientName.Contains(_search) ||
+                q.ProjectName.Contains(_search) ||
+                q.QuoteNumber.Contains(_search));
+        }
+
+        var quotations = await query.OrderByDescending(q => q.QuoteDate).ToListAsync();
+        _items = quotations.Select(QuotationViewModel.FromEntity).ToList();
+        _loading = false;
+    }
+
+    private async Task DeleteQuotation(int id)
+    {
+        var q = await Db.Quotations.Include(x => x.Items).FirstOrDefaultAsync(x => x.Id == id);
+        if (q is null) return;
+
+        Db.QuotationItems.RemoveRange(q.Items);
+        Db.Quotations.Remove(q);
+        await Db.SaveChangesAsync();
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Navigation.Uri.Contains("?deleted"))
+        {
+            Navigation.NavigateTo("/quotations", replace: true);
+        }
+    }
+}

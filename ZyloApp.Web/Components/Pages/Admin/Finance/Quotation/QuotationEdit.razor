@@ -1,0 +1,379 @@
+@page "/quotations/add"
+@page "/quotations/edit/{Id:int}"
+
+@attribute [Authorize(Roles = Role.SuperAdmin)]
+
+@inject ApplicationDbContext Db
+@inject ISnackbar SnackBar
+@inject NavigationManager Navigation
+
+<PageTitle>@(IsAdd ? "New" : "Edit") Quotation</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large">
+    <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+        <MudCard Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6">@(IsAdd ? "Create" : "Edit") Quotation</MudText>
+
+            @if (IsAdd)
+            {
+                <MudSelect @bind-Value="_selectedTemplate"
+                           @bind-Value:after="OnTemplateApplied"
+                           Label="Start from template"
+                           Variant="Variant.Outlined"
+                           Class="mt-4"
+                           Clearable="true">
+                    @foreach (var tpl in _templates)
+                    {
+                        <MudSelectItem Value="@tpl.Key">@tpl.Key</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+
+            <MudTextField Label="Currency"
+                          Variant="Variant.Outlined"
+                          Class="mt-4"
+                          @bind-Value="model.Currency"
+                          Placeholder="NPR / USD / INR" />
+
+            <MudTextField Label="Client Name"
+                          Variant="Variant.Outlined"
+                          Class="mt-4"
+                          @bind-Value="model.ClientName"
+                          Required="true"
+                          RequiredError="Client name is required" />
+
+            <MudTextField Label="Client Address"
+                          Variant="Variant.Outlined"
+                          Class="mt-4"
+                          @bind-Value="model.ClientAddress" />
+
+            <MudTextField Label="Client Email"
+                          Variant="Variant.Outlined"
+                          Class="mt-4"
+                          @bind-Value="model.ClientEmail" />
+
+            <MudTextField Label="Client Phone"
+                          Variant="Variant.Outlined"
+                          Class="mt-4"
+                          @bind-Value="model.ClientPhone" />
+
+            <MudTextField Label="Project Name"
+                          Variant="Variant.Outlined"
+                          Class="mt-4"
+                          @bind-Value="model.ProjectName"
+                          Required="true"
+                          RequiredError="Project name is required" />
+
+            <div class="d-flex gap-4 mt-4">
+                <MudDatePicker Label="Quote Date" @bind-Date="model.QuoteDate" Variant="Variant.Outlined" Class="flex-1" />
+                <MudDatePicker Label="Valid Until" @bind-Date="model.ValidUntil" Variant="Variant.Outlined" Class="flex-1" />
+            </div>
+        </MudCard>
+
+        <MudCard Class="pa-4 mb-4">
+            <div class="d-flex align-center mb-4">
+                <MudText Typo="Typo.h6" Class="flex-1">Items</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Tertiary" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.Add" OnClick="@AddItem">
+                    Add Item
+                </MudButton>
+            </div>
+
+            <MudSimpleTable>
+                <thead>
+                    <tr>
+                        <th style="width:40%">Particulars</th>
+                        <th style="width:15%">Category</th>
+                        <th style="width:10%">Qty</th>
+                        <th style="width:15%">Rate (@model.Currency)</th>
+                        <th style="width:15%">Total (@model.Currency)</th>
+                        <th style="width:5%"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < model.Items.Count; i++)
+                    {
+                        var idx = i;
+                        var item = model.Items[i];
+                        <tr>
+                            <td>
+                                <MudTextField @bind-Value="item.Description" Placeholder="Description" Variant="Variant.Outlined" Class="my-0" />
+                            </td>
+                            <td>
+                                <MudSelect @bind-Value="item.Category" Placeholder="Category" Variant="Variant.Outlined" Dense="true" Class="my-0">
+                                    <MudSelectItem Value="@("Development")">Development</MudSelectItem>
+                                    <MudSelectItem Value="@("Hosting")">Hosting</MudSelectItem>
+                                    <MudSelectItem Value="@("Domain")">Domain</MudSelectItem>
+                                    <MudSelectItem Value="@("AMC")">AMC</MudSelectItem>
+                                    <MudSelectItem Value="@("Marketing")">Marketing</MudSelectItem>
+                                    <MudSelectItem Value="@("Other")">Other</MudSelectItem>
+                                </MudSelect>
+                            </td>
+                            <td>
+                                <MudNumericField @bind-Value="item.Quantity" Min="1" Variant="Variant.Outlined" Class="my-0" />
+                            </td>
+                            <td>
+                                <MudNumericField @bind-Value="item.UnitPrice" Min="0" Variant="Variant.Outlined" Class="my-0"
+                                                 Adornment="Adornment.Start" AdornmentText="@model.Currency" />
+                            </td>
+                            <td class="text-right">
+                                @($"{item.Total:N2}")
+                            </td>
+                            <td>
+                                <MudIconButton Icon="@Icons.Material.Filled.RemoveCircle" Size="Size.Small" Color="Color.Error"
+                                               OnClick="@(() => RemoveItem(idx))" />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+
+            @if (model.Items.Count > 0)
+            {
+                <div class="d-flex flex-column align-end mt-4" style="min-width:300px; margin-left:auto">
+                    <div class="d-flex justify-between" style="width:300px">
+                        <span>Subtotal:</span>
+                        <span>@($"{model.Currency} {model.Subtotal:N2}")</span>
+                    </div>
+                    <div class="d-flex align-center mt-2" style="width:300px">
+                        <span class="flex-1">Discount:</span>
+                        <MudNumericField @bind-Value="model.DiscountPercent" Min="0" Max="100" Variant="Variant.Outlined"
+                                         Class="my-0" Style="width:80px" Adornment="Adornment.End" AdornmentText="%" />
+                        <span style="width:100px; text-align:right">@($"{model.Currency} {model.DiscountAmount:N2}")</span>
+                    </div>
+                    <div class="d-flex align-center mt-2" style="width:300px">
+                        <span class="flex-1">Tax:</span>
+                        <MudNumericField @bind-Value="model.TaxPercent" Min="0" Max="100" Variant="Variant.Outlined"
+                                         Class="my-0" Style="width:80px" Adornment="Adornment.End" AdornmentText="%" />
+                        <span style="width:100px; text-align:right">@($"{model.Currency} {model.TaxAmount:N2}")</span>
+                    </div>
+                    <MudDivider Class="my-1" Style="width:300px" />
+                    <div class="d-flex justify-between" style="width:300px; font-weight:bold; font-size:1.1em">
+                        <span>Grand Total:</span>
+                        <span>@($"{model.Currency} {model.GrandTotal:N2}")</span>
+                    </div>
+                </div>
+            }
+        </MudCard>
+
+        <MudCard Class="pa-4 mb-4">
+            <MudTextField Label="Payment Terms"
+                          Variant="Variant.Outlined"
+                          Class="mt-4"
+                          @bind-Value="model.PaymentTerms" />
+
+            <MudTextField Label="Notes"
+                          Variant="Variant.Outlined"
+                          Class="mt-4"
+                          @bind-Value="model.Notes" />
+        </MudCard>
+
+        <div class="d-flex gap-4 mt-4 mb-8">
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Tertiary"
+                       StartIcon="@Icons.Material.Filled.Save">
+                @(IsAdd ? "Create Quotation" : "Update Quotation")
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Href="/quotations"
+                       StartIcon="@Icons.Material.Filled.ArrowBack">
+                Cancel
+            </MudButton>
+        </div>
+    </EditForm>
+</MudContainer>
+
+@code {
+    [Parameter] public int? Id { get; set; }
+    [CascadingParameter] private Task<AuthenticationState> AuthTask { get; set; } = null!;
+
+    private QuotationEditViewModel model = new();
+    private bool IsAdd => Id is null or 0;
+    private string _selectedTemplate = "";
+
+    private Dictionary<string, List<QuotationItemEdit>> _templates = new()
+    {
+        ["Website Project"] = new()
+        {
+            new() { Description = "Domain Registration (1 Year)", Category = "Domain", Quantity = 1, UnitPrice = 1200, SortOrder = 1 },
+            new() { Description = "Web Hosting (1 Year)", Category = "Hosting", Quantity = 1, UnitPrice = 5000, SortOrder = 2 },
+            new() { Description = "SSL Certificate (1 Year)", Category = "Hosting", Quantity = 1, UnitPrice = 2500, SortOrder = 3 },
+            new() { Description = "UI/UX Design", Category = "Development", Quantity = 1, UnitPrice = 15000, SortOrder = 4 },
+            new() { Description = "Frontend Development", Category = "Development", Quantity = 1, UnitPrice = 25000, SortOrder = 5 },
+            new() { Description = "Backend Development", Category = "Development", Quantity = 1, UnitPrice = 30000, SortOrder = 6 },
+            new() { Description = "Annual Maintenance (1 Year)", Category = "AMC", Quantity = 1, UnitPrice = 12000, SortOrder = 7 },
+            new() { Description = "SEO Setup", Category = "Marketing", Quantity = 1, UnitPrice = 8000, SortOrder = 8 },
+        },
+        ["Mobile Application"] = new()
+        {
+            new() { Description = "App Store Registration (1 Year)", Category = "Domain", Quantity = 1, UnitPrice = 3000, SortOrder = 1 },
+            new() { Description = "UI/UX Design", Category = "Development", Quantity = 1, UnitPrice = 20000, SortOrder = 2 },
+            new() { Description = "iOS Development", Category = "Development", Quantity = 1, UnitPrice = 50000, SortOrder = 3 },
+            new() { Description = "Android Development", Category = "Development", Quantity = 1, UnitPrice = 45000, SortOrder = 4 },
+            new() { Description = "Backend API Development", Category = "Development", Quantity = 1, UnitPrice = 35000, SortOrder = 5 },
+            new() { Description = "Annual Maintenance (1 Year)", Category = "AMC", Quantity = 1, UnitPrice = 15000, SortOrder = 6 },
+        },
+        ["IT Consulting"] = new()
+        {
+            new() { Description = "Requirement Analysis", Category = "Development", Quantity = 1, UnitPrice = 10000, SortOrder = 1 },
+            new() { Description = "System Architecture Design", Category = "Development", Quantity = 1, UnitPrice = 20000, SortOrder = 2 },
+            new() { Description = "Technology Consultation", Category = "Development", Quantity = 1, UnitPrice = 15000, SortOrder = 3 },
+            new() { Description = "Project Management", Category = "Development", Quantity = 1, UnitPrice = 25000, SortOrder = 4 },
+        }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!IsAdd)
+        {
+            var q = await Db.Quotations
+                .Include(x => x.Items.OrderBy(i => i.SortOrder))
+                .FirstOrDefaultAsync(x => x.Id == Id);
+
+            if (q is not null)
+            {
+                model = new()
+                {
+                    Id = q.Id,
+                    ClientName = q.ClientName,
+                    ClientAddress = q.ClientAddress,
+                    ClientEmail = q.ClientEmail,
+                    ClientPhone = q.ClientPhone,
+                    ProjectName = q.ProjectName,
+                    Currency = q.Currency,
+                    QuoteDate = q.QuoteDate,
+                    ValidUntil = q.ValidUntil,
+                    PaymentTerms = q.PaymentTerms,
+                    Notes = q.Notes,
+                    DiscountPercent = q.DiscountPercent,
+                    TaxPercent = q.TaxPercent,
+                    Items = q.Items.Select(i => new QuotationItemEdit
+                    {
+                        Id = i.Id,
+                        Description = i.Description,
+                        Category = i.Category,
+                        Quantity = i.Quantity,
+                        UnitPrice = i.UnitPrice,
+                        SortOrder = i.SortOrder
+                    }).ToList()
+                };
+            }
+        }
+    }
+
+    private void OnTemplateApplied()
+    {
+        ApplyTemplate(_selectedTemplate);
+    }
+
+    private void ApplyTemplate(string templateName)
+    {
+        _selectedTemplate = templateName;
+        if (_templates.TryGetValue(templateName, out var items))
+        {
+            model.Items = items.Select(i => new QuotationItemEdit
+            {
+                Description = i.Description,
+                Category = i.Category,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice,
+                SortOrder = i.SortOrder
+            }).ToList();
+        }
+    }
+
+    private void AddItem()
+    {
+        model.Items.Add(new QuotationItemEdit
+        {
+            Description = "",
+            Category = "Other",
+            Quantity = 1,
+            SortOrder = model.Items.Count > 0 ? model.Items.Max(i => i.SortOrder) + 1 : 1
+        });
+    }
+
+    private void RemoveItem(int index)
+    {
+        model.Items.RemoveAt(index);
+    }
+
+    private async Task OnValidSubmit()
+    {
+        var authState = await AuthTask;
+        var user = authState.User.Identity?.Name ?? "System";
+
+        if (IsAdd)
+        {
+            var yearPrefix = $"Q-{DateTime.Now.Year}-";
+            var lastNumber = await Db.Quotations
+                .Where(q => q.QuoteNumber.StartsWith(yearPrefix))
+                .CountAsync();
+            var seq = (lastNumber + 1).ToString("D3");
+
+            var entity = new Quotation
+            {
+                QuoteNumber = $"Q-{DateTime.Now.Year}-{seq}",
+                ClientName = model.ClientName,
+                ClientAddress = model.ClientAddress,
+                ClientEmail = model.ClientEmail,
+                ClientPhone = model.ClientPhone,
+                ProjectName = model.ProjectName,
+                Currency = model.Currency,
+                QuoteDate = model.QuoteDate ?? DateTime.Now,
+                ValidUntil = model.ValidUntil,
+                PaymentTerms = model.PaymentTerms,
+                Notes = model.Notes,
+                DiscountPercent = model.DiscountPercent,
+                TaxPercent = model.TaxPercent,
+                Items = model.Items.Select(i => new QuotationItem
+                {
+                    Description = i.Description,
+                    Category = i.Category,
+                    Quantity = i.Quantity,
+                    UnitPrice = i.UnitPrice,
+                    SortOrder = i.SortOrder
+                }).ToList()
+            }.AddCreatedStamps(user) as Quotation;
+
+            Db.Quotations.Add(entity!);
+        }
+        else
+        {
+            var entity = await Db.Quotations
+                .Include(x => x.Items)
+                .FirstOrDefaultAsync(x => x.Id == Id);
+
+            if (entity is null) return;
+
+            entity.ClientName = model.ClientName;
+            entity.ClientAddress = model.ClientAddress;
+            entity.ClientEmail = model.ClientEmail;
+            entity.ClientPhone = model.ClientPhone;
+            entity.ProjectName = model.ProjectName;
+            entity.Currency = model.Currency;
+            entity.QuoteDate = model.QuoteDate ?? DateTime.Now;
+            entity.ValidUntil = model.ValidUntil;
+            entity.PaymentTerms = model.PaymentTerms;
+            entity.Notes = model.Notes;
+            entity.DiscountPercent = model.DiscountPercent;
+            entity.TaxPercent = model.TaxPercent;
+            entity.AddLastUpdatedStamps(user);
+
+            Db.QuotationItems.RemoveRange(entity.Items);
+            entity.Items = model.Items.Select(i => new QuotationItem
+            {
+                Description = i.Description,
+                Category = i.Category,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice,
+                SortOrder = i.SortOrder
+            }).ToList();
+        }
+
+        await Db.SaveChangesAsync();
+        SnackBar.Add(IsAdd ? "Quotation created" : "Quotation updated", Severity.Success);
+        Navigation.NavigateTo("/quotations");
+    }
+}
