@@ -1,0 +1,114 @@
+@page "/invoices"
+
+@attribute [Authorize(Roles = Role.SuperAdmin)]
+
+@inject ApplicationDbContext Db
+@inject NavigationManager Navigation
+
+<PageTitle>Invoices</PageTitle>
+
+<MudDataGrid Items="@_items"
+             Hover="true"
+             Loading="@_loading"
+             Dense>
+    <ToolBarContent>
+        <MudFab Href="/invoices/add"
+                StartIcon="@Icons.Material.Filled.Add"
+                title="New Invoice"
+                Size="Size.Small"
+                Color="Color.Tertiary" />
+        <MudSpacer />
+        <MudTextField @bind-Value="_search"
+                      Placeholder="Search client or invoice..."
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0">
+        </MudTextField>
+    </ToolBarContent>
+    <Columns>
+        <PropertyColumn Property="x => x.InvoiceNumber" Title="Invoice #" Sortable="true" />
+        <PropertyColumn Property="x => x.InvoiceDate" Title="Date" Sortable="true">
+            <CellTemplate>@context.Item.InvoiceDate.ToString("yyyy-MM-dd")</CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="x => x.ClientName" Title="Client" Sortable="true" />
+        <PropertyColumn Property="x => x.Currency" Title="Currency" Sortable="true" />
+        <TemplateColumn Title="Total" Sortable="true" SortBy="x => x.TotalAmount">
+            <CellTemplate>
+                @($"{context.Item.Currency} {context.Item.TotalAmount:N2}")
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="x => x.PaymentStatus" Title="Status" Sortable="true">
+            <CellTemplate>
+                <MudChip Size="Size.Small"
+                         Color="@(context.Item.PaymentStatus switch {
+                             "Paid" => Color.Success,
+                             "Partial" => Color.Warning,
+                             "Overdue" => Color.Error,
+                             "Cancelled" => Color.Default,
+                             _ => Color.Info
+                         })">
+                    @context.Item.PaymentStatus
+                </MudChip>
+            </CellTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="x => x.Created" Title="Created" Sortable="true" />
+        <TemplateColumn Title="Actions">
+            <CellTemplate>
+                <MudIconButton Icon="@Icons.Material.Filled.Visibility" Size="Size.Small" Color="Color.Info"
+                               Href="@($"/invoices/view/{context.Item.Id}")" title="View / Print" />
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning"
+                               Href="@($"/invoices/edit/{context.Item.Id}")" title="Edit" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error"
+                               OnClick="@(() => DeleteInvoice(context.Item.Id))" title="Delete" />
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+</MudDataGrid>
+
+@code {
+    private List<InvoiceViewModel> _items = [];
+    private bool _loading;
+    private string _search = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _loading = true;
+        var query = Db.Invoices.Include(q => q.Items).AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(_search))
+        {
+            query = query.Where(q =>
+                q.ClientName.Contains(_search) ||
+                q.InvoiceNumber.Contains(_search));
+        }
+
+        var invoices = await query.OrderByDescending(q => q.InvoiceDate).ToListAsync();
+        _items = invoices.Select(InvoiceViewModel.FromEntity).ToList();
+        _loading = false;
+    }
+
+    private async Task DeleteInvoice(int id)
+    {
+        var inv = await Db.Invoices.Include(x => x.Items).FirstOrDefaultAsync(x => x.Id == id);
+        if (inv is null) return;
+
+        Db.InvoiceItems.RemoveRange(inv.Items);
+        Db.Invoices.Remove(inv);
+        await Db.SaveChangesAsync();
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && Navigation.Uri.Contains("?deleted"))
+        {
+            Navigation.NavigateTo("/invoices", replace: true);
+        }
+    }
+}

@@ -45,6 +45,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<SectionItem> SectionItems { get; set; }
     public DbSet<Quotation> Quotations { get; set; }
     public DbSet<QuotationItem> QuotationItems { get; set; }
+    public DbSet<Invoice> Invoices { get; set; }
+    public DbSet<InvoiceItem> InvoiceItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
