@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 
 namespace ZyloApp.Web.Data.Models;
-// Add profile data for application users by adding properties to the ApplicationUser class
+
 public class ApplicationUser : IdentityUser
 {
+    public Guid? ClientId { get; set; }
+    public ClientApplication? ClientApplication { get; set; }
 }

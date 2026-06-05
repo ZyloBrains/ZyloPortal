@@ -45,6 +45,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<SectionItem> SectionItems { get; set; }
     public DbSet<Quotation> Quotations { get; set; }
     public DbSet<QuotationItem> QuotationItems { get; set; }
+    public DbSet<ClientApplication> ClientApplications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -85,6 +86,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<GatheringCalendar>()
         .HasMany(e => e.Consultants)
         .WithMany();
+
+        builder.Entity<ApplicationUser>()
+            .HasOne(e => e.ClientApplication)
+            .WithMany()
+            .HasForeignKey(e => e.ClientId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<ClientApplication>()
+            .HasIndex(e => e.ClientId)
+            .IsUnique();
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

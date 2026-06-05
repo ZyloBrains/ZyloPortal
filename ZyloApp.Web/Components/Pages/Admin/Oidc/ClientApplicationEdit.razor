@@ -1,0 +1,129 @@
+@page "/identity/client-applications/new"
+@page "/identity/client-applications/edit/{Id:guid}"
+@attribute [Authorize(Roles = Role.SuperAdmin)]
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject ISnackbar SnackBar
+@inject NavigationManager Navigation
+@using ZyloApp.Web.Helpers
+
+<PageTitle>@pageTitle</PageTitle>
+
+<MudContainer>
+    <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+        <MudTextField Label="Client ID" @bind-Value="model.ClientId"
+                      Variant="Variant.Outlined" Disabled="@(!IsAdd)"
+                      HelperText="Unique identifier used by the client application" />
+        <MudTextField Class="mt-3" Label="Display Name" @bind-Value="model.DisplayName"
+                      Variant="Variant.Outlined"
+                      HelperText="Human-readable name shown in admin UI" />
+        <MudTextField Class="mt-3" Label="Redirect URIs" @bind-Value="model.RedirectUris"
+                      Variant="Variant.Outlined" Lines="3"
+                      HelperText="One per line. URIs the client can redirect to after login. Must be HTTPS in production." />
+        <MudTextField Class="mt-3" Label="Post-Logout Redirect URIs" @bind-Value="model.PostLogoutRedirectUris"
+                      Variant="Variant.Outlined" Lines="3"
+                      HelperText="One per line. URIs the client can redirect to after logout." />
+        <MudTextField Class="mt-3" Label="Allowed Scopes" @bind-Value="model.AllowedScopes"
+                      Variant="Variant.Outlined" Lines="2"
+                      HelperText="One per line. Standard: openid, profile, email, roles" />
+        <MudSwitch Class="mt-3" @bind-Value="model.RequireConsent"
+                   Color="Color.Warning"
+                   Label="Require user consent" />
+        <MudSwitch Class="mt-3" @bind-Value="model.Enabled"
+                   Color="Color.Success"
+                   Label="Enabled" />
+
+        <MudText Class="mt-3">
+            <small class="text-muted">
+                Client Secret will be auto-generated upon creation.
+                <strong>Save the secret before leaving this page — it will not be shown again.</strong>
+            </small>
+        </MudText>
+
+        @if (!string.IsNullOrEmpty(generatedSecret))
+        {
+            <MudAlert Class="mt-3" Severity="Severity.Warning" Variant="Variant.Filled">
+                <MudText><strong>Client Secret (copy now):</strong></MudText>
+                <MudText Style="font-family: monospace; word-break: break-all;">@generatedSecret</MudText>
+            </MudAlert>
+        }
+
+        <MudStack Row Class="mt-4">
+            <MudButton ButtonType="ButtonType.Submit"
+                       Variant="Variant.Filled"
+                       Color="Color.Tertiary"
+                       StartIcon="@Icons.Material.Filled.Save">
+                Save
+            </MudButton>
+            <MudButton Href="/identity/client-applications"
+                       Variant="Variant.Outlined"
+                       Color="Color.Default">
+                Cancel
+            </MudButton>
+        </MudStack>
+    </EditForm>
+</MudContainer>
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    ClientApplication model = new();
+    string pageTitle = string.Empty;
+    string generatedSecret = string.Empty;
+    bool IsAdd => Id is null || Id == Guid.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsAdd)
+        {
+            pageTitle = "New Client Application";
+            model.AllowedScopes = "openid\nprofile\nemail\nroles";
+        }
+        else
+        {
+            pageTitle = "Edit Client Application";
+            await using var db = await DbFactory.CreateDbContextAsync();
+            var existing = await db.ClientApplications.FindAsync(Id.Value);
+            if (existing != null)
+            {
+                model = existing;
+            }
+        }
+    }
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
+        if (IsAdd)
+        {
+            var secret = PwdGenerator.GenerateSecret();
+            model.ClientId = string.IsNullOrWhiteSpace(model.ClientId)
+                ? Guid.CreateVersion7().ToString()
+                : model.ClientId;
+
+            db.ClientApplications.Add(model);
+            await db.SaveChangesAsync();
+
+            generatedSecret = secret;
+            SnackBar.Add("Client application created. Copy the secret now!", Severity.Warning);
+        }
+        else
+        {
+            var existing = await db.ClientApplications.FindAsync(Id!.Value);
+            if (existing != null)
+            {
+                existing.DisplayName = model.DisplayName;
+                existing.RedirectUris = model.RedirectUris;
+                existing.PostLogoutRedirectUris = model.PostLogoutRedirectUris;
+                existing.AllowedScopes = model.AllowedScopes;
+                existing.RequireConsent = model.RequireConsent;
+                existing.Enabled = model.Enabled;
+                await db.SaveChangesAsync();
+                SnackBar.Add("Client application updated", Severity.Success);
+            }
+        }
+
+        Navigation.NavigateTo("/identity/client-applications");
+    }
+}

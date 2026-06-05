@@ -33,7 +33,9 @@
 		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="10.0.1" />		
 		<PackageReference Include="MudBlazor" Version="9.2.0" />		
 		<PackageReference Include="NuGet.Packaging" Version="7.6.0" />		
-		<PackageReference Include="NuGet.Protocol" Version="7.6.0" />
+		<PackageReference Include="NuGet.Protocol" Version="7.6.0" />		
+		<PackageReference Include="OpenIddict.AspNetCore" Version="7.5.0" />		
+		<PackageReference Include="OpenIddict.EntityFrameworkCore" Version="7.5.0" />
 		<PackageReference Include="PasswordGenerator" Version="2.1.0" />
 		<PackageReference Include="Humanizer" Version="3.0.1" />
 		<PackageReference Include="Spillgebees.Blazor.RichTextEditor" Version="2.1.0" />

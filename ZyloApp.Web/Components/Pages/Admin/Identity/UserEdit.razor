@@ -6,7 +6,7 @@
 @inject RoleManager<IdentityRole> RoleManager
 @inject ISnackbar SnackBar
 @inject NavigationManager Navigation
-@inject ApplicationDbContext Db
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
 <PageTitle>User Management</PageTitle>
 
@@ -28,6 +28,19 @@
             @foreach (var role in roles)
             {
                 <MudSelectItem Value="@role" />
+            }
+        </MudSelect>
+
+        <MudSelect T="Guid?"
+                   Dense="true"
+                   Variant="Variant.Outlined"
+                   Label="Client Application"
+                   @bind-Value="selectedClientAppId"
+                   Class="my-3">
+            <MudSelectItem Value="@((Guid?)null)">None (Portal user only)</MudSelectItem>
+            @foreach (var app in clientApps)
+            {
+                <MudSelectItem Value="@app.Id">@app.DisplayName (@app.ClientId)</MudSelectItem>
             }
         </MudSelect>
 
@@ -57,17 +70,24 @@
     List<string?> roles = [];
     IReadOnlyCollection<string> selectedRoles = [];
     IReadOnlyCollection<string> userRoles = [];
+    List<ClientApplication> clientApps = [];
+    Guid? selectedClientAppId;
 
     protected override async Task OnInitializedAsync()
     {
+        await using var db = await DbFactory.CreateDbContextAsync();
         model = await UserManager.FindByIdAsync(Id) ?? new();
         roles = await RoleManager.Roles.Select(x => x.Name).ToListAsync() ?? [];
         userRoles = (await UserManager.GetRolesAsync(model)).ToList();
         selectedRoles = userRoles.ToList();
+        clientApps = await db.ClientApplications.OrderBy(x => x.DisplayName).ToListAsync();
+        selectedClientAppId = model.ClientId;
     }
 
     private async Task OnValidSubmit(EditContext context)
     {
+        await using var db = await DbFactory.CreateDbContextAsync();
+
         var rolesTobeAdded = selectedRoles.Except(userRoles);
         var rolesTobeDeleted = userRoles.Except(selectedRoles);
 
@@ -77,7 +97,7 @@
 
             if (rolesTobeAdded.Contains(Role.Instructor))
             {
-                await Db.Instructors
+                await db.Instructors
                     .Where(x => x.Email == model.Email)
                     .ExecuteUpdateAsync(x => x.SetProperty(y => y.ApplicationUserId, Id));
             }
@@ -94,6 +114,16 @@
             _ = resultDelete.Succeeded ?
                 SnackBar.Add("User saved successfully", Severity.Success) :
                 SnackBar.Add($"User save failed. {string.Join("\n\r", resultDelete.Errors.Select(x => x.Description))}", Severity.Error);
+        }
+
+        if (selectedClientAppId != model.ClientId)
+        {
+            model.ClientId = selectedClientAppId;
+            var result = await UserManager.UpdateAsync(model);
+            if (!result.Succeeded)
+            {
+                SnackBar.Add("Failed to update client application", Severity.Error);
+            }
         }
 
         Navigation.NavigateTo("/identity/users");

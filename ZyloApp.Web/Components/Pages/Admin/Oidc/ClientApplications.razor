@@ -1,0 +1,76 @@
+@page "/identity/client-applications"
+@attribute [Authorize(Roles = Role.SuperAdmin)]
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject ISnackbar SnackBar
+@inject NavigationManager Navigation
+
+<PageTitle>Client Applications</PageTitle>
+
+<MudTable Items="@apps" Hover="true" Loading="@loadingData" Dense="true">
+    <ToolBarContent>
+        <MudFab Href="/identity/client-applications/new" StartIcon="@Icons.Material.Filled.Add" title="Add New Client App" Size="Size.Small" Color="Color.Tertiary"></MudFab>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>#</MudTh>
+        <MudTh>Client ID</MudTh>
+        <MudTh>Display Name</MudTh>
+        <MudTh>Enabled</MudTh>
+        <MudTh>Created</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="#">@(apps.IndexOf(context) + 1)</MudTd>
+        <MudTd DataLabel="ClientId">@context.ClientId</MudTd>
+        <MudTd DataLabel="DisplayName">@context.DisplayName</MudTd>
+        <MudTd DataLabel="Enabled">
+            <MudIcon Icon="@(context.Enabled ? Icons.Material.Filled.CheckCircle : Icons.Material.Filled.Cancel)" Color="@(context.Enabled ? Color.Success : Color.Error)" />
+        </MudTd>
+        <MudTd DataLabel="Created">@context.CreatedAt.ToString("g")</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/identity/client-applications/edit/" + context.Id)" />
+            <MudIconButton Icon="@Icons.Material.Sharp.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context)" />
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
+
+<MudMessageBox @ref="mbox" Title="Warning" CancelText="Cancel">
+    <MessageContent>
+        Are you sure to delete this client application? Users linked to it will lose their app association.
+    </MessageContent>
+    <YesButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" Class="ml-2 mb-2 mr-3" StartIcon="@Icons.Material.Filled.DeleteForever">Delete</MudButton>
+    </YesButton>
+</MudMessageBox>
+
+@code {
+    List<ClientApplication> apps = [];
+    bool loadingData = false;
+    ClientApplication? toDelete;
+    MudMessageBox mbox { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loadingData = true;
+        await using var db = await DbFactory.CreateDbContextAsync();
+        apps = await db.ClientApplications.OrderByDescending(x => x.CreatedAt).ToListAsync();
+        loadingData = false;
+    }
+
+    private async Task ConfirmDelete(ClientApplication app)
+    {
+        toDelete = app;
+        bool? result = await mbox.ShowAsync();
+        if (result != true || toDelete == null)
+            return;
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        db.ClientApplications.Remove(toDelete);
+        await db.SaveChangesAsync();
+
+        SnackBar.Add("Client application deleted successfully", Severity.Success);
+        apps.Remove(toDelete);
+    }
+}

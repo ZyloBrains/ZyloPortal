@@ -155,6 +155,11 @@
         {
             Logger.LogInformation("User logged in.");
 
+            if (!string.IsNullOrEmpty(ReturnUrl) && UrlIsLocal(ReturnUrl))
+            {
+                RedirectManager.RedirectTo(ReturnUrl);
+            }
+
             var enrollee = await Db.Students.FirstOrDefaultAsync(x => x.Email == Input.Email);
 
             if (enrollee is null)
@@ -181,6 +186,15 @@
         {
             errorMessage = "Error: Invalid login attempt.";
         }
+    }
+
+    private static bool UrlIsLocal(string url)
+    {
+        if (string.IsNullOrEmpty(url))
+            return false;
+        if (url.StartsWith("/") && !url.StartsWith("//"))
+            return true;
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Host == "localhost";
     }
 
     private sealed class InputModel

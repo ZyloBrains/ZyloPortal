@@ -11,4 +11,16 @@ public static class PwdGenerator
         var password = pass.Next();
         return password;
     }
+
+    public static string GenerateSecret()
+    {
+        var pass = new Password()
+            .LengthRequired(48)
+            .IncludeLowercase()
+            .IncludeUppercase()
+            .IncludeNumeric()
+            .IncludeSpecial();
+
+        return pass.Next();
+    }
 }

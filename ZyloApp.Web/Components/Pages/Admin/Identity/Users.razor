@@ -4,6 +4,7 @@
 @inject RoleManager<IdentityRole> RoleManager
 @inject ISnackbar SnackBar
 @inject ApplicationDbContext Db
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
 <PageTitle>All Users</PageTitle>
 
@@ -32,17 +33,25 @@
             Remove Role
         </MudButton>
         <MudSpacer />
+        <MudSelect @bind-Value="selectedClientAppFilter" Label="Client App" AdornmentColor="Color.Tertiary" Clearable="true" Class="mt-0">
+            <MudSelectItem Value="string.Empty">All</MudSelectItem>
+            @foreach (var app in clientApps)
+            {
+                <MudSelectItem Value="@app.ClientId">@app.DisplayName</MudSelectItem>
+            }
+        </MudSelect>
         <MudTextField @bind-Value="searchString" Placeholder="Search"
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Search"
-                      IconSize="Size.Medium"
-                      Class="mt-0">
+                       Adornment="Adornment.Start"
+                       AdornmentIcon="@Icons.Material.Filled.Search"
+                       IconSize="Size.Medium"
+                       Class="mt-0">
         </MudTextField>
     </ToolBarContent>
     <HeaderContent>
         <MudTh>#</MudTh>
         <MudTh>User Name</MudTh>
         <MudTh>Email</MudTh>
+        <MudTh>Client App</MudTh>
         <MudTh>EmailConfirmed</MudTh>
         <MudTh>TwoFactorEnabled</MudTh>
         <MudTh>AccessFailedCount</MudTh>
@@ -52,6 +61,7 @@
         <MudTd DataLabel="#">@(users.IndexOf(context) + 1)</MudTd>
         <MudTd DataLabel="UserName">@context.UserName</MudTd>
         <MudTd DataLabel="Email">@context.Email</MudTd>
+        <MudTd DataLabel="Client App">@GetClientAppName(context.ClientId)</MudTd>
         <MudTd DataLabel="EmailConfirmed">@context.EmailConfirmed</MudTd>
         <MudTd DataLabel="TwoFactorEnabled">@context.TwoFactorEnabled</MudTd>
         <MudTd DataLabel="AccessFailedCount">@context.AccessFailedCount</MudTd>
@@ -78,17 +88,28 @@
     List<ApplicationUser> users = [];
     HashSet<ApplicationUser> selectedUsers = [];
     List<IdentityRole> roles = [];
+    List<ClientApplication> clientApps = [];
     bool loadingData = false;
     string searchString = string.Empty;
     string selectedRole = string.Empty;
+    string selectedClientAppFilter = string.Empty;
     MudMessageBox mbox { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
         loadingData = true;
+        await using var db = await DbFactory.CreateDbContextAsync();
         users = await UserManager.Users.ToListAsync();
         roles = RoleManager.Roles.ToList();
+        clientApps = await db.ClientApplications.OrderBy(x => x.DisplayName).ToListAsync();
         loadingData = false;
+    }
+
+    private string GetClientAppName(Guid? clientId)
+    {
+        if (clientId == null) return "-";
+        var app = clientApps.FirstOrDefault(x => x.Id == clientId.Value);
+        return app?.DisplayName ?? "-";
     }
 
     private async Task ConfirmDelete(ApplicationUser user)
@@ -114,6 +135,13 @@
 
     private bool FilterFunc(ApplicationUser user, string searchString)
     {
+        if (!string.IsNullOrWhiteSpace(selectedClientAppFilter))
+        {
+            var app = clientApps.FirstOrDefault(x => x.ClientId == selectedClientAppFilter);
+            if (app == null || user.ClientId != app.Id)
+                return false;
+        }
+
         if (string.IsNullOrWhiteSpace(searchString))
             return true;
         if (user!.UserName!.Contains(searchString, StringComparison.OrdinalIgnoreCase))
