@@ -167,6 +167,7 @@ else
 <style>
     @@media print {
         @@page { margin: 15mm; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         body { background: white; }
         .no-print { display: none !important; }
         .mud-layout { height: auto !important; }
