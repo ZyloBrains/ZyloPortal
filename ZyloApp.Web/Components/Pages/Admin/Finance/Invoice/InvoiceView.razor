@@ -21,6 +21,13 @@
                OnClick="@Print" Style="float:right">
         Print / Save PDF
     </MudButton>
+    <MudButton Variant="Variant.Outlined"
+               StartIcon="@(_showBankDetails ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.Visibility)"
+               OnClick="@ToggleBankDetails"
+               Color="Color.Info"
+               Style="float:right; margin-right:8px">
+        @(_showBankDetails ? "Hide" : "Show") Bank Details
+    </MudButton>
 </div>
 
 @if (_inv is not null)
@@ -64,9 +71,6 @@
                     <div class="meta-row">
                         <span class="meta-label">Currency:</span>
                         <span class="meta-value">@_inv.Currency</span>
-                    </div>
-                    <div class="meta-row">
-                        <span class="status-badge @GetStatusClass(_inv.PaymentStatus)">@_inv.PaymentStatus</span>
                     </div>
                 </div>
             </div>
@@ -160,9 +164,9 @@
             </div>
         </div>
 
-        @if (!string.IsNullOrWhiteSpace(_inv.BankName) ||
+        @if (_showBankDetails && (!string.IsNullOrWhiteSpace(_inv.BankName) ||
              !string.IsNullOrWhiteSpace(_inv.BankAccountNumber) ||
-             !string.IsNullOrWhiteSpace(_inv.BankAccountHolder))
+             !string.IsNullOrWhiteSpace(_inv.BankAccountHolder)))
         {
             <div class="bank-section">
                 <div class="section-label">Bank Details:</div>
@@ -178,14 +182,6 @@
                 {
                     <div class="bank-detail">Account #: @_inv.BankAccountNumber</div>
                 }
-            </div>
-        }
-
-        @if (!string.IsNullOrWhiteSpace(_inv.PaymentTerms))
-        {
-            <div class="terms-section">
-                <div class="section-label">Payment Terms:</div>
-                <div class="terms-text">@_inv.PaymentTerms</div>
             </div>
         }
 
@@ -244,13 +240,6 @@ else
     .meta-row { margin-bottom: 4px; font-size: 13px; }
     .meta-label { color: #666; margin-right: 6px; }
     .meta-value { font-weight: 600; }
-    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 700; }
-    .status-unpaid { background: #fff3e0; color: #e65100; }
-    .status-paid { background: #e8f5e9; color: #2e7d32; }
-    .status-partial { background: #fff8e1; color: #f57f17; }
-    .status-overdue { background: #fce4ec; color: #c62828; }
-    .status-cancelled { background: #f5f5f5; color: #616161; }
-
     .divider { border-top: 2px solid #1a237e; margin-bottom: 14px; }
 
     .client-section { margin-bottom: 15px; }
@@ -289,6 +278,7 @@ else
 
     private Invoice? _inv;
     private bool _notFound;
+    private bool _showBankDetails = true;
 
     private float Subtotal => _inv?.Items.Sum(i => i.Quantity * i.UnitPrice) ?? 0;
     private float DiscountAmount => Subtotal * (_inv?.DiscountPercent ?? 0) / 100;
@@ -298,15 +288,6 @@ else
 
     private string FormatAmount(float amount) => $"{_inv?.Currency ?? "NPR"} {amount:N2}";
 
-    private string GetStatusClass(string status) => status switch
-    {
-        "Paid" => "status-paid",
-        "Partial" => "status-partial",
-        "Overdue" => "status-overdue",
-        "Cancelled" => "status-cancelled",
-        _ => "status-unpaid"
-    };
-
     protected override async Task OnInitializedAsync()
     {
         _inv = await Db.Invoices
@@ -315,6 +296,11 @@ else
             .FirstOrDefaultAsync(x => x.Id == Id);
 
         _notFound = _inv is null;
+    }
+
+    private void ToggleBankDetails()
+    {
+        _showBankDetails = !_showBankDetails;
     }
 
     private async Task Print()
