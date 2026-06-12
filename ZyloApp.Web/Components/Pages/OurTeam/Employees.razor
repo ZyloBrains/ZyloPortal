@@ -1,0 +1,142 @@
+@page "/employees"
+
+@attribute [Authorize(Roles = Role.Admins)]
+
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<PageTitle>Employee Directory</PageTitle>
+
+<MudText Typo="Typo.h4" Class="mb-4">ZyloBrains Employee Directory</MudText>
+
+<MudGrid Spacing="2">
+    <MudItem xs="12">
+        <MudPaper Class="pa-4 mb-4">
+            <MudText Typo="Typo.h6" Class="mb-2">Filter by Department</MudText>
+            <MudChipSet T="string" Filter="true" SelectedValues="@selectedDepartments" SelectedValuesChanged="@((IReadOnlyCollection<string> v) => { selectedDepartments = v; FilterChanged(); })">
+                @foreach (var dept in departments)
+                {
+                    <MudChip T="string" Value="@dept">@dept</MudChip>
+                }
+            </MudChipSet>
+        </MudPaper>
+    </MudItem>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <MudItem xs="12">
+            <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
+        </MudItem>
+    }
+
+    @foreach (var employee in filteredEmployees)
+    {
+        <MudItem xl="3" lg="4" md="6" sm="6" xs="12">
+            <MudCard Elevation="3">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudContainer Class="d-flex justify-center">
+                            <MudAvatar Style="height:120px; width:120px; font-size:2.5rem;" Elevation="5">
+                                @if (!string.IsNullOrEmpty(employee.ProfilePath))
+                                {
+                                    <MudImage Src="@employee.ProfilePath" />
+                                }
+                                else
+                                {
+                                    <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
+                                }
+                            </MudAvatar>
+                        </MudContainer>
+                    </CardHeaderContent>
+                    <CardHeaderActions>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small" Href="@("/employees/edit/" + employee.Id)" />
+                    </CardHeaderActions>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.h5" Align="Align.Center">@employee.Name</MudText>
+                    <MudText Typo="Typo.subtitle1" Align="Align.Center" Color="Color.Secondary">@employee.Designation</MudText>
+                    <MudChip T="string" Size="Size.Small" Class="my-1" Color="Color.Tertiary">@employee.Department</MudChip>
+                    @if (employee.ReportsTo is not null)
+                    {
+                        <MudText Typo="Typo.body2" Align="Align.Center" Class="mt-2">
+                            Reports to: <MudLink Href="@("/employees/edit/" + employee.ReportsTo.Id)"><strong>@employee.ReportsTo.Name</strong></MudLink>
+                        </MudText>
+                    }
+                    <MudList T="string" Gutters="false" Dense Class="mt-2">
+                        <MudListItem Icon="@Icons.Material.Sharp.Email">@employee.Email</MudListItem>
+                        @if (!string.IsNullOrEmpty(employee.Phone))
+                        {
+                            <MudListItem Icon="@Icons.Material.Sharp.Phone">@employee.Phone</MudListItem>
+                        }
+                    </MudList>
+                </MudCardContent>
+                <MudCardActions>
+                    @if (employee.DirectReports is not null && employee.DirectReports.Count > 0)
+                    {
+                        <MudContainer Class="pa-2">
+                            <MudText Typo="Typo.body2" Class="mb-1"><strong>Direct Reports (@employee.DirectReports.Count)</strong></MudText>
+                            @foreach (var report in employee.DirectReports)
+                            {
+                                <MudChip T="string" Size="Size.Small" Class="mr-1 mb-1">@report.Name</MudChip>
+                            }
+                        </MudContainer>
+                    }
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+    }
+
+    @if (filteredEmployees.Count == 0 && string.IsNullOrEmpty(_errorMessage))
+    {
+        <MudItem xs="12">
+            <MudAlert Severity="Severity.Info">No employees found.</MudAlert>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    private List<Employee> allEmployees = [];
+    private List<Employee> filteredEmployees = [];
+    private List<string> departments = [];
+    private IReadOnlyCollection<string> selectedDepartments = [];
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            using var Db = DbFactory.CreateDbContext();
+            allEmployees = await Db.Employees
+                .Include(x => x.ReportsTo)
+                .Include(x => x.DirectReports)
+                .OrderBy(x => x.Name)
+                .ToListAsync();
+
+            departments = allEmployees
+                .Where(x => !string.IsNullOrEmpty(x.Department))
+                .Select(x => x.Department!)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList();
+
+            filteredEmployees = [.. allEmployees];
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error loading employees: {ex.Message}";
+        }
+    }
+
+    private void FilterChanged()
+    {
+        if (selectedDepartments is null || !selectedDepartments.Any())
+        {
+            filteredEmployees = [.. allEmployees];
+        }
+        else
+        {
+            filteredEmployees = allEmployees
+                .Where(x => x.Department is not null && selectedDepartments.Contains(x.Department))
+                .ToList();
+        }
+    }
+}

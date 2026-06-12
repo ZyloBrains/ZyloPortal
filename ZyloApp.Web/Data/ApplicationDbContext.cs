@@ -47,6 +47,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<QuotationItem> QuotationItems { get; set; }
     public DbSet<Invoice> Invoices { get; set; }
     public DbSet<InvoiceItem> InvoiceItems { get; set; }
+    public DbSet<Models.Employee.Employee> Employees { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -87,6 +88,12 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         builder.Entity<GatheringCalendar>()
         .HasMany(e => e.Consultants)
         .WithMany();
+
+        builder.Entity<Models.Employee.Employee>()
+        .HasOne(e => e.ReportsTo)
+        .WithMany(e => e.DirectReports)
+        .HasForeignKey(e => e.ReportsToId)
+        .OnDelete(DeleteBehavior.Restrict);
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -185,6 +192,16 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                             NormalizedName = "TRAINEE",
                             Id = traineeRoleId,
                             ConcurrencyStamp = traineeRoleId
+                        },
+                        new IdentityRole
+                        {
+                            Name = Role.Employee,
+                            NormalizedName = "EMPLOYEE"
+                        },
+                        new IdentityRole
+                        {
+                            Name = Role.Instructor,
+                            NormalizedName = "INSTRUCTOR"
                         }
                     ]);
 
