@@ -1,0 +1,26 @@
+<MudPaper Class="pa-4" Elevation="1">
+    @if (RootEmployees.Count == 0)
+    {
+        <MudAlert Severity="Severity.Info">No employees found.</MudAlert>
+    }
+    else
+    {
+        <div class="hierarchy-tree">
+            @foreach (var root in RootEmployees)
+            {
+                <EmployeeTreeNode Employee="@root" />
+            }
+        </div>
+    }
+</MudPaper>
+
+<style>
+    .hierarchy-tree {
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+
+@code {
+    [Parameter] public List<Employee> RootEmployees { get; set; } = [];
+}

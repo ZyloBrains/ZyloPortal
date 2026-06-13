@@ -1,0 +1,236 @@
+@page "/employees/add"
+@page "/employees/edit/{Id:int}"
+
+@attribute [Authorize(Roles = Role.Admins)]
+
+@inject ApplicationDbContext Db
+@inject UserManager<ApplicationUser> UserManager
+@inject IUserStore<ApplicationUser> UserStore
+@inject ISnackbar SnackBar
+@inject IFileStorageService ImageUploader
+
+<PageTitle>@pageTitle</PageTitle>
+<MudContainer>
+    <EditForm Model="@model" OnValidSubmit="OnValidSubmit" Context="formContext">
+        @if (IsAdd)
+        {
+            <MudAutocomplete T="ApplicationUser?"
+                             Label="Link from Registered User"
+                             @bind-Value="selectedUser"
+                             @bind-Value:after="OnUserSelectedAfter"
+                             Class="mb-3"
+                             Variant="Variant.Outlined"
+                             Clearable="true"
+                             SearchFunc="@SearchUsers"
+                             ToStringFunc="@(u => u is null ? "" : $"{u.FullName ?? u.UserName} ({u.Email})")" />
+        }
+        <MudTextField Label="Name" @bind-Value="model.Name" Variant="Variant.Outlined" TextChanged="UserNameChanged" />
+        <MudTextField Label="Email" Class="mt-3" @bind-Value="model.Email" Variant="Variant.Outlined" Disabled />
+        <MudTextField Label="Phone" Class="mt-3" @bind-Value="model.Phone" Variant="Variant.Outlined" />
+
+        <div class="d-flex mt-2">
+            <MudTextField Label="Designation" @bind-Value="model.Designation" Class="mr-6" Variant="Variant.Outlined" />
+            <MudTextField Label="Department" @bind-Value="model.Department" Variant="Variant.Outlined" />
+        </div>
+
+        <MudSelect T="Employee?"
+                   Label="Reports To (Manager)"
+                   Dense="true"
+                   @bind-Value="selectedManager"
+                   Class="mt-3"
+                   Variant="Variant.Outlined"
+                   Clearable="true"
+                   AnchorOrigin="Origin.BottomCenter">
+            @foreach (var mgr in managers)
+            {
+                <MudSelectItem Value="mgr">@mgr.Name - @mgr.Designation</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudText Typo="Typo.h6" Class="mt-4 mb-2">Compensation</MudText>
+        <div class="d-flex mt-2">
+            <MudNumericField Label="Monthly Basic" @bind-Value="model.MonthlyBasic" Class="mr-6" Variant="Variant.Outlined" Currency="@model.Currency" />
+            <MudTextField Label="Currency" @bind-Value="model.Currency" Variant="Variant.Outlined" />
+        </div>
+        <MudTextField Label="Bank Account Details" Lines="2" Class="my-3" @bind-Value="model.BankAccountDetails" Variant="Variant.Outlined" Placeholder="Bank name, account number, branch etc." />
+        <MudTextField Label="Other Details" Lines="2" Class="my-3" @bind-Value="model.OtherDetails" Variant="Variant.Outlined" />
+        <ImageUpload ImagePath="@model.ProfilePath" ImageChanged="ProfileChanged" Label="Employee Profile Image" />
+
+        <MudSwitch @bind-Value="@model.Publish" Class="mt-3" Color="Color.Success" UncheckedColor="Color.Error" Label="Active" />
+
+        <MudButton Variant="Variant.Outlined" Disabled="model.Email == string.Empty" Color="Color.Warning" Class="my-3" StartIcon="@Icons.Material.Filled.Security" OnClick="Generate">
+            Generate Login Details
+        </MudButton>
+
+        @if (password != string.Empty)
+        {
+            <ApplicationAlert>
+                Please Keep it Safe (One time only)
+                <span class="border-2 border-dashed p-2" style="font-family:Courier New, Courier, monospace">
+                    <b>Email:</b> @model.Email
+                    <b>Password:</b> @password
+                </span>
+            </ApplicationAlert>
+        }
+        <MudDivider />
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Tertiary" Class="mt-5" StartIcon="@Icons.Material.Filled.Save">Save Employee</MudButton>
+    </EditForm>
+</MudContainer>
+
+@code {
+
+    [Parameter]
+    public int? Id { get; set; }
+
+    Employee model = new();
+    List<Employee> managers = [];
+    Employee? selectedManager = null;
+    ApplicationUser? selectedUser = null;
+    string pageTitle = string.Empty;
+    bool IsAdd => Id is null or 0;
+    string password = string.Empty;
+    bool credsInitiated = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        managers = await Db.Employees
+            .Where(x => x.Id != Id)
+            .OrderBy(x => x.Name)
+            .ToListAsync();
+
+        if (IsAdd)
+        {
+            pageTitle = "Add Employee";
+        }
+        else
+        {
+            pageTitle = "Edit Employee";
+            model = await Db.Employees
+                .Include(x => x.ReportsTo)
+                .FirstOrDefaultAsync(x => x.Id == Id) ?? new();
+            selectedManager = model.ReportsTo;
+            selectedUser = await UserManager.FindByIdAsync(model.ApplicationUserId ?? string.Empty);
+        }
+    }
+
+    private async Task OnValidSubmit(EditContext context)
+    {
+        var (success, message) = await ImageUploader.UploadProfileAsync(model.Profile, BlobContainer.ProfileImages);
+        if (success)
+        {
+            model.ProfilePath = message;
+        }
+
+        model.ReportsToId = selectedManager?.Id;
+        model.ReportsTo = null;
+
+        if (IsAdd)
+        {
+            Db.Employees.Add(model);
+        }
+        else
+        {
+            model.Id = Id!.Value;
+            Db.Employees.Update(model);
+        }
+
+        var rowsAffected = await Db.SaveChangesAsync();
+
+        _ = rowsAffected > 0 ?
+            SnackBar.Add("Employee saved successfully", Severity.Success) :
+            SnackBar.Add("Employee save failed", Severity.Error);
+
+        if (!credsInitiated)
+            return;
+
+        if (model.ApplicationUserId is null)
+        {
+            var user = Activator.CreateInstance<ApplicationUser>();
+            await UserStore.SetUserNameAsync(user, model.Email, CancellationToken.None);
+            var emailStore = (IUserEmailStore<ApplicationUser>)UserStore;
+            await emailStore.SetEmailAsync(user, model.Email, CancellationToken.None);
+            var result = await UserManager.CreateAsync(user, password);
+            _ = await UserManager.AddToRoleAsync(user, Role.Employee);
+
+            if (!result.Succeeded)
+            {
+                SnackBar.Add(string.Join(", ", result.Errors.Select(error => error.Description)), Severity.Error);
+                return;
+            }
+
+            var empLoginUserUpdateRowsAffected = Db.Employees
+                .Where(s => s.Id == model.Id)
+                .ExecuteUpdate(x => x
+                    .SetProperty(y => y.ApplicationUserId, user.Id)
+                );
+
+            if (empLoginUserUpdateRowsAffected == 0)
+            {
+                await UserManager.DeleteAsync(user);
+                return;
+            }
+
+            SnackBar.Add("And employee user registered successfully with login details provided.", Severity.Success);
+        }
+        else
+        {
+            var existingUser = await UserManager.FindByIdAsync(model.ApplicationUserId);
+            if (existingUser is null)
+                return;
+
+            existingUser.PasswordHash = UserManager.PasswordHasher.HashPassword(existingUser, password);
+            var resultReset = await UserManager.UpdateAsync(existingUser);
+
+            _ = resultReset.Succeeded ?
+                SnackBar.Add($"Password reset for '{model.Email}' successfully", Severity.Success) :
+                SnackBar.Add(string.Join(", ", resultReset.Errors.Select(error => error.Description)), Severity.Error);
+        }
+    }
+
+    private Task<IEnumerable<ApplicationUser>> SearchUsers(string value, CancellationToken _)
+    {
+        var linkedUserIds = Db.Employees
+            .Where(x => x.ApplicationUserId != null)
+            .Select(x => x.ApplicationUserId);
+
+        var query = UserManager.Users
+            .Where(x => !linkedUserIds.Contains(x.Id))
+            .OrderBy(x => x.UserName)
+            .AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            query = query.Where(x =>
+                (x.FullName?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (x.UserName?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (x.Email?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+
+        return Task.FromResult(query.Take(20));
+    }
+
+    private void OnUserSelectedAfter()
+    {
+        if (selectedUser is null) return;
+        model.Name = selectedUser.FullName ?? selectedUser.UserName ?? string.Empty;
+        model.Email = selectedUser.Email ?? string.Empty;
+        model.Phone = selectedUser.PhoneNumber;
+        model.ApplicationUserId = selectedUser.Id;
+    }
+
+    private void ProfileChanged(IBrowserFile file)
+    {
+        model.Profile = file;
+    }
+
+    private void UserNameChanged()
+    {
+        model.Email = model.Name.ToEmail();
+    }
+
+    private void Generate()
+    {
+        password = PwdGenerator.NewPassword(8);
+        credsInitiated = true;
+    }
+}

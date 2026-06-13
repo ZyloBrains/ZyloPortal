@@ -1,0 +1,223 @@
+@page "/employees"
+
+@attribute [Authorize(Roles = Role.EmployeesOrAdmins)]
+
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<PageTitle>Employee Directory</PageTitle>
+
+<MudGrid Spacing="8">
+    <MudItem xs="12">
+        <MudPaper Class="pa-0 mt-3" Elevation="0">
+            <div class="d-flex align-center gap-4 flex-wrap">
+                <MudTextField @bind-Value="_searchText"
+                              Placeholder="Search by name, designation, department, or email..."
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              IconSize="Size.Medium"
+                              Immediate="true"
+                              DebounceInterval="300"
+                              OnDebounceIntervalElapsed="FilterChanged"
+                              Class="flex-grow-1"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense" />
+
+                <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+
+                <div>
+                    <MudToggleGroup T="string" @bind-Value="_viewMode" Color="Color.Tertiary" Size="Size.Small" outline="true" delimitedSegments="true">
+                        <MudToggleItem Value="@("list")">
+                            <MudIcon Icon="@Icons.Material.Filled.ViewList" Class="mr-1" />List
+                        </MudToggleItem>
+                        <MudToggleItem Value="@("hierarchy")">
+                            <MudIcon Icon="@Icons.Material.Filled.AccountTree" Class="mr-1" />Hierarchy
+                        </MudToggleItem>
+                    </MudToggleGroup>
+                </div>
+            </div>
+        </MudPaper>
+    </MudItem>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <MudItem xs="12">
+            <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
+        </MudItem>
+    }
+
+    @if (_viewMode == "list")
+    {
+        @foreach (var employee in filteredEmployees)
+        {
+            <MudItem xl="3" lg="3" md="4" sm="6" xs="12">
+                <MudPaper Elevation="0" Class="org-card">
+                    <div class="org-card-glow"></div>
+                    <div class="org-card-content">
+                        <MudAvatar Style="height:160px; width:160px; font-size:2.8rem;" Elevation="3" Class="org-card-avatar">
+                            @if (!string.IsNullOrEmpty(employee.ProfilePath))
+                            {
+                                <MudImage Src="@employee.ProfilePath" Alt="@employee.Name" />
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Medium" />
+                            }
+                        </MudAvatar>
+
+                        <MudText Typo="Typo.h5" Align="Align.Center" Class="mt-2 org-card-name">@employee.Name</MudText>
+                        <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">@employee.Designation</MudText>
+                        <div class="d-flex justify-center my-2">
+                            <MudChip T="string" Size="Size.Small" Color="Color.Tertiary">@employee.Department</MudChip>
+                        </div>
+
+                        <MudList T="string" Gutters="false" Dense="true">
+                            <MudListItem Icon="@Icons.Material.Sharp.Email" IconColor="Color.Secondary">@employee.Email</MudListItem>
+                            @if (!string.IsNullOrEmpty(employee.Phone))
+                            {
+                                <MudListItem Icon="@Icons.Material.Sharp.Phone" IconColor="Color.Secondary">@employee.Phone</MudListItem>
+                            }
+                        </MudList>
+
+                        @if (employee.DirectReports is not null && employee.DirectReports.Count > 0)
+                        {
+                            <MudDivider Class="my-3" />
+                            <div class="org-card-reports">
+                                <MudTooltip Text="@($"{employee.DirectReports.Count} direct report(s)")">
+                                    <MudLink Href="@("/employees/org/" + employee.Id)" Class="org-card-reports-link">
+                                        <MudIcon Icon="@Icons.Material.Filled.AccountTree" Size="Size.Small" Class="mr-1" />
+                                        @employee.DirectReports.Count direct report(s)
+                                    </MudLink>
+                                </MudTooltip>
+                            </div>
+                        }
+                        else
+                        {
+                            <MudDivider Class="my-3" />
+                            <div class="org-card-reports" style="visibility:hidden;">
+                                <span class="org-card-reports-link">-</span>
+                            </div>
+                        }
+
+                        <AuthorizeView Roles="Admin,SuperAdmin">
+                            <Authorized>
+                                <MudDivider Class="my-3" />
+                                <div class="d-flex justify-center">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small"
+                                                   Href="@("/employees/edit/" + employee.Id)" title="Edit employee" />
+                                </div>
+                            </Authorized>
+                        </AuthorizeView>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        }
+
+        @if (filteredEmployees.Count == 0 && string.IsNullOrEmpty(_errorMessage))
+        {
+            <MudItem xs="12">
+                <MudAlert Severity="Severity.Info">No employees found.</MudAlert>
+            </MudItem>
+        }
+    }
+    else
+    {
+        var rootEmployees = filteredEmployees.Where(e => e.ReportsToId == null).OrderBy(e => e.Name).ToList();
+        <MudItem xs="12">
+            <EmployeeTreeView RootEmployees="@rootEmployees" />
+        </MudItem>
+    }
+</MudGrid>
+
+<MudOverlay Visible="_showOverlay" />
+
+<style>
+    .org-card {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 2px dotted var(--mud-palette-warning);
+    }
+    .org-card-glow {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 80px;
+        background: linear-gradient(135deg, var(--mud-palette-warning-lighten) 0%, var(--mud-palette-warning) 100%);
+        opacity: 0.12;
+    }
+    .org-card-content {
+        position: relative;
+        padding: 24px 24px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .org-card-avatar {
+        border: 3px solid var(--mud-palette-surface);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    }
+    .org-card-name {
+        font-weight: 700;
+    }
+    .org-card-reports {
+        text-align: center;
+    }
+    .org-card-reports-link {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.8rem;
+        text-decoration: none !important;
+        color: var(--mud-palette-primary);
+    }
+    .org-card-reports-link:hover {
+        text-decoration: underline !important;
+    }
+</style>
+
+@code {
+    private List<Employee> allEmployees = [];
+    private List<Employee> filteredEmployees = [];
+    private string _searchText = string.Empty;
+    private string _errorMessage = string.Empty;
+    private bool _showOverlay = false;
+    private string _viewMode = "list";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            using var Db = DbFactory.CreateDbContext();
+            allEmployees = await Db.Employees
+                .Include(x => x.ReportsTo)
+                .Include(x => x.DirectReports)
+                .OrderBy(x => x.Name)
+                .ToListAsync();
+
+            filteredEmployees = [.. allEmployees];
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error loading employees: {ex.Message}";
+        }
+    }
+
+    private void FilterChanged()
+    {
+        if (string.IsNullOrWhiteSpace(_searchText))
+        {
+            filteredEmployees = [.. allEmployees];
+            return;
+        }
+
+        var term = _searchText.Trim();
+        filteredEmployees = allEmployees
+            .Where(x =>
+                x.Name.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                (x.Designation != null && x.Designation.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                (x.Department != null && x.Department.Contains(term, StringComparison.OrdinalIgnoreCase)) ||
+                x.Email.Contains(term, StringComparison.OrdinalIgnoreCase) ||
+                (x.Phone != null && x.Phone.Contains(term, StringComparison.OrdinalIgnoreCase)))
+            .ToList();
+    }
+}

@@ -1,0 +1,357 @@
+@page "/employees/org/{Id:int}"
+
+@attribute [Authorize(Roles = Role.EmployeesOrAdmins)]
+
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<PageTitle>Organization View · @employee?.Name</PageTitle>
+
+<div class="org-header mb-6">
+    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack" Href="/employees" Class="mr-2" />
+    <div>
+        <MudText Typo="Typo.h4">Organization View</MudText>
+        @if (employee is not null)
+        {
+            <MudText Typo="Typo.body1" Color="Color.Secondary">@employee.Name's reporting structure</MudText>
+        }
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(_errorMessage))
+{
+    <MudAlert Severity="Severity.Error">@_errorMessage</MudAlert>
+}
+else if (employee is null)
+{
+    <MudPaper Class="pa-8 d-flex justify-center">
+        <MudAlert Severity="Severity.Info">Employee not found.</MudAlert>
+    </MudPaper>
+}
+else
+{
+    @* Ancestor breadcrumb *@
+    @if (ancestorChain.Count > 0)
+    {
+        <div class="org-breadcrumb mb-6">
+            @for (int i = 0; i < ancestorChain.Count; i++)
+            {
+                var ancestor = ancestorChain[i];
+                <MudLink Href="@("/employees/org/" + ancestor.Id)" Class="org-breadcrumb-item">
+                    <MudAvatar Style="height:28px; width:28px; font-size:0.7rem;" Elevation="1">
+                        @if (!string.IsNullOrEmpty(ancestor.ProfilePath))
+                        {
+                            <MudImage Src="@ancestor.ProfilePath" Alt="@ancestor.Name" />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                        }
+                    </MudAvatar>
+                    <span class="org-breadcrumb-name">@ancestor.Name</span>
+                    @if (!string.IsNullOrEmpty(ancestor.Designation))
+                    {
+                        <span class="org-breadcrumb-title">@ancestor.Designation</span>
+                    }
+                </MudLink>
+                <MudIcon Icon="@Icons.Material.Filled.ChevronRight" Size="Size.Small" Class="org-breadcrumb-sep" />
+            }
+            <div class="org-breadcrumb-current">
+                <span class="org-breadcrumb-name">@employee.Name</span>
+            </div>
+        </div>
+    }
+
+    @* Focus employee card *@
+    <div class="org-focus-section mb-8">
+        <MudPaper Elevation="0" Class="org-card org-card-focus">
+            <div class="org-card-glow"></div>
+            <div class="org-card-content">
+                <MudAvatar Style="height:160px; width:160px; font-size:2.8rem;" Elevation="4" Class="org-card-avatar">
+                    @if (!string.IsNullOrEmpty(employee.ProfilePath))
+                    {
+                        <MudImage Src="@employee.ProfilePath" Alt="@employee.Name" />
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Large" />
+                    }
+                </MudAvatar>
+
+                <MudText Typo="Typo.h5" Align="Align.Center" Class="mt-3 org-card-name">@employee.Name</MudText>
+                <MudText Typo="Typo.body1" Align="Align.Center" Color="Color.Secondary" Class="mt-1">@employee.Designation</MudText>
+
+                <div class="d-flex justify-center my-3">
+                    <MudChip T="string" Size="Size.Small" Color="Color.Tertiary">@employee.Department</MudChip>
+                </div>
+
+                <MudDivider Class="my-3" />
+
+                <MudList T="string" Gutters="false" Dense="true">
+                    <MudListItem Icon="@Icons.Material.Sharp.Email" IconColor="Color.Secondary">@employee.Email</MudListItem>
+                    @if (!string.IsNullOrEmpty(employee.Phone))
+                    {
+                        <MudListItem Icon="@Icons.Material.Sharp.Phone" IconColor="Color.Secondary">@employee.Phone</MudListItem>
+                    }
+                </MudList>
+            </div>
+        </MudPaper>
+    </div>
+
+    @* Direct reports *@
+    @if (directReports.Count > 0)
+    {
+        <div class="org-reports-section">
+            <div class="org-reports-header mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.SupervisorAccount" Size="Size.Medium" Color="Color.Primary" Class="mr-2" />
+                <MudText Typo="Typo.h5">Direct Reports</MudText>
+                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Class="ml-2">@directReports.Count</MudChip>
+            </div>
+
+            <MudGrid Spacing="4">
+                @foreach (var report in directReports)
+                {
+                    <MudItem xl="3" lg="3" md="4" sm="6" xs="12">
+                        <MudPaper Elevation="0" Class="org-card org-card-focus">
+                            <div class="org-card-glow"></div>
+                            <div class="org-card-content">
+                                <MudAvatar Style="height:160px; width:160px; font-size:2.8rem;" Elevation="3" Class="org-card-avatar">
+                                    @if (!string.IsNullOrEmpty(report.ProfilePath))
+                                    {
+                                        <MudImage Src="@report.ProfilePath" Alt="@report.Name" />
+                                    }
+                                    else
+                                    {
+                                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Medium" />
+                                    }
+                                </MudAvatar>
+
+                                <MudText Typo="Typo.h5" Align="Align.Center" Class="mt-2 org-card-name">@report.Name</MudText>
+                                <MudText Typo="Typo.body2" Align="Align.Center" Color="Color.Secondary">@report.Designation</MudText>
+
+                                <div class="d-flex justify-center my-2">
+                                    <MudChip T="string" Size="Size.Small" Color="Color.Tertiary">@report.Department</MudChip>
+                                </div>
+
+                                <MudList T="string" Gutters="false" Dense="true">
+                                    <MudListItem Icon="@Icons.Material.Sharp.Email" IconColor="Color.Secondary">@report.Email</MudListItem>
+                                    @if (!string.IsNullOrEmpty(report.Phone))
+                                    {
+                                        <MudListItem Icon="@Icons.Material.Sharp.Phone" IconColor="Color.Secondary">@report.Phone</MudListItem>
+                                    }
+                                </MudList>
+
+                                @if (report.DirectReports is not null && report.DirectReports.Count > 0)
+                                {
+                                    <MudDivider Class="my-3" />
+                                    <div class="org-card-reports">
+                                        <MudLink Href="@("/employees/org/" + report.Id)" Class="org-card-reports-link">
+                                            <MudIcon Icon="@Icons.Material.Filled.AccountTree" Size="Size.Small" Class="mr-1" />
+                                            @report.DirectReports.Count direct report(s)
+                                        </MudLink>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <MudDivider Class="my-3" />
+                                    <div class="org-card-reports" style="visibility:hidden;">
+                                        <span class="org-card-reports-link">-</span>
+                                    </div>
+                                }
+                            </div>
+                        </MudPaper>
+                    </MudItem>
+                }
+            </MudGrid>
+        </div>
+    }
+    else
+    {
+        <div class="org-no-reports">
+            <MudIcon Icon="@Icons.Material.Filled.PersonOff" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+            <MudText Typo="Typo.body1" Color="Color.Secondary">@employee.Name has no direct reports.</MudText>
+        </div>
+    }
+}
+
+<style>
+    .org-header {
+        display: flex;
+        align-items: center;
+    }
+
+    .org-breadcrumb {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+    .org-breadcrumb-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        text-decoration: none !important;
+        background: var(--mud-palette-surface);
+        border: 1px solid var(--mud-palette-lines-default);
+        transition: all 0.15s ease;
+    }
+    .org-breadcrumb-item:hover {
+        background: var(--mud-palette-primary-lighten);
+        border-color: var(--mud-palette-primary);
+    }
+    .org-breadcrumb-sep {
+        color: var(--mud-palette-text-secondary);
+        opacity: 0.5;
+    }
+    .org-breadcrumb-current {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        background: var(--mud-palette-primary);
+        color: var(--mud-palette-primary-text);
+    }
+    .org-breadcrumb-name {
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+    .org-breadcrumb-title {
+        font-size: 0.75rem;
+        opacity: 0.7;
+    }
+
+    .org-focus-section {
+        display: flex;
+        justify-content: center;
+    }
+
+    .org-card {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid var(--mud-palette-lines-default);
+    }
+    .org-card-focus {
+        max-width: 380px;
+        width: 100%;
+        border: 2px dotted var(--mud-palette-warning);
+    }
+    .org-card-glow {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 80px;
+        background: linear-gradient(135deg, var(--mud-palette-warning-lighten) 0%, var(--mud-palette-warning) 100%);
+        opacity: 0.12;
+    }
+    .org-card-content {
+        position: relative;
+        padding: 24px 24px 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .org-card-avatar {
+        border: 3px solid var(--mud-palette-surface);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+    }
+    .org-card-name {
+        font-weight: 700;
+    }
+    .org-card-contact {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+    }
+    .org-contact-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 0.85rem;
+    }
+    .org-card-reports {
+        text-align: center;
+    }
+    .org-card-reports-title {
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    .org-card-reports-link {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.8rem;
+        text-decoration: none !important;
+        color: var(--mud-palette-primary);
+    }
+    .org-card-reports-link:hover {
+        text-decoration: underline !important;
+    }
+
+    .org-reports-section {
+        width: 100%;
+        padding: 0 16px;
+    }
+    .org-reports-header {
+        display: flex;
+        align-items: center;
+    }
+
+    .org-no-reports {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 0;
+        opacity: 0.6;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Employee? employee;
+    private List<Employee> ancestorChain = [];
+    private List<Employee> directReports = [];
+    private string _errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            using var Db = DbFactory.CreateDbContext();
+            employee = await Db.Employees
+                .Include(x => x.ReportsTo)
+                .Include(x => x.DirectReports)
+                .FirstOrDefaultAsync(x => x.Id == Id);
+
+            if (employee is not null)
+            {
+                BuildAncestorChain(employee);
+                directReports = employee.DirectReports?
+                    .OrderBy(r => r.Name)
+                    .ToList() ?? [];
+            }
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = $"Error loading employee: {ex.Message}";
+        }
+    }
+
+    private void BuildAncestorChain(Employee emp)
+    {
+        var chain = new List<Employee>();
+        var current = emp.ReportsTo;
+        while (current is not null)
+        {
+            chain.Insert(0, current);
+            current = current.ReportsTo;
+        }
+        ancestorChain = chain;
+    }
+}
