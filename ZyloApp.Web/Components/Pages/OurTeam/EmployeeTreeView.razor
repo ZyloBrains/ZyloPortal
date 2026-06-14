@@ -1,23 +1,62 @@
-<MudPaper Class="pa-4" Elevation="1">
+<MudPaper Class="hierarchy-container" Elevation="0">
+    <div class="hierarchy-header">
+        <MudIcon Icon="@Icons.Material.Filled.AccountTree" Size="Size.Medium" Color="Color.Warning" Class="mr-2" />
+        <MudText Typo="Typo.h6" Class="hierarchy-title">Organization Hierarchy</MudText>
+    </div>
+    <MudDivider Class="mb-4" />
+
     @if (RootEmployees.Count == 0)
     {
-        <MudAlert Severity="Severity.Info">No employees found.</MudAlert>
+        <div class="hierarchy-empty">
+            <MudIcon Icon="@Icons.Material.Filled.SearchOff" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+            <MudText Typo="Typo.body1" Color="Color.Secondary">No employees found.</MudText>
+        </div>
     }
     else
     {
         <div class="hierarchy-tree">
             @foreach (var root in RootEmployees)
             {
-                <EmployeeTreeNode Employee="@root" />
+                <EmployeeTreeNode Employee="@root" IsRoot="true" />
             }
         </div>
     }
 </MudPaper>
 
 <style>
+    .hierarchy-container {
+        border-radius: 12px;
+        border: 1px solid var(--mud-palette-lines-default);
+        background: var(--mud-palette-surface);
+        overflow: hidden;
+    }
+
+    .hierarchy-header {
+        display: flex;
+        align-items: center;
+        padding: 16px 20px 0;
+        background: linear-gradient(135deg, rgba(var(--mud-palette-warning-rgb), 0.04) 0%, transparent 100%);
+    }
+
+    .hierarchy-title {
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+
     .hierarchy-tree {
         display: flex;
         flex-direction: column;
+        gap: 2px;
+        padding: 0 12px 12px;
+    }
+
+    .hierarchy-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 24px;
+        text-align: center;
     }
 </style>
 

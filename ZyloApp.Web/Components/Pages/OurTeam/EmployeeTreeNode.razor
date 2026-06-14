@@ -1,10 +1,14 @@
 <div class="tree-node">
-    <div class="tree-node-row" @onclick="ToggleExpand" @onclick:preventDefault>
+    <div class="tree-node-row @(IsRoot ? "tree-node-root" : "")"
+         @onclick="ToggleExpand" @onclick:preventDefault>
         <div class="tree-node-toggle">
             @if (HasChildren)
             {
-                <MudIcon Icon="@(_expanded ? Icons.Material.Filled.KeyboardArrowDown : Icons.Material.Filled.KeyboardArrowRight)"
-                         Size="Size.Small" Class="tree-toggle-icon" />
+                <div class="tree-toggle-icon-wrapper">
+                    <MudIcon
+                        Icon="@(_expanded? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)"
+                        Size="Size.Small" Class="tree-toggle-icon" />
+                </div>
             }
             else
             {
@@ -14,7 +18,8 @@
 
         <div class="tree-node-content">
             <div class="tree-node-avatar">
-                <MudAvatar Style="height:36px; width:36px; font-size:0.9rem;" Elevation="2">
+                <MudAvatar Style="height:48px; width:48px; font-size:1.1rem;" Elevation="2"
+                           Class="@(IsRoot ? "tree-avatar-root" : "")">
                     @if (!string.IsNullOrEmpty(Employee.ProfilePath))
                     {
                         <MudImage Src="@Employee.ProfilePath" Alt="@Employee.Name" />
@@ -27,35 +32,56 @@
             </div>
 
             <div class="tree-node-info">
-                <MudLink Href="@("/employees/edit/" + Employee.Id)" Class="tree-node-name">
-                    @Employee.Name
-                </MudLink>
+                <MudText Typo="Typo.subtitle2" Class="tree-node-name">@Employee.Name</MudText>
                 @if (!string.IsNullOrEmpty(Employee.Designation))
                 {
-                    <MudText Typo="Typo.caption" Class="tree-node-designation">@Employee.Designation</MudText>
+                    <MudText Typo="Typo.caption" Class="tree-node-designation" Color="Color.Secondary">@Employee.Designation</MudText>
                 }
+                <div class="tree-node-details">
+                    @if (!string.IsNullOrEmpty(Employee.Email))
+                    {
+                        <span class="tree-node-detail-item">
+                            <MudIcon Icon="@Icons.Material.Outlined.Email" Size="Size.Small" Class="tree-node-detail-icon" />
+                            <span class="tree-node-detail-text">@Employee.Email</span>
+                        </span>
+                    }
+                    @if (!string.IsNullOrEmpty(Employee.Phone))
+                    {
+                        <span class="tree-node-detail-item">
+                            <MudIcon Icon="@Icons.Material.Outlined.Phone" Size="Size.Small" Class="tree-node-detail-icon" />
+                            <span class="tree-node-detail-text">@Employee.Phone</span>
+                        </span>
+                    }
+                </div>
             </div>
 
-            @if (!string.IsNullOrEmpty(Employee.Department))
-            {
-                <MudChip T="string" Size="Size.Small" Color="Color.Tertiary" Class="tree-node-dept">@Employee.Department</MudChip>
-            }
+            <div class="tree-node-badges">
+                @if (!string.IsNullOrEmpty(Employee.Department))
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Tertiary" Variant="Variant.Outlined"
+                             Class="tree-node-dept">@Employee.Department</MudChip>
+                }
 
-            @if (HasChildren)
-            {
-                <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Outlined" Class="tree-node-reports">
-                    <MudIcon Icon="@Icons.Material.Filled.SupervisorAccount" Size="Size.Small" Class="mr-1" />@Employee.DirectReports!.Count
-                </MudChip>
-            }
+                @if (HasChildren)
+                {
+                    <MudTooltip Text="@($"{@Employee.DirectReports!.Count} direct report(s)")">
+                        <MudChip T="string" Size="Size.Small" Color="Color.Warning" Variant="Variant.Outlined"
+                                 Class="tree-node-reports">
+                            <MudIcon Icon="@Icons.Material.Filled.SupervisorAccount" Size="Size.Small" Class="mr-1" />
+                            @Employee.DirectReports!.Count
+                        </MudChip>
+                    </MudTooltip>
+                }
+            </div>
 
             <div class="tree-node-actions">
                 @if (HasChildren)
                 {
-                    <MudIconButton Icon="@Icons.Material.Filled.AccountTree" Color="Color.Primary" Size="Size.Small"
-                                   Href="@("/employees/org/" + Employee.Id)" title="View organization hierarchy" />
+                    <MudTooltip Text="View organization chart">
+                        <MudIconButton Icon="@Icons.Material.Filled.AccountTree" Color="Color.Warning" Size="Size.Small"
+                                       Href="@("/employees/org/" + Employee.Id)" />
+                    </MudTooltip>
                 }
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Default" Size="Size.Small"
-                               Href="@("/employees/edit/" + Employee.Id)" title="Edit employee" />
             </div>
         </div>
     </div>
@@ -63,7 +89,9 @@
     @if (_expanded && HasChildren)
     {
         <div class="tree-children">
-            @{ var children = Employee.DirectReports!.OrderBy(r => r.Name).ToList(); }
+            @{
+                var children = Employee.DirectReports!.OrderBy(r => r.Name).ToList();
+            }
             @foreach (var child in children)
             {
                 <EmployeeTreeNode Employee="@child" />
@@ -77,95 +105,187 @@
         display: flex;
         flex-direction: column;
     }
+
     .tree-node-row {
         display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 5px 8px;
-        border-radius: 8px;
+        align-items: flex-start;
+        gap: 6px;
+        padding: 10px 12px;
+        border-radius: 10px;
         cursor: pointer;
-        transition: background-color 0.15s ease;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid transparent;
     }
+
     .tree-node-row:hover {
-        background-color: var(--mud-palette-surface);
+        background-color: rgba(var(--mud-palette-warning-rgb), 0.06);
+        border-color: rgba(var(--mud-palette-warning-rgb), 0.12);
     }
+
+    .tree-node-root {
+        background: linear-gradient(135deg, rgba(var(--mud-palette-warning-rgb), 0.08) 0%, rgba(var(--mud-palette-warning-rgb), 0.02) 100%);
+        border: 1px solid rgba(var(--mud-palette-warning-rgb), 0.15);
+        margin-bottom: 4px;
+    }
+
+    .tree-node-root:hover {
+        background: linear-gradient(135deg, rgba(var(--mud-palette-warning-rgb), 0.12) 0%, rgba(var(--mud-palette-warning-rgb), 0.04) 100%);
+    }
+
     .tree-node-toggle {
-        width: 24px;
-        height: 24px;
+        width: 28px;
+        height: 28px;
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        margin-top: 6px;
     }
-    .tree-toggle-icon {
-        color: var(--mud-palette-text-secondary);
-        transition: transform 0.2s ease;
-    }
-    .tree-toggle-spacer {
-        width: 16px;
-    }
-    .tree-node-content {
+
+    .tree-toggle-icon-wrapper {
         display: flex;
         align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        background: rgba(var(--mud-palette-warning-rgb), 0.08);
+        transition: all 0.2s ease;
+    }
+
+    .tree-toggle-icon-wrapper:hover {
+        background: rgba(var(--mud-palette-warning-rgb), 0.16);
+    }
+
+    .tree-toggle-icon {
+        color: var(--mud-palette-warning);
+        transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .tree-toggle-spacer {
+        width: 22px;
+    }
+
+    .tree-node-content {
+        display: flex;
+        align-items: flex-start;
         gap: 12px;
         min-width: 0;
         flex: 1;
     }
+
     .tree-node-avatar {
         flex-shrink: 0;
+        margin-top: 2px;
     }
+
+    .tree-avatar-root {
+        border: 2px solid var(--mud-palette-warning);
+        box-shadow: 0 2px 8px rgba(var(--mud-palette-warning-rgb), 0.25);
+    }
+
     .tree-node-info {
         display: flex;
         flex-direction: column;
         min-width: 0;
         flex: 1;
     }
+
     .tree-node-name {
         font-weight: 600;
-        font-size: 0.9rem;
-        line-height: 1.3;
+        font-size: 0.875rem;
+        line-height: 1.4;
         color: var(--mud-palette-text-primary);
         text-decoration: none !important;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        transition: color 0.15s ease;
     }
-    .tree-node-name:hover {
-        color: var(--mud-palette-primary);
-        text-decoration: underline !important;
+
+    .tree-node-row:hover .tree-node-name {
+        color: var(--mud-palette-warning);
     }
+
     .tree-node-designation {
         font-size: 0.75rem;
         color: var(--mud-palette-text-secondary);
         line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
+
+    .tree-node-details {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 2px;
+    }
+
+    .tree-node-detail-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        min-width: 0;
+    }
+
+    .tree-node-detail-icon {
+        color: var(--mud-palette-text-secondary);
+        font-size: 0.875rem !important;
+        flex-shrink: 0;
+    }
+
+    .tree-node-detail-text {
+        font-size: 0.7rem;
+        color: var(--mud-palette-text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .tree-node-badges {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
     .tree-node-dept {
-        flex-shrink: 0;
+        font-size: 0.7rem !important;
     }
+
     .tree-node-reports {
-        flex-shrink: 0;
+        font-size: 0.7rem !important;
     }
+
     .tree-node-actions {
         display: flex;
-        gap: 2px;
+        gap: 4px;
         flex-shrink: 0;
         opacity: 0;
-        transition: opacity 0.15s ease;
+        transition: opacity 0.2s ease;
+        margin-left: 4px;
     }
+
     .tree-node-row:hover .tree-node-actions {
         opacity: 1;
     }
+
     .tree-children {
         display: flex;
         flex-direction: column;
-        border-left: 2px solid var(--mud-palette-lines-default);
-        margin-left: 11px;
-        opacity: 0.6;
+        margin-left: 28px;
+        padding-left: 20px;
+        border-left: 2px solid rgba(var(--mud-palette-warning-rgb), 0.3);
+        margin-top: 4px;
+        gap: 2px;
     }
 </style>
 
 @code {
     [Parameter] public Employee Employee { get; set; } = default!;
+    [Parameter] public bool IsRoot { get; set; }
 
     private bool _expanded = true;
 

@@ -1,4 +1,4 @@
-@page "/employees"
+@page "/employees/org"
 
 @attribute [Authorize(Roles = Role.EmployeesOrAdmins)]
 
@@ -97,16 +97,6 @@
                                 <span class="org-card-reports-link">-</span>
                             </div>
                         }
-
-                        <AuthorizeView Roles="Admin,SuperAdmin">
-                            <Authorized>
-                                <MudDivider Class="my-3" />
-                                <div class="d-flex justify-center">
-                                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Warning" Size="Size.Small"
-                                                   Href="@("/employees/edit/" + employee.Id)" title="Edit employee" />
-                                </div>
-                            </Authorized>
-                        </AuthorizeView>
                     </div>
                 </MudPaper>
             </MudItem>

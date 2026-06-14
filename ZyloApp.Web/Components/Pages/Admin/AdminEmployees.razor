@@ -1,0 +1,181 @@
+@page "/admin/employees"
+
+@attribute [Authorize(Roles = Role.Admins)]
+
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject ISnackbar SnackBar
+@inject NavigationManager Navigation
+
+<PageTitle>Employee Management</PageTitle>
+
+<MudDataGrid T="Employee" @ref="_grid"
+             ServerData="@GetEmployees"
+             SortMode="SortMode.Single"
+             Filterable="true"
+             FilterMode="DataGridFilterMode.ColumnFilterRow"
+             FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
+             Hover="true"
+             Loading="loadingData"
+             Hideable="true"
+             Dense="true"
+             Class="mt-2">
+    <ToolBarContent>
+        <MudToolBar WrapContent="true" Class="px-0">
+            <MudButton StartIcon="@Icons.Material.Filled.PersonAdd"
+                       Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Href="/employees/add">Add Employee</MudButton>
+        </MudToolBar>
+        <MudSpacer />
+        <MudTextField Value="@_searchString"
+                      ValueChanged="(string v) => OnSearch(v)"
+                      Placeholder="Search by name, email, phone, designation..."
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      Immediate="true"
+                      DebounceInterval="300"
+                      Class="mt-0" />
+    </ToolBarContent>
+    <Columns>
+        <TemplateColumn Filterable="false" Sortable="false" Title="Profile" Width="60px">
+            <CellTemplate>
+                <MudAvatar Style="height:32px; width:32px; font-size:0.8rem;">
+                    @if (!string.IsNullOrEmpty(context.Item.ProfilePath))
+                    {
+                        <MudImage Src="@context.Item.ProfilePath" Alt="@context.Item.Name" />
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                    }
+                </MudAvatar>
+            </CellTemplate>
+        </TemplateColumn>
+        <PropertyColumn Property="x => x.Name" Title="Name" />
+        <PropertyColumn Property="x => x.Email" Title="Email" />
+        <PropertyColumn Property="x => x.Phone" Title="Phone" />
+        <PropertyColumn Property="x => x.Designation" Title="Designation" />
+        <PropertyColumn Property="x => x.Department" Title="Department" />
+        <TemplateColumn Filterable="false" Sortable="false" Title="Monthly Basic" Width="130px" Align="Align.Right">
+            <CellTemplate>
+                @if (context.Item.MonthlyBasic is not null)
+                {
+                    <MudText Typo="Typo.body2">@context.Item.MonthlyBasic.Value.ToString("N2")</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">—</MudText>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Filterable="false" Sortable="false" Title="Manager" Width="160px">
+            <CellTemplate>
+                @if (context.Item.ReportsTo is not null)
+                {
+                    <MudText Typo="Typo.body2">@context.Item.ReportsTo.Name</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">—</MudText>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Filterable="false" Sortable="false" Title="Reports" Width="70px" Align="Align.Center">
+            <CellTemplate>
+                @{ var count = context.Item.DirectReports?.Count ?? 0; }
+                <MudText Typo="Typo.body2" Align="Align.Center">@count</MudText>
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Filterable="false" Sortable="false" Title="Status" Width="90px" Align="Align.Center">
+            <CellTemplate>
+                @if (context.Item.Publish)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Success">Active</MudChip>
+                }
+                else
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Error">Inactive</MudChip>
+                }
+            </CellTemplate>
+        </TemplateColumn>
+        <TemplateColumn Filterable="false" Sortable="false" Title="Actions" Width="100px" Align="Align.End">
+            <CellTemplate>
+                <div class="d-flex" style="gap: 2px;">
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Size="Size.Small"
+                                   Color="Color.Warning"
+                                   Href="@("/employees/edit/" + context.Item.Id)"
+                                   title="Edit employee" />
+                    <MudIconButton Icon="@(context.Item.Publish ? Icons.Material.Filled.Block : Icons.Material.Filled.CheckCircle)"
+                                   Size="Size.Small"
+                                   Color="@(context.Item.Publish ? Color.Error : Color.Success)"
+                                   OnClick="() => ToggleStatus(context.Item)"
+                                   title="@(context.Item.Publish ? "Deactivate" : "Activate")" />
+                </div>
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="Employee" PageSizeOptions="[20, 50, 100]" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    private MudDataGrid<Employee>? _grid;
+    private string _searchString = string.Empty;
+    private bool loadingData = false;
+
+    private async Task<GridData<Employee>> GetEmployees(GridState<Employee> state, CancellationToken ct)
+    {
+        loadingData = true;
+
+        using var Db = DbFactory.CreateDbContext();
+        var query = Db.Employees
+            .Include(x => x.ReportsTo)
+            .Include(x => x.DirectReports)
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(_searchString))
+        {
+            var term = _searchString.Trim();
+            query = query.Where(x =>
+                x.Name.Contains(term) ||
+                x.Email.Contains(term) ||
+                (x.Phone != null && x.Phone.Contains(term)) ||
+                (x.Designation != null && x.Designation.Contains(term)) ||
+                (x.Department != null && x.Department.Contains(term)));
+        }
+
+        var totalItems = await query.CountAsync(ct);
+
+        var items = await query
+            .OrderBy(x => x.Name)
+            .Skip(state.Page * state.PageSize)
+            .Take(state.PageSize)
+            .ToListAsync(ct);
+
+        loadingData = false;
+
+        return new GridData<Employee> { Items = items, TotalItems = totalItems };
+    }
+
+    private void OnSearch(string value)
+    {
+        _searchString = value;
+        _ = _grid?.ReloadServerData();
+    }
+
+    private async Task ToggleStatus(Employee employee)
+    {
+        using var Db = DbFactory.CreateDbContext();
+        var emp = await Db.Employees.FindAsync(employee.Id);
+        if (emp is null) return;
+
+        emp.Publish = !emp.Publish;
+        await Db.SaveChangesAsync();
+
+        SnackBar.Add(emp.Publish ? $"{emp.Name} activated" : $"{emp.Name} deactivated", Severity.Success);
+        await _grid!.ReloadServerData();
+    }
+}
