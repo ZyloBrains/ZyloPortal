@@ -225,6 +225,7 @@
 
     private void UserNameChanged()
     {
+        if (selectedUser is not null) return;
         model.Email = model.Name.ToEmail();
     }
 
