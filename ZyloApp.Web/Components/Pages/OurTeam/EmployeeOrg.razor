@@ -327,12 +327,13 @@ else
             employee = await Db.Employees
                 .Include(x => x.ReportsTo)
                 .Include(x => x.DirectReports)
-                .FirstOrDefaultAsync(x => x.Id == Id);
+                .FirstOrDefaultAsync(x => x.Id == Id && x.Publish);
 
             if (employee is not null)
             {
                 BuildAncestorChain(employee);
                 directReports = employee.DirectReports?
+                    .Where(r => r.Publish)
                     .OrderBy(r => r.Name)
                     .ToList() ?? [];
             }
