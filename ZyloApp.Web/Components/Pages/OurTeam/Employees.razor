@@ -179,6 +179,7 @@
         {
             using var Db = DbFactory.CreateDbContext();
             allEmployees = await Db.Employees
+                .Where(x => x.Publish)
                 .Include(x => x.ReportsTo)
                 .Include(x => x.DirectReports)
                 .OrderBy(x => x.Name)

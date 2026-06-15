@@ -39,8 +39,7 @@
                    @bind-Value="selectedManager"
                    Class="mt-3"
                    Variant="Variant.Outlined"
-                   Clearable="true"
-                   AnchorOrigin="Origin.BottomCenter">
+                   Clearable="true">
             @foreach (var mgr in managers)
             {
                 <MudSelectItem Value="mgr">@mgr.Name - @mgr.Designation</MudSelectItem>
@@ -93,10 +92,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        managers = await Db.Employees
+        var emps = await Db.Employees
             .Where(x => x.Id != Id)
+            .Select(x => new { Id = x.Id, Name = x.Name, Designation = x.Designation })
             .OrderBy(x => x.Name)
             .ToListAsync();
+
+        managers = emps.Select(x => new Employee { Id = x.Id, Name = x.Name, Designation = x.Designation }).ToList();
 
         if (IsAdd)
         {
@@ -115,6 +117,11 @@
 
     private async Task OnValidSubmit(EditContext context)
     {
+        if (selectedUser is null && string.IsNullOrEmpty(model.Email) && !string.IsNullOrEmpty(model.Name))
+        {
+            model.Email = model.Name.ToEmail();
+        }
+
         var (success, message) = await ImageUploader.UploadProfileAsync(model.Profile, BlobContainer.ProfileImages);
         if (success)
         {
@@ -206,13 +213,13 @@
                 (x.Email?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false));
         }
 
-        return Task.FromResult(query.Take(20));
+        return Task.FromResult(query);
     }
 
     private void OnUserSelectedAfter()
     {
         if (selectedUser is null) return;
-        model.Name = selectedUser.FullName ?? selectedUser.UserName ?? string.Empty;
+        model.Name = selectedUser.FullName ?? string.Empty;
         model.Email = selectedUser.Email ?? string.Empty;
         model.Phone = selectedUser.PhoneNumber;
         model.ApplicationUserId = selectedUser.Id;
