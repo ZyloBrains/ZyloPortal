@@ -24,7 +24,7 @@
                              SearchFunc="@SearchUsers"
                              ToStringFunc="@(u => u is null ? "" : $"{u.FullName ?? u.UserName} ({u.Email})")" />
         }
-        <MudTextField Label="Name" @bind-Value="model.Name" Variant="Variant.Outlined" TextChanged="UserNameChanged" />
+        <MudTextField Label="Name" @bind-Value="model.Name" Variant="Variant.Outlined" TextChanged="UserNameChanged" Immediate="true" />
         <MudTextField Label="Email" Class="mt-3" @bind-Value="model.Email" Variant="Variant.Outlined" Disabled />
         <MudTextField Label="Phone" Class="mt-3" @bind-Value="model.Phone" Variant="Variant.Outlined" />
 
@@ -232,7 +232,6 @@
 
     private void UserNameChanged()
     {
-        if (selectedUser is not null) return;
         model.Email = model.Name.ToEmail();
     }
 
