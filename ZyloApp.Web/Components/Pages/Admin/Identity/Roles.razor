@@ -8,7 +8,7 @@
 
 <MudTable Items="@roleItems" Hover="true" Loading="@loadingData" Dense="true">
     <ToolBarContent>
-        <MudFab Href="/add-role" StartIcon="@Icons.Material.Filled.Add" title="Add New Role" Size="Size.Small" Color="Color.Tertiary"></MudFab>
+        <MudFab Href="/roles/add" StartIcon="@Icons.Material.Filled.Add" title="Add New Role" Size="Size.Small" Color="Color.Tertiary"></MudFab>
     </ToolBarContent>
     <HeaderContent>
         <MudTh>#</MudTh>
@@ -26,7 +26,7 @@
             <MudChip T="string" Size="Size.Small" Color="Color.Primary">@context.PermissionCount permissions</MudChip>
         </MudTd>
         <MudTd>
-            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/edit-role/" + context.Role.Id)" />
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/roles/edit/" + context.Role.Id)" />
             <MudIconButton Icon="@Icons.Material.Sharp.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Role)" />
             <MudMessageBox @ref="mbox" Title="Warning" CancelText="Cancel">
                 <MessageContent>
