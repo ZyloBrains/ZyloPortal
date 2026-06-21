@@ -212,32 +212,149 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
              superAdminId = roles?.FirstOrDefault(x => x.Name == Role.SuperAdmin)?.Id ?? superAdminId;
              traineeRoleId = roles?.FirstOrDefault(x => x.Name == Role.Trainee)?.Id ?? traineeRoleId;
 
-             var appUserAdmin = context.Set<ApplicationUser>().FirstOrDefault(x => x.UserName == appUser.UserName);
-             if (appUserAdmin is null)
-             {
-                 context.Set<ApplicationUser>().Add(appUser);
-                 context.SaveChanges();
+              var appUserAdmin = context.Set<ApplicationUser>().FirstOrDefault(x => x.UserName == appUser.UserName);
+              if (appUserAdmin is null)
+              {
+                  context.Set<ApplicationUser>().Add(appUser);
+                  context.SaveChanges();
 
-                 context.Set<IdentityUserRole<string>>().AddRange(
-                     [
-                        new IdentityUserRole<string>
-                        {
-                            RoleId = superAdminRoleId,
-                            UserId = superAdminId
-                        },
-                        new IdentityUserRole<string>
-                        {
-                            RoleId = adminRoleId,
-                            UserId = superAdminId
-                        },
-                        new IdentityUserRole<string>
-                        {
-                            RoleId = traineeRoleId,
-                            UserId = superAdminId
-                        }
+                  context.Set<IdentityUserRole<string>>().AddRange(
+                      [
+                         new IdentityUserRole<string>
+                         {
+                             RoleId = superAdminRoleId,
+                             UserId = superAdminId
+                         },
+                         new IdentityUserRole<string>
+                         {
+                             RoleId = adminRoleId,
+                             UserId = superAdminId
+                         },
+                         new IdentityUserRole<string>
+                         {
+                             RoleId = traineeRoleId,
+                             UserId = superAdminId
+                         }
                     ]);
-                 context.SaveChanges();
-             }
+                  context.SaveChanges();
+              }
+
+              // Seed permissions for roles
+              var roleClaims = context.Set<IdentityRoleClaim<string>>().ToList();
+              if (roleClaims == null || roleClaims.Count == 0)
+              {
+                  var allRoles = context.Set<IdentityRole>().ToList();
+                  var superAdminRole = allRoles.FirstOrDefault(r => r.Name == Role.SuperAdmin);
+                  var adminRole = allRoles.FirstOrDefault(r => r.Name == Role.Admin);
+                  var instructorRole = allRoles.FirstOrDefault(r => r.Name == Role.Instructor);
+                  var traineeRole = allRoles.FirstOrDefault(r => r.Name == Role.Trainee);
+                  var employeeRole = allRoles.FirstOrDefault(r => r.Name == Role.Employee);
+
+                  var claimsToAdd = new List<IdentityRoleClaim<string>>();
+
+                  // SuperAdmin gets ALL permissions
+                  if (superAdminRole is not null)
+                  {
+                      foreach (var perm in Permission.All)
+                      {
+                          claimsToAdd.Add(new IdentityRoleClaim<string>
+                          {
+                              RoleId = superAdminRole.Id,
+                              ClaimType = "Permission",
+                              ClaimValue = perm
+                          });
+                      }
+                  }
+
+                  // Admin gets most permissions except user/role management
+                  if (adminRole is not null)
+                  {
+                      var adminPermissions = Permission.All.Where(p =>
+                          p != Permission.RolesView && p != Permission.RolesEdit &&
+                          p != Permission.UsersView && p != Permission.UsersEdit);
+                      foreach (var perm in adminPermissions)
+                      {
+                          claimsToAdd.Add(new IdentityRoleClaim<string>
+                          {
+                              RoleId = adminRole.Id,
+                              ClaimType = "Permission",
+                              ClaimValue = perm
+                          });
+                      }
+                  }
+
+                  // Instructor permissions
+                  if (instructorRole is not null)
+                  {
+                      var instructorPermissions = new[]
+                      {
+                          Permission.DashboardConsultant,
+                          Permission.SchedulesView, Permission.SchedulesEdit,
+                          Permission.AttendanceView, Permission.AttendanceEdit,
+                          Permission.AssignmentsView, Permission.AssignmentsCreate, Permission.AssignmentsVerify,
+                          Permission.ModulesView, Permission.ModulesEdit,
+                          Permission.ProjectsView, Permission.ProjectsEdit,
+                          Permission.StudentsView,
+                          Permission.BatchesView,
+                          Permission.CertificatesView
+                      };
+                      foreach (var perm in instructorPermissions)
+                      {
+                          claimsToAdd.Add(new IdentityRoleClaim<string>
+                          {
+                              RoleId = instructorRole.Id,
+                              ClaimType = "Permission",
+                              ClaimValue = perm
+                          });
+                      }
+                  }
+
+                  // Trainee permissions
+                  if (traineeRole is not null)
+                  {
+                      var traineePermissions = new[]
+                      {
+                          Permission.AssignmentsView,
+                          Permission.SchedulesView,
+                          Permission.AttendanceView,
+                          Permission.ModulesView,
+                          Permission.ProjectsView,
+                          Permission.CertificatesView
+                      };
+                      foreach (var perm in traineePermissions)
+                      {
+                          claimsToAdd.Add(new IdentityRoleClaim<string>
+                          {
+                              RoleId = traineeRole.Id,
+                              ClaimType = "Permission",
+                              ClaimValue = perm
+                          });
+                      }
+                  }
+
+                  // Employee permissions
+                  if (employeeRole is not null)
+                  {
+                      var employeePermissions = new[]
+                      {
+                          Permission.EmployeesView,
+                          Permission.ModulesView,
+                          Permission.CertificatesView
+                      };
+                      foreach (var perm in employeePermissions)
+                      {
+                          claimsToAdd.Add(new IdentityRoleClaim<string>
+                          {
+                              RoleId = employeeRole.Id,
+                              ClaimType = "Permission",
+                              ClaimValue = perm
+                          });
+                      }
+                  }
+
+                  context.Set<IdentityRoleClaim<string>>().AddRange(claimsToAdd);
+                  context.SaveChanges();
+              }
          });
     }
 }

@@ -1,12 +1,15 @@
+using ZyloApp.Web.Authorization;
 using ZyloApp.Web.Components;
 using ZyloApp.Web.Components.Account;
 using ZyloApp.Web.Data;
+using ZyloApp.Web.Data.Constants;
 using ZyloApp.Web.Data.Models;
 using ZyloApp.Web.Extensions;
 using ZyloApp.Web.Services;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -55,6 +58,21 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 builder.Services.AddMudServices();
+builder.Services.AddMemoryCache();
+
+// Permission / Claims-based authorization
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddTransient<Microsoft.AspNetCore.Authentication.IClaimsTransformation, PermissionClaimsTransformation>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var permission in Permission.All)
+    {
+        options.AddPolicy($"Permission.{permission}", policy =>
+            policy.Requirements.Add(new PermissionRequirement(permission)));
+    }
+});
 
 // read connection string secret value
 var blobConnectionString = builder.Configuration["BlobStorageConnectionString"];

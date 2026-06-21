@@ -4,27 +4,60 @@
 @attribute [Authorize(Roles = Role.SuperAdmin)]
 
 @inject RoleManager<IdentityRole> RoleManager
+@inject IPermissionService PermissionService
 @inject ISnackbar SnackBar
 @inject NavigationManager Navigation
 
 <PageTitle>@pageTitle</PageTitle>
-    <MudContainer>
-        <EditForm Model="@model"
-                  OnValidSubmit="OnValidSubmit">
-            <DataAnnotationsValidator />
-            <MudTextField Label="Title" @bind-Value="model.Name" For="@(() => model.Name)" />
+<MudContainer>
+    <EditForm Model="@model"
+              OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator />
+        <MudTextField Label="Title" @bind-Value="model.Name" For="@(() => model.Name)" />
 
+        @if (!IsAdd)
+        {
+            <MudDivider Class="my-4" />
+            <MudText Typo="Typo.h6" Class="mb-2">Permissions</MudText>
+
+            @foreach (var module in Permission.ByModule)
+            {
+                <MudExpansionPanels Dense Class="mb-1">
+                    <MudExpansionPanel Text="@module.Key" Dense>
+                        <MudStack Row Wrap="Wrap.Wrap" Spacing="2">
+                            @foreach (var permission in module.Value)
+                            {
+                                <MudCheckBox T="bool"
+                                             Label="@permission.Split('.')[1]"
+                                             Value="@selectedPermissions.Contains(permission)"
+                                             ValueChanged="@((bool val) => TogglePermission(permission, val))"
+                                             Color="Color.Primary"
+                                             Dense />
+                            }
+                        </MudStack>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            }
+        }
+
+        <MudStack Row Class="mt-4">
             <MudButton ButtonType="ButtonType.Submit"
                        Variant="Variant.Filled"
                        Color="Color.Primary"
-                       Class="mt-3"
                        StartIcon="@Icons.Material.Filled.Save">
                 Save Role
             </MudButton>
-            <MudText Color="Color.Error">@errorMessage</MudText>
-        </EditForm>
-    </MudContainer>
-    @code {
+            <MudButton Href="/identity/roles"
+                       Variant="Variant.Outlined"
+                       StartIcon="@Icons.Material.Sharp.ArrowBack">
+                Back
+            </MudButton>
+        </MudStack>
+        <MudText Color="Color.Error">@errorMessage</MudText>
+    </EditForm>
+</MudContainer>
+
+@code {
 
     [Parameter]
     public string? Id { get; set; }
@@ -32,6 +65,7 @@
     IdentityRole model = new();
     string pageTitle = string.Empty;
     string errorMessage = string.Empty;
+    HashSet<string> selectedPermissions = new();
     bool IsAdd => Id is null or "";
 
     protected override async Task OnInitializedAsync()
@@ -44,7 +78,18 @@
         {
             pageTitle = "Edit Role";
             model = await RoleManager.FindByIdAsync(Id!) ?? new();
+
+            var rolePermissions = await PermissionService.GetRolePermissionsAsync(Id!);
+            selectedPermissions = rolePermissions.ToHashSet();
         }
+    }
+
+    private void TogglePermission(string permission, bool isChecked)
+    {
+        if (isChecked)
+            selectedPermissions.Add(permission);
+        else
+            selectedPermissions.Remove(permission);
     }
 
     private async Task OnValidSubmit(EditContext context)
@@ -69,6 +114,12 @@
 
         if (result.Succeeded)
         {
+            // Save permissions for existing roles
+            if (!IsAdd && Id is not null)
+            {
+                await PermissionService.SetRolePermissionsAsync(Id, selectedPermissions);
+            }
+
             SnackBar.Add("Role saved successfully", Severity.Success);
             Navigation.NavigateTo("/identity/roles");
         }

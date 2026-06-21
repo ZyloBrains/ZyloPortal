@@ -34,4 +34,28 @@ public static class IdentityExtensions
 
         return roles.All(user.IsInRole);
     }
+
+    public static bool HasPermission(this ClaimsPrincipal principal, string permission)
+    {
+        if (principal is null)
+            return false;
+
+        return principal.HasClaim(c => c.Type == "Permission" && c.Value == permission);
+    }
+
+    public static bool HasAnyPermission(this ClaimsPrincipal principal, params string[] permissions)
+    {
+        if (principal is null || permissions is null || permissions.Length == 0)
+            return false;
+
+        return permissions.Any(p => principal.HasPermission(p));
+    }
+
+    public static bool HasAllPermissions(this ClaimsPrincipal principal, params string[] permissions)
+    {
+        if (principal is null || permissions is null || permissions.Length == 0)
+            return false;
+
+        return permissions.All(p => principal.HasPermission(p));
+    }
 }

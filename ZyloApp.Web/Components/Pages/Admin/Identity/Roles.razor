@@ -1,11 +1,12 @@
 ﻿@page "/identity/roles"
 @attribute [Authorize(Roles = Role.SuperAdmin)]
 @inject RoleManager<IdentityRole> RoleManager
+@inject IPermissionService PermissionService
 @inject ISnackbar SnackBar
 
 <PageTitle>All Roles</PageTitle>
 
-<MudTable Items="@roles" Hover="true" Loading="@loadingData" Dense="true">
+<MudTable Items="@roleItems" Hover="true" Loading="@loadingData" Dense="true">
     <ToolBarContent>
         <MudFab Href="/add-role" StartIcon="@Icons.Material.Filled.Add" title="Add New Role" Size="Size.Small" Color="Color.Tertiary"></MudFab>
     </ToolBarContent>
@@ -14,41 +15,51 @@
         <MudTh>Id</MudTh>
         <MudTh>Role</MudTh>
         <MudTh>NormalizedName</MudTh>
+        <MudTh>Permissions</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="#">@(roles.IndexOf(context) + 1)</MudTd>
-        <MudTd DataLabel="Name">@context.Id</MudTd>
-            <MudTd DataLabel="Name">@context.Name</MudTd>
-            <MudTd DataLabel="NormalizedName">@context.NormalizedName</MudTd>
-            <MudTd>
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/edit-role/" + context.Id)" />
-                <MudIconButton Icon="@Icons.Material.Sharp.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context)" />
-                <MudMessageBox @ref="mbox" Title="Warning" CancelText="Cancel">
-                    <MessageContent>
-                        Are you sure to delete this role? It can't be undone!
-                    </MessageContent>
-                    <YesButton>
-                        <MudButton Variant="Variant.Filled" Color="Color.Error" Class="ml-2 mb-2 mr-3" StartIcon="@Icons.Material.Filled.DeleteForever">Delete</MudButton>
-                    </YesButton>
-                </MudMessageBox>
-            </MudTd>
-        </RowTemplate>
-        <PagerContent>
-            <MudTablePager />
-        </PagerContent>
-    </MudTable>
+        <MudTd DataLabel="#">@(roleItems.IndexOf(context) + 1)</MudTd>
+        <MudTd DataLabel="Id">@context.Role.Id</MudTd>
+        <MudTd DataLabel="Name">@context.Role.Name</MudTd>
+        <MudTd DataLabel="NormalizedName">@context.Role.NormalizedName</MudTd>
+        <MudTd DataLabel="Permissions">
+            <MudChip T="string" Size="Size.Small" Color="Color.Primary">@context.PermissionCount permissions</MudChip>
+        </MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Warning" Href="@("/edit-role/" + context.Role.Id)" />
+            <MudIconButton Icon="@Icons.Material.Sharp.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => ConfirmDelete(context.Role)" />
+            <MudMessageBox @ref="mbox" Title="Warning" CancelText="Cancel">
+                <MessageContent>
+                    Are you sure to delete this role? It can't be undone!
+                </MessageContent>
+                <YesButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Error" Class="ml-2 mb-2 mr-3" StartIcon="@Icons.Material.Filled.DeleteForever">Delete</MudButton>
+                </YesButton>
+            </MudMessageBox>
+        </MudTd>
+    </RowTemplate>
+    <PagerContent>
+        <MudTablePager />
+    </PagerContent>
+</MudTable>
 
+@code {
 
-    @code {
+    record RoleWithPermissionCount(IdentityRole Role, int PermissionCount);
 
-    List<IdentityRole> roles = new();
+    List<RoleWithPermissionCount> roleItems = new();
     bool loadingData = false;
     MudMessageBox mbox { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
         loadingData = true;
-        roles = await RoleManager.Roles.ToListAsync();
+        var roles = await RoleManager.Roles.ToListAsync();
+        foreach (var role in roles)
+        {
+            var permissions = await PermissionService.GetRolePermissionsAsync(role.Id);
+            roleItems.Add(new RoleWithPermissionCount(role, permissions.Count));
+        }
         loadingData = false;
     }
 
@@ -59,11 +70,13 @@
             return;
 
         var identityResult = await RoleManager.DeleteAsync(role);
-                
+
         if (identityResult.Succeeded)
         {
             SnackBar.Add("Role Deleted successfully", Severity.Success);
-            roles.Remove(role);
+            var item = roleItems.FirstOrDefault(x => x.Role.Id == role.Id);
+            if (item is not null)
+                roleItems.Remove(item);
         }
         else
         {
